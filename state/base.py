@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Any, List, Tuple, TypeVar, Optional, Union, Generator
+from typing import Any, List, Tuple, Optional, Union
 import uuid
 
 primitive_types = (int, float, str, bool)
+type_values = ("Integer", "Float", "String", "Boolean", "Type")
 
 
 Node = str
@@ -36,6 +37,8 @@ class State(ABC):
         Returns:
             True if value type is supported, False otherwise.
         """
+        if isinstance(value, dict) and value.get("type", None) in type_values:
+            return True
         if not isinstance(value, primitive_types):
             return False
         elif isinstance(value, int) and not (-2**63 <= value <= 2**63 - 1):
@@ -100,8 +103,7 @@ class State(ABC):
             target: target element of edge
 
         Returns:
-            Tuple containing the created edges and label node, None is source or target don't exist
-            or value type doesn't exist. First edge goes from source to target, second from edge to label.
+            Nothing.
         """
         pass
 
