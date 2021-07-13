@@ -31,8 +31,10 @@ class DevState(PyState):
                     x = self.values[n]
                     if isinstance(x, dict):
                         x = f"{x.get('type')}"
+                    else:
+                        x = repr(x)
                     f.write("\"a_%s\" [label=\"%s\"];\n" % (
-                        n, str(x).replace('"', '\\"')))
+                        n, x.replace('"', '\\"')))
                 else:
                     f.write("\"a_%s\" [label=\"\"];\n" % n)
             for i, e in sorted(list(self.edges.items())):
