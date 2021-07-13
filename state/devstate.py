@@ -28,8 +28,11 @@ class DevState(PyState):
             f.write("digraph main {\n")
             for n in sorted(self.nodes):
                 if n in self.values:
+                    x = self.values[n]
+                    if isinstance(x, dict):
+                        x = f"{x.get('type')}"
                     f.write("\"a_%s\" [label=\"%s\"];\n" % (
-                        n, str(self.values[n]).replace('"', '\\"')))
+                        n, str(x).replace('"', '\\"')))
                 else:
                     f.write("\"a_%s\" [label=\"\"];\n" % n)
             for i, e in sorted(list(self.edges.items())):
