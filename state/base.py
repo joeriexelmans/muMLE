@@ -14,6 +14,8 @@ class State(ABC):
     """
     Abstract base class for MvS CRUD interface defined in:
     http://msdl.cs.mcgill.ca/people/yentl/files/thesis.pdf
+    This code is based on:
+    https://msdl.uantwerpen.be/git/yentl/modelverse/src/master/state/modelverse_state
     """
 
     @staticmethod
@@ -88,7 +90,7 @@ class State(ABC):
         pass
 
     @abstractmethod
-    def create_dict(self, source: Element, value: Any, target: Element) -> Optional[Tuple[Edge, Edge, Node]]:
+    def create_dict(self, source: Element, value: Any, target: Element) -> None:
         """
         Creates named edge between two graph elements.
 
