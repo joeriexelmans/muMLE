@@ -165,3 +165,27 @@ def test_create_nodevalue_string_type(state):
 
     v = state.read_value(id1)
     assert v == {"type": "String"}
+
+
+@pytest.mark.usefixtures("state")
+def test_create_nodevalue_node_type(state):
+    id1 = state.create_nodevalue({"type": "Node"})
+    assert id1 is not None
+
+    v = state.read_value(id1)
+    assert v == {"type": "Node"}
+
+
+@pytest.mark.usefixtures("state")
+def test_create_nodevalue_edge_type(state):
+    id1 = state.create_nodevalue({"type": "Edge"})
+    assert id1 is not None
+
+    v = state.read_value(id1)
+    assert v == {"type": "Edge"}
+
+
+@pytest.mark.usefixtures("state")
+def test_create_nodevalue_invalid_type(state):
+    id1 = state.create_nodevalue({"type": "Class"})
+    assert id1 is None
