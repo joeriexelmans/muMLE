@@ -8,9 +8,7 @@ FLOAT = ("Float",)
 STRING = ("String",)
 BOOLEAN = ("Boolean",)
 TYPE = ("Type",)
-NODE = ("Node",)
-EDGE = ("Edge",)
-type_values = (INTEGER, FLOAT, STRING, BOOLEAN, TYPE, NODE, EDGE)
+type_values = (INTEGER, FLOAT, STRING, BOOLEAN, TYPE)
 
 
 Node = str
