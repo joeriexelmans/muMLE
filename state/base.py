@@ -3,13 +3,13 @@ from typing import Any, List, Tuple, Optional, Union
 import uuid
 
 primitive_types = (int, float, str, bool)
-INTEGER = {"type": "Integer"}
-FLOAT = {"type": "Float"}
-STRING = {"type": "String"}
-BOOLEAN = {"type": "Boolean"}
-TYPE = {"type": "Type"}
-NODE = {"type": "Node"}
-EDGE = {"type": "Edge"}
+INTEGER = ("Integer",)
+FLOAT = ("Float",)
+STRING = ("String",)
+BOOLEAN = ("Boolean",)
+TYPE = ("Type",)
+NODE = ("Node",)
+EDGE = ("Edge",)
 type_values = (INTEGER, FLOAT, STRING, BOOLEAN, TYPE, NODE, EDGE)
 
 
@@ -44,7 +44,7 @@ class State(ABC):
         Returns:
             True if value type is supported, False otherwise.
         """
-        if isinstance(value, dict) and value in type_values:
+        if isinstance(value, tuple) and value in type_values:
             return True
         if not isinstance(value, primitive_types):
             return False

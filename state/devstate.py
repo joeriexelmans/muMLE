@@ -29,8 +29,8 @@ class DevState(PyState):
             for n in sorted(self.nodes):
                 if n in self.values:
                     x = self.values[n]
-                    if isinstance(x, dict):
-                        x = f"{x.get('type')}"
+                    if isinstance(x, tuple):
+                        x = f"{x[0]}"
                     else:
                         x = repr(x)
                     f.write("\"a_%s\" [label=\"%s\"];\n" % (

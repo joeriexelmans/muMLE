@@ -1,4 +1,5 @@
 import pytest
+from state.base import INTEGER, FLOAT, STRING, BOOLEAN, TYPE, NODE, EDGE
 
 
 @pytest.mark.usefixtures("state")
@@ -123,69 +124,15 @@ def test_create_nodevalue_junk(state):
 
 
 @pytest.mark.usefixtures("state")
-def test_create_nodevalue_type_type(state):
-    id1 = state.create_nodevalue({"type": "Type"})
-    assert id1 is not None
+def test_create_nodevalue_type(state):
+    for t in {INTEGER, FLOAT, STRING, BOOLEAN, TYPE, NODE, EDGE}:
+        id1 = state.create_nodevalue(t)
+        assert id1 is not None
 
-    v = state.read_value(id1)
-    assert v == {"type": "Type"}
-
-
-@pytest.mark.usefixtures("state")
-def test_create_nodevalue_integer_type(state):
-    id1 = state.create_nodevalue({"type": "Integer"})
-    assert id1 is not None
-
-    v = state.read_value(id1)
-    assert v == {"type": "Integer"}
-
-
-@pytest.mark.usefixtures("state")
-def test_create_nodevalue_float_type(state):
-    id1 = state.create_nodevalue({"type": "Float"})
-    assert id1 is not None
-
-    v = state.read_value(id1)
-    assert v == {"type": "Float"}
-
-
-@pytest.mark.usefixtures("state")
-def test_create_nodevalue_boolean_type(state):
-    id1 = state.create_nodevalue({"type": "Boolean"})
-    assert id1 is not None
-
-    v = state.read_value(id1)
-    assert v == {"type": "Boolean"}
-
-
-@pytest.mark.usefixtures("state")
-def test_create_nodevalue_string_type(state):
-    id1 = state.create_nodevalue({"type": "String"})
-    assert id1 is not None
-
-    v = state.read_value(id1)
-    assert v == {"type": "String"}
-
-
-@pytest.mark.usefixtures("state")
-def test_create_nodevalue_node_type(state):
-    id1 = state.create_nodevalue({"type": "Node"})
-    assert id1 is not None
-
-    v = state.read_value(id1)
-    assert v == {"type": "Node"}
-
-
-@pytest.mark.usefixtures("state")
-def test_create_nodevalue_edge_type(state):
-    id1 = state.create_nodevalue({"type": "Edge"})
-    assert id1 is not None
-
-    v = state.read_value(id1)
-    assert v == {"type": "Edge"}
-
+        v = state.read_value(id1)
+        assert v == t
 
 @pytest.mark.usefixtures("state")
 def test_create_nodevalue_invalid_type(state):
-    id1 = state.create_nodevalue({"type": "Class"})
+    id1 = state.create_nodevalue(("Class",))
     assert id1 is None
