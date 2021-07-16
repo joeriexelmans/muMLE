@@ -1,4 +1,4 @@
-from state.base import State
+from state.base import INTEGER, FLOAT, BOOLEAN, STRING, TYPE, State
 from core.element import Element, String
 
 
@@ -60,18 +60,45 @@ class Bottom:
             self.state.delete_edge(element)
             print(f"Warning: Invalid name {name.value}, element not created.")
 
-    def get_element(self, model: Element, name: String) -> Element:
-        model_root = self.state.read_dict(model.id, "Model")
-        element = self.state.read_dict(model_root, name.value)
-        if element is None:
-            print(f"Warning: Unknown element {name.value}.")
-            return Element()
-        else:
-            return Element(id=element, value=self.state.read_value(element))
-
     def delete_element(self, model: Element, name: String):
         model_root = self.state.read_dict(model.id, "Model")
         element = self.state.read_dict(model_root, name.value)
         # could be both a node or an edge
         self.state.delete_node(element)
         self.state.delete_edge(element)
+
+    def list_elements(self, model: Element):
+        def is_edge(elem: Element) -> bool:
+            edge = self.state.read_edge(elem.id)
+            return edge is not None
+        def value_type(value) -> str:
+            map = {
+                int: INTEGER,
+                float: FLOAT,
+                str: STRING,
+                bool: BOOLEAN,
+                tuple: TYPE
+            }
+            return map[type(value)][0]
+        
+        unsorted = []
+        model_root = self.state.read_dict(model.id, "Model")
+        for elem_edge in self.state.read_outgoing(model_root):
+            # get element name
+            label_edge, = self.state.read_outgoing(elem_edge)
+            _, label_node = self.state.read_edge(label_edge)
+            label = self.state.read_value(label_node)
+            # find element bottom type
+            _, elem = self.state.read_edge(elem_edge)
+            if is_edge(elem):
+                bottom_type = "Edge"
+            else:
+                # is_node
+                elem_value = self.state.read_value(elem)
+                if elem_value is None:
+                    bottom_type = "Node"
+                else:
+                    bottom_type = value_type
+            unsorted.append(f"{label} : {bottom_type}")
+        for i in sorted(unsorted):
+            print(i)
