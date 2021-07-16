@@ -1,12 +1,14 @@
-from dataclasses import dataclass, asdict, astuple
-from typing import TypeVar, Generic, Optional
+from dataclasses import dataclass
+from typing import TypeVar, Generic, Optional, Literal
+from state.base import INTEGER, FLOAT, BOOLEAN, STRING, TYPE
 
 # Some typing information for Python static type checkers
-Literal = TypeVar('Literal', int, float, bool, str)  # Must be int, float, bool or str
+bottom_type = Literal[INTEGER, FLOAT, BOOLEAN, STRING, TYPE]
+T = TypeVar('T', int, float, bool, str, bottom_type)
 
 
 @dataclass
-class Element(Generic[Literal]):
+class Element(Generic[T]):
     """
     An Element can represent one of following two things, based on the value of its attributes:
 
@@ -19,7 +21,7 @@ class Element(Generic[Literal]):
     dict that is used there.
     """
     id: Optional[str] = None
-    value: Optional[Literal] = None
+    value: Optional[T] = None
 
     def is_none(self) -> bool:
         return self.id is None and self.value is None
@@ -29,3 +31,4 @@ String = Element[str]
 Integer = Element[int]
 Float = Element[float]
 Boolean = Element[bool]
+Type = Element[bottom_type]
