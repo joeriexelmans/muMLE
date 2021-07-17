@@ -2,30 +2,32 @@ from state.base import INTEGER, FLOAT, BOOLEAN, STRING, TYPE, State
 from core.element import Element, String
 
 
-class Bottom:
-    def __init__(self, state: State):
+class BottomContext:
+    def __init__(self, state: State, model: Element):
         self.state = state
+        self.model = model
 
-    def create_model(self, name: String) -> Element:
-        bottom = self.state.create_nodevalue(name.value)
-        self.state.create_dict(bottom, "Model", self.state.create_node())
-        return Element(id=bottom)
+    def __enter__(self):
+        return self
 
-    def add_node(self, model: Element, name: String):
-        model_root = self.state.read_dict(model.id, "Model")
+    def __exit__(self):
+        pass
+
+    def add_node(self, name: String):
+        model_root = self.state.read_dict(self.model.id, "Model")
         # create model element
         element = self.state.create_node()
         # connect to model root
         self.state.create_dict(model_root, name.value, element)
         # confirm that element has been added to the model
-        element = self.state.read_dict(model_root, name.value)
-        if element is None:
+        element_found = self.state.read_dict(model_root, name.value)
+        if element_found is None:
             self.state.delete_node(element)
             print(f"Warning: Invalid name {name.value}, element not created.")
             return
 
-    def add_value(self, model: Element, name: String, value: Element):
-        model_root = self.state.read_dict(model.id, "Model")
+    def add_value(self, name: String, value: Element):
+        model_root = self.state.read_dict(self.model.id, "Model")
         # create model element
         element = self.state.create_nodevalue(value.value)
         if element is None:
@@ -40,8 +42,8 @@ class Bottom:
             print(f"Warning: Invalid name {name.value}, element not created.")
             return
 
-    def add_edge(self, model: Element, name: String, source: String, target: String):
-        model_root = self.state.read_dict(model.id, "Model")
+    def add_edge(self, name: String, source: String, target: String):
+        model_root = self.state.read_dict(self.model.id, "Model")
         source_element = self.state.read_dict(model_root, source.value)
         if source_element is None:
             print(f"Warning: Unknown source element {source.value}, edge not created.")
@@ -55,34 +57,35 @@ class Bottom:
         # connect to model root
         self.state.create_dict(model_root, name.value, element)
         # confirm that element has been added to the model
-        element = self.state.read_dict(model_root, name.value)
-        if element is None:
+        element_found = self.state.read_dict(model_root, name.value)
+        if element_found is None:
             self.state.delete_edge(element)
             print(f"Warning: Invalid name {name.value}, element not created.")
 
-    def delete_element(self, model: Element, name: String):
-        model_root = self.state.read_dict(model.id, "Model")
+    def delete_element(self, name: String):
+        model_root = self.state.read_dict(self.model.id, "Model")
         element = self.state.read_dict(model_root, name.value)
         # could be both a node or an edge
         self.state.delete_node(element)
         self.state.delete_edge(element)
 
-    def list_elements(self, model: Element):
-        def is_edge(elem: Element) -> bool:
-            edge = self.state.read_edge(elem.id)
+    def list_elements(self):
+        def is_edge(element: str) -> bool:
+            edge = self.state.read_edge(element)
             return edge is not None
+
         def value_type(value) -> str:
-            map = {
+            mapping = {
                 int: INTEGER,
                 float: FLOAT,
                 str: STRING,
                 bool: BOOLEAN,
                 tuple: TYPE
             }
-            return map[type(value)][0]
+            return mapping[type(value)][0]
         
         unsorted = []
-        model_root = self.state.read_dict(model.id, "Model")
+        model_root = self.state.read_dict(self.model.id, "Model")
         for elem_edge in self.state.read_outgoing(model_root):
             # get element name
             label_edge, = self.state.read_outgoing(elem_edge)
