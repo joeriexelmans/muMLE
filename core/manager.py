@@ -63,3 +63,16 @@ class Manager:
             unsorted.append(f"{self.state.read_value(model)} : {self.state.read_value(metamodel)}")
         for x in sorted(unsorted):
             print(x)
+
+    def retype_model(self, model_name: String, metamodel_name: String):
+        root = self.state.read_root()
+        model = self.state.read_dict(root, model_name.value)
+        if model is None:
+            print(f"Error: Cannot find model with name {model_name.value}.")
+        metamodel = self.state.read_dict(root, metamodel_name.value)
+        if metamodel is None:
+            print(f"Error: Cannot find model with name {metamodel_name.value}.")
+        metamodel_edge = self.state.read_dict_edge(model, "Metamodel")
+        if metamodel_edge is not None:
+            self.state.delete_edge(metamodel_edge)
+        self.state.create_dict(model, "Metamodel", metamodel)
