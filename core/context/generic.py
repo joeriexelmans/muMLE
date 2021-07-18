@@ -68,12 +68,15 @@ class GenericContext(Context):
     def retype_element(self, name: String, type_name: String):
         model_root = self.state.read_dict(self.model.id, "Model")
         element_edge = self.state.read_dict_edge(model_root, name.value)
+        if element_edge is None:
+            print(f"Error: Element with name {name.value} not found.")
+            return
         label_node_edge, = self.state.read_outgoing(element_edge)
         _, label_node = self.state.read_edge(label_node_edge)
         # create type name node
         type_name_node = self.state.create_nodevalue(type_name.value)
         if type_name_node is None:
-            print("Warning: Invalid type name, element not retyped.")
+            print("Error: Invalid type name, element not retyped.")
         # remove any existing type node
         existing = self.state.read_dict(label_node, "Type")
         if existing is not None:
