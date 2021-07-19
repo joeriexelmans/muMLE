@@ -5,6 +5,7 @@ from core.context.bottom import BottomContext
 
 
 class GenericContext(Context):
+
     def __init__(self, state: State, model: Element, metamodel: Element):
         super().__init__(state, model, metamodel)
         self.bottom = BottomContext(state, model)
@@ -15,13 +16,24 @@ class GenericContext(Context):
     def __exit__(self):
         pass
 
+    def exposed_methods(self):
+        yield from [
+            self.instantiate,
+            self.instantiate_value,
+            self.instantiate_link,
+            self.retype_element,
+            self.list_elements,
+            self.delete_element,
+            self.verify,
+        ]
+
     def _type_exists(self, type_name: String, instantiate_link: bool) -> bool:
         metamodel_root = self.state.read_dict(self.metamodel.id, "Model")
         type_element = self.state.read_dict(metamodel_root, type_name.value)
         if type_element is None:
             return False
         else:
-            element_is_edge = self.state.read_edge(type_element) is not None
+            element_is_edge = self.state.read_edge(type_element) != (None, None)
             return element_is_edge == instantiate_link
 
     def instantiate(self, type_name: String, name: String):

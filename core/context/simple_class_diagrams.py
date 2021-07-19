@@ -1,4 +1,4 @@
-from core.element import Element
+from core.element import Element, String, Integer, Boolean
 from state.base import State
 from core.context.generic import GenericContext
 
@@ -7,25 +7,26 @@ class SCDContext(GenericContext):
     def __init__(self, state: State, model: Element, metamodel: Element):
         super().__init__(state, model, metamodel)
 
+    def exposed_methods(self):
+        yield from super().exposed_methods()
+        yield from [
+            self.create_class,
+            self.create_class_attribute,
+            self.create_association,
+            self.create_inheritance
+        ]
 
-def main():
-    from state.devstate import DevState
+    def create_class(self, name: String, lower_cardinality: Integer = Element(), upper_cardinality: Integer = Element()):
+        pass
 
-    s = DevState()
-    scd = SCDContext(s, Element(), Element())
-    bootstrap = scd._bootstrap_scd()
-    model = s.read_dict(bootstrap.id, "Model")
-    x = []
-    for e in s.read_outgoing(model):
-        label_node_edge, = s.read_outgoing(e)
-        _, label_node = s.read_edge(label_node_edge)
-        type_node = s.read_dict(label_node, "Type")
-        x.append(f"{s.read_value(label_node)} : {s.read_value(type_node)}")
-    for t in sorted(x):
-        print(t)
+    def create_class_attribute(self, class_name: String, name: String, optional: Boolean = Element(value=False)):
+        pass
 
-    # s.dump("out/scd.dot", "out/scd.png")
+    def create_association(self, source_class_name: String, target_class_name: String, name: String,
+                           source_lower_cardinality: Integer = Element(), target_lower_cardinality: Integer = Element(),
+                           source_upper_cardinality: Integer = Element(), target_upper_cardinality: Integer = Element()
+                           ):
+        pass
 
-
-if __name__ == '__main__':
-    main()
+    def create_inheritance(self, parent_class_name: String, child_class_name: String):
+        pass

@@ -18,6 +18,10 @@ class Context(ABC):
         pass
 
     @abstractmethod
+    def exposed_methods(self):
+        pass
+
+    @abstractmethod
     def instantiate(self, type_name: String, instance_name: String):
         pass
 

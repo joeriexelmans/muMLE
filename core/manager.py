@@ -6,6 +6,16 @@ class Manager:
     def __init__(self, state: State):
         self.state = state
 
+    def exposed_methods(self):
+        yield from [
+            self.new_model,
+            self.get_model,
+            self.rename_model,
+            self.retype_model,
+            self.delete_model,
+            self.list_models,
+        ]
+
     def new_model(self, name: String, type_model_name: String) -> Element:
         root = self.state.read_root()
         mm_bottom = self.state.read_dict(root, type_model_name.value)
