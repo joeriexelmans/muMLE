@@ -22,8 +22,9 @@ class GenericContext(Context):
             self.instantiate_value,
             self.instantiate_link,
             self.retype_element,
-            self.list_elements,
             self.delete_element,
+            self.list_elements,
+            self.list_types,
             self.verify,
         ]
 
@@ -47,7 +48,7 @@ class GenericContext(Context):
         if not self._type_exists(type_name, instantiate_link=False):
             print(f"Attempting to instantiate element with invalid type: {type_name.value}")
         else:
-            self.bottom.add_value(name, value.value)
+            self.bottom.add_value(name, value)
             self.retype_element(name, type_name)
 
     def instantiate_link(self, type_name: String, name: String, source: String, target: String):

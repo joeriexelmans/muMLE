@@ -37,6 +37,9 @@ def input_args(method):
             arg = input(f"{param_type} {param_name} (default = {param_default.value})? ")
             if arg == '':
                 arg = param_default.value
+                arg = Element(value=arg)
+                args.append(arg)
+                continue
         else:
             param_name, param_type = param_tuple
             while True:

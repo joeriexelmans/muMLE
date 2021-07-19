@@ -68,18 +68,18 @@ def bootstrap_scd(state: State) -> Element:
                         Element(value="Element"))
 
     # AttributeLinks --> elements that will be typed by AttributeLink
-    ctx.bottom.add_edge(Element(value="Class_attr01"), Element(value="Class"),
+    ctx.bottom.add_edge(Element(value="Class_lower_cardinality_link"), Element(value="Class"),
                         Element(value="Class_lower_cardinality"))
-    ctx.bottom.add_edge(Element(value="Class_attr02"), Element(value="Class"),
+    ctx.bottom.add_edge(Element(value="Class_upper_cardinality_link"), Element(value="Class"),
                         Element(value="Class_upper_cardinality"))
 
-    ctx.bottom.add_edge(Element(value="Association_attr01"), Element(value="Association"),
+    ctx.bottom.add_edge(Element(value="Association_source_lower_cardinality_link"), Element(value="Association"),
                         Element(value="Association_source_lower_cardinality"))
-    ctx.bottom.add_edge(Element(value="Association_attr02"), Element(value="Association"),
+    ctx.bottom.add_edge(Element(value="Association_source_upper_cardinality_link"), Element(value="Association"),
                         Element(value="Association_source_upper_cardinality"))
-    ctx.bottom.add_edge(Element(value="Association_attr03"), Element(value="Association"),
+    ctx.bottom.add_edge(Element(value="Association_target_lower_cardinality_link"), Element(value="Association"),
                         Element(value="Association_target_lower_cardinality"))
-    ctx.bottom.add_edge(Element(value="Association_attr04"), Element(value="Association"),
+    ctx.bottom.add_edge(Element(value="Association_target_upper_cardinality_link"), Element(value="Association"),
                         Element(value="Association_target_upper_cardinality"))
 
     ctx.bottom.add_edge(Element(value="Attribute_name_link"), Element(value="Attribute"),
@@ -88,43 +88,49 @@ def bootstrap_scd(state: State) -> Element:
                         Element(value="Attribute_optional"))
 
     # AttributeLink instances --> elements that will be typed by one of the AttributeLink defined above
-    ctx.bottom.add_edge(Element(value="Attribute_name_link_01"), Element(value="Attribute_name"),
+    ctx.bottom.add_edge(Element(value="Attribute_name.name_link"), Element(value="Attribute_name"),
                         Element(value="Attribute_name.name"))
-    ctx.bottom.add_edge(Element(value="Attribute_optional_link_01"), Element(value="Attribute_name"),
+    ctx.bottom.add_edge(Element(value="Attribute_name.optional_link"), Element(value="Attribute_name"),
                         Element(value="Attribute_name.optional"))
-    ctx.bottom.add_edge(Element(value="Attribute_name_link_02"), Element(value="Attribute_optional"),
+    ctx.bottom.add_edge(Element(value="Attribute_optional.name_link"), Element(value="Attribute_optional"),
                         Element(value="Attribute_optional.name"))
-    ctx.bottom.add_edge(Element(value="Attribute_optional_link_02"), Element(value="Attribute_optional"),
+    ctx.bottom.add_edge(Element(value="Attribute_optional.optional_link"), Element(value="Attribute_optional"),
                         Element(value="Attribute_optional.optional"))
 
-    ctx.bottom.add_edge(Element(value="Attribute_name_link_03"), Element(value="Class_lower_cardinality"),
+    ctx.bottom.add_edge(Element(value="Class_lower_cardinality.name_link"), Element(value="Class_lower_cardinality"),
                         Element(value="Class_lower_cardinality.name"))
-    ctx.bottom.add_edge(Element(value="Attribute_optional_link_03"), Element(value="Class_lower_cardinality"),
+    ctx.bottom.add_edge(Element(value="Class_lower_cardinality.optional_link"),
+                        Element(value="Class_lower_cardinality"),
                         Element(value="Class_lower_cardinality.optional"))
-    ctx.bottom.add_edge(Element(value="Attribute_name_link_04"), Element(value="Class_upper_cardinality"),
+    ctx.bottom.add_edge(Element(value="Class_upper_cardinality.name_link"), Element(value="Class_upper_cardinality"),
                         Element(value="Class_upper_cardinality.name"))
-    ctx.bottom.add_edge(Element(value="Attribute_optional_link_04"), Element(value="Class_upper_cardinality"),
+    ctx.bottom.add_edge(Element(value="Class_upper_cardinality.optional_link"),
+                        Element(value="Class_upper_cardinality"),
                         Element(value="Class_upper_cardinality.optional"))
 
-    ctx.bottom.add_edge(Element(value="Attribute_name_link_05"), Element(value="Association_source_lower_cardinality"),
+    ctx.bottom.add_edge(Element(value="Association_source_lower_cardinality.name_link"),
+                        Element(value="Association_source_lower_cardinality"),
                         Element(value="Association_source_lower_cardinality.name"))
-    ctx.bottom.add_edge(Element(value="Attribute_optional_link_05"),
+    ctx.bottom.add_edge(Element(value="Association_source_lower_cardinality.optional_link"),
                         Element(value="Association_source_lower_cardinality"),
                         Element(value="Association_source_lower_cardinality.optional"))
-    ctx.bottom.add_edge(Element(value="Attribute_name_link_06"), Element(value="Association_source_upper_cardinality"),
+    ctx.bottom.add_edge(Element(value="Association_source_upper_cardinality.name_link"),
+                        Element(value="Association_source_upper_cardinality"),
                         Element(value="Association_source_upper_cardinality.name"))
-    ctx.bottom.add_edge(Element(value="Attribute_optional_link_06"),
+    ctx.bottom.add_edge(Element(value="Association_source_upper_cardinality.optional_link"),
                         Element(value="Association_source_upper_cardinality"),
                         Element(value="Association_source_upper_cardinality.optional"))
 
-    ctx.bottom.add_edge(Element(value="Attribute_name_link_07"), Element(value="Association_target_lower_cardinality"),
+    ctx.bottom.add_edge(Element(value="Association_target_lower_cardinality.name_link"),
+                        Element(value="Association_target_lower_cardinality"),
                         Element(value="Association_target_lower_cardinality.name"))
-    ctx.bottom.add_edge(Element(value="Attribute_optional_link_07"),
+    ctx.bottom.add_edge(Element(value="Association_target_lower_cardinality.optional_link"),
                         Element(value="Association_target_lower_cardinality"),
                         Element(value="Association_target_lower_cardinality.optional"))
-    ctx.bottom.add_edge(Element(value="Attribute_name_link_08"), Element(value="Association_target_upper_cardinality"),
+    ctx.bottom.add_edge(Element(value="Association_target_upper_cardinality.name_link"),
+                        Element(value="Association_target_upper_cardinality"),
                         Element(value="Association_target_upper_cardinality.name"))
-    ctx.bottom.add_edge(Element(value="Attribute_optional_link_08"),
+    ctx.bottom.add_edge(Element(value="Association_target_upper_cardinality.optional_link"),
                         Element(value="Association_target_upper_cardinality"),
                         Element(value="Association_target_upper_cardinality.optional"))
 
@@ -149,12 +155,12 @@ def bootstrap_scd(state: State) -> Element:
     ctx.retype_element(Element(value="Attribute_name"), Element(value="Attribute"))
     ctx.retype_element(Element(value="Attribute_optional"), Element(value="Attribute"))
 
-    ctx.retype_element(Element(value="Class_attr01"), Element(value="AttributeLink"))
-    ctx.retype_element(Element(value="Class_attr02"), Element(value="AttributeLink"))
-    ctx.retype_element(Element(value="Association_attr01"), Element(value="AttributeLink"))
-    ctx.retype_element(Element(value="Association_attr02"), Element(value="AttributeLink"))
-    ctx.retype_element(Element(value="Association_attr03"), Element(value="AttributeLink"))
-    ctx.retype_element(Element(value="Association_attr04"), Element(value="AttributeLink"))
+    ctx.retype_element(Element(value="Class_lower_cardinality_link"), Element(value="AttributeLink"))
+    ctx.retype_element(Element(value="Class_upper_cardinality_link"), Element(value="AttributeLink"))
+    ctx.retype_element(Element(value="Association_source_lower_cardinality_link"), Element(value="AttributeLink"))
+    ctx.retype_element(Element(value="Association_source_upper_cardinality_link"), Element(value="AttributeLink"))
+    ctx.retype_element(Element(value="Association_target_lower_cardinality_link"), Element(value="AttributeLink"))
+    ctx.retype_element(Element(value="Association_target_upper_cardinality_link"), Element(value="AttributeLink"))
     ctx.retype_element(Element(value="Attribute_name_link"), Element(value="AttributeLink"))
     ctx.retype_element(Element(value="Attribute_optional_link"), Element(value="AttributeLink"))
 
@@ -184,21 +190,29 @@ def bootstrap_scd(state: State) -> Element:
     ctx.retype_element(Element(value="Association_target_upper_cardinality.optional"),
                        Element(value="Attribute_optional"))
 
-    ctx.retype_element(Element(value="Attribute_name_link_01"), Element(value="Attribute_name_link"))
-    ctx.retype_element(Element(value="Attribute_optional_link_01"), Element(value="Attribute_optional_link"))
-    ctx.retype_element(Element(value="Attribute_name_link_02"), Element(value="Attribute_name_link"))
-    ctx.retype_element(Element(value="Attribute_optional_link_02"), Element(value="Attribute_optional_link"))
-    ctx.retype_element(Element(value="Attribute_name_link_03"), Element(value="Attribute_name_link"))
-    ctx.retype_element(Element(value="Attribute_optional_link_03"), Element(value="Attribute_optional_link"))
-    ctx.retype_element(Element(value="Attribute_name_link_04"), Element(value="Attribute_name_link"))
-    ctx.retype_element(Element(value="Attribute_optional_link_04"), Element(value="Attribute_optional_link"))
-    ctx.retype_element(Element(value="Attribute_name_link_05"), Element(value="Attribute_name_link"))
-    ctx.retype_element(Element(value="Attribute_optional_link_05"), Element(value="Attribute_optional_link"))
-    ctx.retype_element(Element(value="Attribute_name_link_06"), Element(value="Attribute_name_link"))
-    ctx.retype_element(Element(value="Attribute_optional_link_06"), Element(value="Attribute_optional_link"))
-    ctx.retype_element(Element(value="Attribute_name_link_07"), Element(value="Attribute_name_link"))
-    ctx.retype_element(Element(value="Attribute_optional_link_07"), Element(value="Attribute_optional_link"))
-    ctx.retype_element(Element(value="Attribute_name_link_08"), Element(value="Attribute_name_link"))
-    ctx.retype_element(Element(value="Attribute_optional_link_08"), Element(value="Attribute_optional_link"))
+    ctx.retype_element(Element(value="Attribute_name.name_link"), Element(value="Attribute_name_link"))
+    ctx.retype_element(Element(value="Attribute_name.optional_link"), Element(value="Attribute_optional_link"))
+    ctx.retype_element(Element(value="Attribute_optional.name_link"), Element(value="Attribute_name_link"))
+    ctx.retype_element(Element(value="Attribute_optional.optional_link"), Element(value="Attribute_optional_link"))
+    ctx.retype_element(Element(value="Class_lower_cardinality.name_link"), Element(value="Attribute_name_link"))
+    ctx.retype_element(Element(value="Class_lower_cardinality.optional_link"), Element(value="Attribute_optional_link"))
+    ctx.retype_element(Element(value="Class_upper_cardinality.name_link"), Element(value="Attribute_name_link"))
+    ctx.retype_element(Element(value="Class_upper_cardinality.optional_link"), Element(value="Attribute_optional_link"))
+    ctx.retype_element(Element(value="Association_source_lower_cardinality.name_link"),
+                       Element(value="Attribute_name_link"))
+    ctx.retype_element(Element(value="Association_source_lower_cardinality.optional_link"),
+                       Element(value="Attribute_optional_link"))
+    ctx.retype_element(Element(value="Association_source_upper_cardinality.name_link"),
+                       Element(value="Attribute_name_link"))
+    ctx.retype_element(Element(value="Association_source_upper_cardinality.optional_link"),
+                       Element(value="Attribute_optional_link"))
+    ctx.retype_element(Element(value="Association_target_lower_cardinality.name_link"),
+                       Element(value="Attribute_name_link"))
+    ctx.retype_element(Element(value="Association_target_lower_cardinality.optional_link"),
+                       Element(value="Attribute_optional_link"))
+    ctx.retype_element(Element(value="Association_target_upper_cardinality.name_link"),
+                       Element(value="Attribute_name_link"))
+    ctx.retype_element(Element(value="Association_target_upper_cardinality.optional_link"),
+                       Element(value="Attribute_optional_link"))
 
     return Element(id=scd)
