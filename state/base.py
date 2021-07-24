@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, List, Tuple, Optional, Union
-import uuid
+from uuid import UUID, uuid4
 
 primitive_types = (int, float, str, bool)
 INTEGER = ("Integer",)
@@ -11,8 +11,8 @@ TYPE = ("Type",)
 type_values = (INTEGER, FLOAT, STRING, BOOLEAN, TYPE)
 
 
-Node = str
-Edge = str
+Node = UUID
+Edge = UUID
 Element = Union[Node, Edge]
 
 
@@ -25,11 +25,11 @@ class State(ABC):
     """
 
     @staticmethod
-    def new_id() -> str:
+    def new_id() -> UUID:
         """
         Generates a new UUID
         """
-        return str(uuid.uuid4())
+        return uuid4()
 
     @staticmethod
     def is_valid_datavalue(value: Any) -> bool:

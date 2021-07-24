@@ -1,4 +1,5 @@
 from state.pystate import PyState
+from uuid import UUID
 
 
 class DevState(PyState):
@@ -13,9 +14,9 @@ class DevState(PyState):
         super().__init__()
 
     @staticmethod
-    def new_id() -> str:
+    def new_id() -> UUID:
         DevState.free_id += 1
-        return str(DevState.free_id - 1)
+        return UUID(int=DevState.free_id - 1)
 
     def dump(self, path: str, png_path: str = None):
         """Dumps the whole MV graph to a graphviz .dot-file
@@ -34,13 +35,13 @@ class DevState(PyState):
                     else:
                         x = repr(x)
                     f.write("\"a_%s\" [label=\"%s\"];\n" % (
-                        n, x.replace('"', '\\"')))
+                        n.int, x.replace('"', '\\"')))
                 else:
                     f.write("\"a_%s\" [label=\"\"];\n" % n)
             for i, e in sorted(list(self.edges.items())):
-                f.write("\"a_%s\" [label=\"e_%s\" shape=point];\n" % (i, i))
-                f.write("\"a_%s\" -> \"a_%s\" [arrowhead=none];\n" % (e[0], i))
-                f.write("\"a_%s\" -> \"a_%s\";\n" % (i, e[1]))
+                f.write("\"a_%s\" [label=\"e_%s\" shape=point];\n" % (i.int, i.int))
+                f.write("\"a_%s\" -> \"a_%s\" [arrowhead=none];\n" % (e[0].int, i.int))
+                f.write("\"a_%s\" -> \"a_%s\";\n" % (i.int, e[1].int))
             f.write("}")
 
         if png_path is not None:
