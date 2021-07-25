@@ -112,7 +112,7 @@ class PyState(State):
         else:
             return self.edges[e][1]
 
-    def read_dict_keys(self, elem: Element) -> Optional[List[Any]]:
+    def read_dict_keys(self, elem: Element) -> Optional[List[Element]]:
         if elem not in self.nodes and elem not in self.edges:
             return None
 

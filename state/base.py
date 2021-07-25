@@ -191,7 +191,7 @@ class State(ABC):
         pass
 
     @abstractmethod
-    def read_dict_keys(self, elem: Element) -> Optional[List[Any]]:
+    def read_dict_keys(self, elem: Element) -> Optional[List[Element]]:
         """
         Reads labels of outgoing edges starting in given node.
 
