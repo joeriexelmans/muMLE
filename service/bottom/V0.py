@@ -3,7 +3,7 @@ from state.base import State
 from typing import Any, List
 
 
-class Bottom0(Service):
+class Bottom(Service):
     def __init__(self, model: UUID, state: State):
         super().__init__(model)
         self.state = state
