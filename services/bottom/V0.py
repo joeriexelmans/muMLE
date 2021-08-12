@@ -1,4 +1,4 @@
-from service.base import Service, UUID
+from services.base import Service, UUID
 from state.base import State
 from typing import Any, List
 
