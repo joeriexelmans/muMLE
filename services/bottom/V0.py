@@ -15,7 +15,10 @@ class Bottom(Service):
             return self.state.create_nodevalue(value)
 
     def create_edge(self, source: UUID, target: UUID, label=None):
-        pass
+        if label is None:
+            return self.state.create_edge(source, target)
+        else:
+            return self.state.create_dict(source, label, target)
 
     def read_model_root(self) -> UUID:
         return self.model

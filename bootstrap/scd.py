@@ -40,9 +40,9 @@ def bootstrap_scd(state: State) -> UUID:
 
     def add_attribute_attributes(attribute_element_name, attribute_element, _name, _optional):
         _name_node = add_node_element(f"{attribute_element_name}.name", _name)
-        _name_edge = add_edge_element(f"{attribute_element_name}01", attribute_element, _name_node)
+        _name_edge = add_edge_element(f"{attribute_element_name}.name_link", attribute_element, _name_node)
         _optional_node = add_node_element(f"{attribute_element_name}.optional", _optional)
-        _optional_edge = add_edge_element(f"{attribute_element_name}02", attribute_element, _optional_node)
+        _optional_edge = add_edge_element(f"{attribute_element_name}.optional_link", attribute_element, _optional_node)
         return _name_node, _name_edge, _optional_node, _optional_edge
 
     # # CLASSES, i.e. elements typed by Class
@@ -134,23 +134,108 @@ def bootstrap_scd(state: State) -> UUID:
         add_attribute_attributes("Association_target_upper_cardinality", assoc_t_u_c_edge, "target_upper_cardinality", True)
 
     # create phi(SCD,SCD) to type MCL with itself
+    bottom.model = mcl_morphism_root
+
+    def add_mcl_morphism(element_name, type_name):
+        # get elements from mcl by name
+        _element_edge, = bottom.read_outgoing_edges(mcl_root, element_name)
+        _element_node = bottom.read_edge_target(_element_edge)
+        _type_edge, = bottom.read_outgoing_edges(mcl_root, type_name)
+        _type_node = bottom.read_edge_target(_type_edge)
+        # add elements to morphism model
+        if element_name not in bottom.read_keys(bottom.model):
+            bottom.create_edge(bottom.model, _element_node, element_name)
+        if type_name not in bottom.read_keys(bottom.model):
+            bottom.create_edge(bottom.model, _type_node, type_name)
+        # create morphism link
+        morphism_edge = bottom.create_edge(_element_node, _type_node)
+        bottom.create_edge(bottom.model, morphism_edge, f"{element_name}_is_a_{type_name}")
+
+    # Class
+    add_mcl_morphism("Element", "Class")
+    add_mcl_morphism("Class", "Class")
+    add_mcl_morphism("Attribute", "Class")
+    add_mcl_morphism("ModelRef", "Class")
+    add_mcl_morphism("GlobalConstraint", "Class")
+    # Association
+    add_mcl_morphism("Association", "Association")
+    add_mcl_morphism("Inheritance", "Association")
+    add_mcl_morphism("AttributeLink", "Association")
+    # Inheritance
+    add_mcl_morphism("class_inh_element", "Inheritance")
+    add_mcl_morphism("attr_inh_element", "Inheritance")
+    add_mcl_morphism("assoc_inh_element", "Inheritance")
+    add_mcl_morphism("attr_link_inh_element", "Inheritance")
+    add_mcl_morphism("model_ref_inh_attr", "Inheritance")
+    # Attribute
+    add_mcl_morphism("ActionCode", "Attribute")
+    # ModelRef
+    add_mcl_morphism("Integer", "ModelRef")
+    add_mcl_morphism("String", "ModelRef")
+    add_mcl_morphism("Boolean", "ModelRef")
+    # AttributeLink
+    add_mcl_morphism("AttributeLink_name", "AttributeLink")
+    add_mcl_morphism("AttributeLink_optional", "AttributeLink")
+    add_mcl_morphism("Element_constraint", "AttributeLink")
+    add_mcl_morphism("Class_abstract", "AttributeLink")
+    add_mcl_morphism("Class_lower_cardinality", "AttributeLink")
+    add_mcl_morphism("Class_upper_cardinality", "AttributeLink")
+    add_mcl_morphism("Association_source_lower_cardinality", "AttributeLink")
+    add_mcl_morphism("Association_source_upper_cardinality", "AttributeLink")
+    add_mcl_morphism("Association_target_lower_cardinality", "AttributeLink")
+    add_mcl_morphism("Association_target_upper_cardinality", "AttributeLink")
+    # AttributeLink_name
+    add_mcl_morphism("AttributeLink_name.name_link", "AttributeLink_name")
+    add_mcl_morphism("AttributeLink_optional.name_link", "AttributeLink_name")
+    add_mcl_morphism("Element_constraint.name_link", "AttributeLink_name")
+    add_mcl_morphism("Class_abstract.name_link", "AttributeLink_name")
+    add_mcl_morphism("Class_lower_cardinality.name_link", "AttributeLink_name")
+    add_mcl_morphism("Class_upper_cardinality.name_link", "AttributeLink_name")
+    add_mcl_morphism("Association_source_lower_cardinality.name_link", "AttributeLink_name")
+    add_mcl_morphism("Association_source_upper_cardinality.name_link", "AttributeLink_name")
+    add_mcl_morphism("Association_target_lower_cardinality.name_link", "AttributeLink_name")
+    add_mcl_morphism("Association_target_upper_cardinality.name_link", "AttributeLink_name")
+    # AttributeLink_optional
+    add_mcl_morphism("AttributeLink_name.optional_link", "AttributeLink_optional")
+    add_mcl_morphism("AttributeLink_optional.optional_link", "AttributeLink_optional")
+    add_mcl_morphism("Element_constraint.optional_link", "AttributeLink_optional")
+    add_mcl_morphism("Class_abstract.optional_link", "AttributeLink_optional")
+    add_mcl_morphism("Class_lower_cardinality.optional_link", "AttributeLink_optional")
+    add_mcl_morphism("Class_upper_cardinality.optional_link", "AttributeLink_optional")
+    add_mcl_morphism("Association_source_lower_cardinality.optional_link", "AttributeLink_optional")
+    add_mcl_morphism("Association_source_upper_cardinality.optional_link", "AttributeLink_optional")
+    add_mcl_morphism("Association_target_lower_cardinality.optional_link", "AttributeLink_optional")
+    add_mcl_morphism("Association_target_upper_cardinality.optional_link", "AttributeLink_optional")
+    # String
+    add_mcl_morphism("AttributeLink_name.name", "String")
+    add_mcl_morphism("AttributeLink_optional.name", "String")
+    add_mcl_morphism("Element_constraint.name", "String")
+    add_mcl_morphism("Class_abstract.name", "String")
+    add_mcl_morphism("Class_lower_cardinality.name", "String")
+    add_mcl_morphism("Class_upper_cardinality.name", "String")
+    add_mcl_morphism("Association_source_lower_cardinality.name", "String")
+    add_mcl_morphism("Association_source_upper_cardinality.name", "String")
+    add_mcl_morphism("Association_target_lower_cardinality.name", "String")
+    add_mcl_morphism("Association_target_upper_cardinality.name", "String")
+    # Boolean
+    add_mcl_morphism("AttributeLink_name.optional", "Boolean")
+    add_mcl_morphism("AttributeLink_optional.optional", "Boolean")
+    add_mcl_morphism("Element_constraint.optional", "Boolean")
+    add_mcl_morphism("Class_abstract.optional", "Boolean")
+    add_mcl_morphism("Class_lower_cardinality.optional", "Boolean")
+    add_mcl_morphism("Class_upper_cardinality.optional", "Boolean")
+    add_mcl_morphism("Association_source_lower_cardinality.optional", "Boolean")
+    add_mcl_morphism("Association_source_upper_cardinality.optional", "Boolean")
+    add_mcl_morphism("Association_target_lower_cardinality.optional", "Boolean")
+    add_mcl_morphism("Association_target_upper_cardinality.optional", "Boolean")
+
+    return mcl_root
 
 
-def bootstrap_type_type(model_root: UUID, state: State) -> UUID:
-    pass
-
-
-def bootstrap_boolean_type(model_root: UUID, state: State) -> UUID:
-    pass
-
-
-def bootstrap_integer_type(model_root: UUID, state: State) -> UUID:
-    pass
-
-
-def bootstrap_float_type(model_root: UUID, state: State) -> UUID:
-    pass
-
-
-def bootstrap_string_type(model_root: UUID, state: State) -> UUID:
-    pass
+if __name__ == '__main__':
+    from state.devstate import DevState as State
+    s = State()
+    bootstrap_scd(s)
+    r = s.read_root()
+    for n in s.read_dict_keys(r):
+        print(s.read_value(n))
