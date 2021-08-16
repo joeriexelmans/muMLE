@@ -64,14 +64,14 @@ class Bottom:
             edges = [e for e in edges if read_label(e) == label]
         return edges
 
-    def read_incoming_nodes(self, target: UUID, label=None) -> List[UUID]:
+    def read_incoming_elements(self, target: UUID, label=None) -> List[UUID]:
         edges = self.read_incoming_edges(target, label)
         if edges is None or len(edges) == 0:
             return []
         else:
             return [self.read_edge_source(e) for e in edges]
 
-    def read_outgoing_nodes(self, source: UUID, label=None) -> List[UUID]:
+    def read_outgoing_elements(self, source: UUID, label=None) -> List[UUID]:
         edges = self.read_outgoing_edges(source, label)
         if edges is None or len(edges) == 0:
             return []
