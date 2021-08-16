@@ -1,5 +1,12 @@
 from state.base import State, UUID
 from services.bottom.V0 import Bottom
+from bootstrap.primitive import (
+    bootstrap_boolean_type,
+    bootstrap_float_type,
+    bootstrap_integer_type,
+    bootstrap_string_type,
+    bootstrap_type_type
+)
 
 
 def create_model_root(bottom: Bottom, model_name: str) -> UUID:
@@ -208,6 +215,13 @@ def bootstrap_scd(state: State) -> UUID:
     add_mcl_morphism("Association_source_upper_cardinality.optional", "Boolean")
     add_mcl_morphism("Association_target_lower_cardinality.optional", "Boolean")
     add_mcl_morphism("Association_target_upper_cardinality.optional", "Boolean")
+
+    # bootstrap primitive types
+    bootstrap_boolean_type(mcl_root, boolean_type_root, state)
+    bootstrap_float_type(mcl_root, float_type_root, state)
+    bootstrap_integer_type(mcl_root, integer_type_root, state)
+    bootstrap_string_type(mcl_root, string_type_root, state)
+    bootstrap_type_type(mcl_root, type_type_root, state)
 
     return mcl_root
 
