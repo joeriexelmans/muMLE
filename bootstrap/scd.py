@@ -1,5 +1,7 @@
 from state.base import State, UUID
 from services.bottom.V0 import Bottom
+from services.primitives.boolean_type import Boolean
+from services.primitives.string_type import String
 from bootstrap.primitive import (
     bootstrap_boolean_type,
     bootstrap_float_type,
@@ -42,12 +44,14 @@ def bootstrap_scd(state: State) -> UUID:
         bottom.create_edge(mcl_root, _edge, element_name)
         return _edge
 
-    def add_attribute_attributes(attribute_element_name, attribute_element, _name, _optional):
-        _name_node = add_node_element(f"{attribute_element_name}.name", _name)
+    def add_attribute_attributes(attribute_element_name, attribute_element):
+        _name_model = bottom.create_node()
+        _name_node = add_node_element(f"{attribute_element_name}.name", str(_name_model))
         _name_edge = add_edge_element(f"{attribute_element_name}.name_link", attribute_element, _name_node)
-        _optional_node = add_node_element(f"{attribute_element_name}.optional", _optional)
+        _optional_model = bottom.create_node()
+        _optional_node = add_node_element(f"{attribute_element_name}.optional", str(_optional_model))
         _optional_edge = add_edge_element(f"{attribute_element_name}.optional_link", attribute_element, _optional_node)
-        return _name_node, _name_edge, _optional_node, _optional_edge
+        return _name_model, _optional_model
 
     # # CLASSES, i.e. elements typed by Class
     # # Element
@@ -105,27 +109,53 @@ def bootstrap_scd(state: State) -> UUID:
     assoc_s_u_c_edge = add_edge_element("Association_source_upper_cardinality", assoc_edge, integer_node)
     assoc_t_l_c_edge = add_edge_element("Association_target_lower_cardinality", assoc_edge, integer_node)
     assoc_t_u_c_edge = add_edge_element("Association_target_upper_cardinality", assoc_edge, integer_node)
+    # # bootstrap primitive types
+    bootstrap_boolean_type(mcl_root, boolean_type_root, state)
+    bootstrap_float_type(mcl_root, float_type_root, state)
+    bootstrap_integer_type(mcl_root, integer_type_root, state)
+    bootstrap_string_type(mcl_root, string_type_root, state)
+    bootstrap_type_type(mcl_root, type_type_root, state)
     # # ATTRIBUTE ATTRIBUTES, assign 'name' and 'optional' attributes to all AttributeLinks
     # # AttributeLink_name
-    add_attribute_attributes("AttributeLink_name", attr_name_edge, "name", False)
+    m_name, m_opt = add_attribute_attributes("AttributeLink_name", attr_name_edge)
+    String(m_name, state).create("name")
+    Boolean(m_opt, state).create(False)
     # # AttributeLink_opt
-    add_attribute_attributes("AttributeLink_optional", attr_opt_edge, "optional", False)
+    m_name, m_opt = add_attribute_attributes("AttributeLink_optional", attr_opt_edge)
+    String(m_name, state).create("optional")
+    Boolean(m_opt, state).create(False)
     # # Element_constraint
-    add_attribute_attributes("Element_constraint", elem_constr_edge, "constraint", True)
+    m_name, m_opt = add_attribute_attributes("Element_constraint", elem_constr_edge)
+    String(m_name, state).create("constraint")
+    Boolean(m_opt, state).create(True)
     # # Class_abstract
-    add_attribute_attributes("Class_abstract", class_abs_edge, "abstract", True)
+    m_name, m_opt = add_attribute_attributes("Class_abstract", class_abs_edge)
+    String(m_name, state).create("abstract")
+    Boolean(m_opt, state).create(True)
     # # Class_lower_cardinality
-    add_attribute_attributes("Class_lower_cardinality", class_l_c_edge, "lower_cardinality", True)
+    m_name, m_opt = add_attribute_attributes("Class_lower_cardinality", class_l_c_edge)
+    String(m_name, state).create("lower_cardinality")
+    Boolean(m_opt, state).create(True)
     # # Class_upper_cardinality
-    add_attribute_attributes("Class_upper_cardinality", class_u_c_edge, "upper_cardinality", True)
+    m_name, m_opt = add_attribute_attributes("Class_upper_cardinality", class_u_c_edge)
+    String(m_name, state).create("upper_cardinality")
+    Boolean(m_opt, state).create(True)
     # # Association_source_lower_cardinality
-    add_attribute_attributes("Association_source_lower_cardinality", assoc_s_l_c_edge, "source_lower_cardinality", True)
+    m_name, m_opt = add_attribute_attributes("Association_source_lower_cardinality", assoc_s_l_c_edge)
+    String(m_name, state).create("source_lower_cardinality")
+    Boolean(m_opt, state).create(True)
     # # Association_source_upper_cardinality
-    add_attribute_attributes("Association_source_upper_cardinality", assoc_s_u_c_edge, "source_upper_cardinality", True)
+    m_name, m_opt = add_attribute_attributes("Association_source_upper_cardinality", assoc_s_u_c_edge)
+    String(m_name, state).create("source_upper_cardinality")
+    Boolean(m_opt, state).create(True)
     # # Association_target_lower_cardinality
-    add_attribute_attributes("Association_target_lower_cardinality", assoc_t_l_c_edge, "target_lower_cardinality", True)
+    m_name, m_opt = add_attribute_attributes("Association_target_lower_cardinality", assoc_t_l_c_edge)
+    String(m_name, state).create("target_lower_cardinality")
+    Boolean(m_opt, state).create(True)
     # # Association_target_upper_cardinality
-    add_attribute_attributes("Association_target_upper_cardinality", assoc_t_u_c_edge, "target_upper_cardinality", True)
+    m_name, m_opt = add_attribute_attributes("Association_target_upper_cardinality", assoc_t_u_c_edge)
+    String(m_name, state).create("target_upper_cardinality")
+    Boolean(m_opt, state).create(True)
 
     # create phi(SCD,SCD) to type MCL with itself
 
@@ -216,12 +246,6 @@ def bootstrap_scd(state: State) -> UUID:
     add_mcl_morphism("Association_target_lower_cardinality.optional", "Boolean")
     add_mcl_morphism("Association_target_upper_cardinality.optional", "Boolean")
 
-    # bootstrap primitive types
-    bootstrap_boolean_type(mcl_root, boolean_type_root, state)
-    bootstrap_float_type(mcl_root, float_type_root, state)
-    bootstrap_integer_type(mcl_root, integer_type_root, state)
-    bootstrap_string_type(mcl_root, string_type_root, state)
-    bootstrap_type_type(mcl_root, type_type_root, state)
 
     return mcl_root
 
