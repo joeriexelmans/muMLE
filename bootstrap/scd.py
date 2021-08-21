@@ -246,7 +246,6 @@ def bootstrap_scd(state: State) -> UUID:
     add_mcl_morphism("Association_target_lower_cardinality.optional", "Boolean")
     add_mcl_morphism("Association_target_upper_cardinality.optional", "Boolean")
 
-
     return mcl_root
 
 

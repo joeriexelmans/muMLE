@@ -187,15 +187,32 @@ if __name__ == '__main__':
     s = State()
     from bootstrap.scd import bootstrap_scd
     scd = bootstrap_scd(s)
+    # Retrieve refs to primitive type models
+    # # integer
     int_type_id = s.read_dict(s.read_root(), "Integer")
     int_type = UUID(s.read_value(int_type_id))
-    service = SCD(scd, s.create_node(), s)
-    service.create_class("Place")
-    service.create_class("Transition")
-    service.create_association("P2T", "Place", "Transition")
-    service.create_association("T2P", "Transition", "Place")
+    print(f"Integer Model UUID: {int_type}")  # 6
+    # # string
+    str_type_id = s.read_dict(s.read_root(), "String")
+    str_type = UUID(s.read_value(str_type_id))
+    print(f"String Model UUID: {str_type}")  # 16
+    # Create LTM_PN
+    model_uuid = s.create_node()
+    print(f"LTM_PN Model UUID: {model_uuid}")  # 845
+    service = SCD(scd, model_uuid, s)
+    # Create classes
+    service.create_class("P")
+    service.create_class("T")
+    # Create associations
+    service.create_association("P2T", "P", "T")
+    service.create_association("T2P", "T", "P")
+    # Create model refs
     service.create_model_ref("Integer", int_type)
-    service.create_attribute_link("Place", "Integer", "tokens", False)
-    service.create_attribute_link("P2T", "Integer", "weight", False)
-    service.create_attribute_link("T2P", "Integer", "weight", False)
-    service.list_elements()
+    service.create_model_ref("String", int_type)
+    # Create class attributes
+    service.create_attribute_link("P", "Integer", "t", False)
+    service.create_attribute_link("P", "String", "n", False)
+    service.create_attribute_link("T", "String", "n", False)
+    # Create association attributes
+    service.create_attribute_link("P2T", "Integer", "w", False)
+    service.create_attribute_link("T2P", "Integer", "w", False)
