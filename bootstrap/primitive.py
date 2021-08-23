@@ -1,5 +1,6 @@
 from state.base import State, UUID
 from services.bottom.V0 import Bottom
+from services.primitives.integer_type import Integer
 
 
 def bootstrap_type(type_name: str, python_type: str, scd_root: UUID, model_root: UUID, state: State):
@@ -10,7 +11,9 @@ def bootstrap_type(type_name: str, python_type: str, scd_root: UUID, model_root:
     scd_node, = bottom.read_outgoing_elements(scd_root, "Class")  # retrieve type
     bottom.create_edge(class_node, scd_node, "Morphism")  # create morphism link
     # set min_cardinality
-    min_c_node = bottom.create_node(1)
+    min_c_model = bottom.create_node()
+    Integer(min_c_model, state).create(1)
+    min_c_node = bottom.create_node(str(min_c_model))
     bottom.create_edge(model_root, min_c_node, f"{type_name}.lower_cardinality")
     min_c_link = bottom.create_edge(class_node, min_c_node)
     bottom.create_edge(model_root, min_c_link, f"{type_name}.lower_cardinality_link")
@@ -19,7 +22,9 @@ def bootstrap_type(type_name: str, python_type: str, scd_root: UUID, model_root:
     bottom.create_edge(min_c_node, scd_node, "Morphism")
     bottom.create_edge(min_c_link, scd_link, "Morphism")
     # set max_cardinality
-    max_c_node = bottom.create_node(1)
+    max_c_model = bottom.create_node()
+    Integer(max_c_model, state).create(1)
+    max_c_node = bottom.create_node(str(max_c_model))
     bottom.create_edge(model_root, max_c_node, f"{type_name}.upper_cardinality")
     max_c_link = bottom.create_edge(class_node, max_c_node)
     bottom.create_edge(model_root, max_c_link, f"{type_name}.upper_cardinality_link")
@@ -28,7 +33,7 @@ def bootstrap_type(type_name: str, python_type: str, scd_root: UUID, model_root:
     bottom.create_edge(max_c_node, scd_node, "Morphism")
     bottom.create_edge(max_c_link, scd_link, "Morphism")
     # set constraint
-    constraint_node = bottom.create_node(f"isinstance(read_value(x),{python_type})")
+    constraint_node = bottom.create_node(f"isinstance(read_value(element),{python_type})")
     bottom.create_edge(model_root, constraint_node, f"{type_name}.constraint")
     constraint_link = bottom.create_edge(class_node, constraint_node)
     bottom.create_edge(model_root, constraint_link, f"{type_name}.constraint_link")

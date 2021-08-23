@@ -110,9 +110,10 @@ def bootstrap_scd(state: State) -> UUID:
     assoc_t_l_c_edge = add_edge_element("Association_target_lower_cardinality", assoc_edge, integer_node)
     assoc_t_u_c_edge = add_edge_element("Association_target_upper_cardinality", assoc_edge, integer_node)
     # # bootstrap primitive types
+    # # order is important, integer must be first
+    bootstrap_integer_type(mcl_root, integer_type_root, state)
     bootstrap_boolean_type(mcl_root, boolean_type_root, state)
     bootstrap_float_type(mcl_root, float_type_root, state)
-    bootstrap_integer_type(mcl_root, integer_type_root, state)
     bootstrap_string_type(mcl_root, string_type_root, state)
     bootstrap_type_type(mcl_root, type_type_root, state)
     # # ATTRIBUTE ATTRIBUTES, assign 'name' and 'optional' attributes to all AttributeLinks
@@ -156,6 +157,11 @@ def bootstrap_scd(state: State) -> UUID:
     m_name, m_opt = add_attribute_attributes("Association_target_upper_cardinality", assoc_t_u_c_edge)
     String(m_name, state).create("target_upper_cardinality")
     Boolean(m_opt, state).create(True)
+    # # Make Element abstract
+    abs_model = bottom.create_node()
+    abs_node = add_node_element(f"Element.abstract", str(abs_model))
+    abs_edge = add_edge_element(f"Element.abstract_link", element_node, abs_node)
+    Boolean(abs_model, state).create(True)
 
     # create phi(SCD,SCD) to type MCL with itself
 
@@ -245,6 +251,9 @@ def bootstrap_scd(state: State) -> UUID:
     add_mcl_morphism("Association_source_upper_cardinality.optional", "Boolean")
     add_mcl_morphism("Association_target_lower_cardinality.optional", "Boolean")
     add_mcl_morphism("Association_target_upper_cardinality.optional", "Boolean")
+    add_mcl_morphism("Element.abstract", "Boolean")
+    # Class_abstract
+    add_mcl_morphism("Element.abstract_link", "Class_abstract")
 
     return mcl_root
 

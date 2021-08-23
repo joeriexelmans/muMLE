@@ -14,6 +14,7 @@ class Integer:
         if "string" in self.bottom.read_keys(self.model):
             instance, = self.bottom.read_outgoing_elements(self.model, "integer")
             self.bottom.delete_element(instance)
-        _instance = self.bottom.create_edge(self.model, self.bottom.create_node(value), "integer")
+        _instance = self.bottom.create_node(value)
+        self.bottom.create_edge(self.model, _instance, "integer")
         _type, = self.bottom.read_outgoing_elements(self.type_model, "Integer")
         self.bottom.create_edge(_instance, _type, "Morphism")
