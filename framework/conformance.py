@@ -388,35 +388,85 @@ class Conformance:
 
     def match_structures(self):
         ref_element, = self.bottom.read_outgoing_elements(self.scd_model, "ModelRef")
-        # match nodes
+        # matching
         for m_element, m_name in self.model_names.items():
-            self.candidates[m_name] = set()
             is_edge = self.bottom.read_edge_source(m_element) is not None
             for type_name, structure in self.structures.items():
                 tm_element, = self.bottom.read_outgoing_elements(self.type_model, type_name)
                 type_is_edge = self.bottom.read_edge_source(tm_element) is not None
                 if is_edge == type_is_edge:
-                    matched = []
+                    matched = 0
                     for name, optional, attr_type in structure:
                         try:
                             attr, = self.bottom.read_outgoing_elements(self.model, f"{m_name}.{name}")
+                            attr_tm, = self.bottom.read_outgoing_elements(self.type_model, attr_type)
                             # if attribute is a modelref, we need to check whether it
                             # linguistically conforms to the specified type
-                            # if its an internlly defined attribute, this will be checked by constraints later
-                            morphisms = self.bottom.read_outgoing_elements(tm_element, "Morphism")
+                            # if its an internally defined attribute, this will be checked by constraints
+                            morphisms = self.bottom.read_outgoing_elements(attr_tm, "Morphism")
                             if ref_element in morphisms:
-                                pass
-
+                                # check conformance of reference model
+                                type_model_uuid = UUID(self.bottom.read_value(attr_tm))
+                                model_uuid = UUID(self.bottom.read_value(attr))
+                                attr_conforms = Conformance(self.state, self.scd_model, model_uuid, type_model_uuid)\
+                                    .check_nominal()
+                            else:
+                                # eval constraints
+                                code = self.read_attribute(attr_tm, "constraint")
+                                if code is not None:
+                                    attr_conforms = self.evaluate_constraint(code, element=attr)
+                            matched += 1
                         except ValueError:
+                            # attr not found or failed parsing UUID
                             if optional:
                                 continue
                             else:
                                 break
-                    if len(matched) == len(structure):
-                        self.candidates[m_name].add(type_name)
+                    if matched == len(structure):
+                        self.candidates.setdefault(m_name, set()).add(type_name)
+        # filter out candidates for links based on source and target types
+        for m_element, m_name in self.model_names.items():
+            is_edge = self.bottom.read_edge_source(m_element) is not None
+            if is_edge and m_name in self.candidates:
+                m_source = self.bottom.read_edge_source(m_element)
+                m_target = self.bottom.read_edge_target(m_element)
+                source_candidates = self.candidates[self.model_names[m_source]]
+                target_candidates = self.candidates[self.model_names[m_target]]
+                remove = set()
+                for candidate_name in self.candidates[m_name]:
+                    candidate_element, = self.bottom.read_outgoing_elements(self.type_model, candidate_name)
+                    candidate_source = self.type_model_names[self.bottom.read_edge_source(candidate_element)]
+                    if candidate_source not in source_candidates:
+                        remove.add(candidate_name)
+                    candidate_target = self.type_model_names[self.bottom.read_edge_target(candidate_element)]
+                    if candidate_target not in target_candidates:
+                        remove.add(candidate_name)
+                self.candidates[m_name] = self.candidates[m_name].difference(remove)
 
     def build_morphisms(self):
-        pass
+        if not all([len(c) == 1 for c in self.candidates.values()]):
+            print("Ambiguous structural matches found, unable to build unique morphism.")
+            return False
+        mapping = {k: v.pop() for k, v in self.candidates.items()}
+        for m_name, tm_name in mapping.items():
+            # morphism to class/assoc
+            m_element, = self.bottom.read_outgoing_elements(self.model, m_name)
+            tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
+            self.bottom.create_edge(m_element, tm_element, "Morphism")
+            # morphism for attributes and attribute links
+            structure = self.structures[tm_name]
+            for attr_name, _, attr_type in structure:
+                try:
+                    # attribute node
+                    attr_element, = self.bottom.read_outgoing_elements(self.model, f"{m_name}.{attr_name}")
+                    attr_type_element, = self.bottom.read_outgoing_elements(self.type_model, attr_type)
+                    self.bottom.create_edge(attr_element, attr_type_element, "Morphism")
+                    # attribute link
+                    attr_link_element, = self.bottom.read_outgoing_elements(self.model, f"{m_name}.{attr_name}_link")
+                    attr_link_type_element, = self.bottom.read_outgoing_elements(self.type_model, f"{tm_name}_{attr_name}")
+                    self.bottom.create_edge(attr_link_element, attr_link_type_element, "Morphism")
+                except ValueError:
+                    pass
 
 
 if __name__ == '__main__':
@@ -426,6 +476,7 @@ if __name__ == '__main__':
     scd = bootstrap_scd(s)
     from bootstrap.pn import bootstrap_pn
     ltm_pn = bootstrap_pn(s, "PN")
+    ltm_pn_lola = bootstrap_pn(s, "PNlola")
     from services.pn import PN
     my_pn = s.create_node()
     PNserv = PN(ltm_pn, my_pn, s)
@@ -435,10 +486,11 @@ if __name__ == '__main__':
     PNserv.create_p2t("p1", "t1", 1)
     PNserv.create_t2p("t1", "p2", 1)
     
-    cf = Conformance(s, scd, my_pn, ltm_pn)
+    cf = Conformance(s, scd, my_pn, ltm_pn_lola)
     # cf = Conformance(s, scd, ltm_pn, scd)
+    cf.precompute_structures()
+    cf.match_structures()
+    cf.build_morphisms()
     print(cf.check_nominal())
-    # cf.precompute_structures()
-    # cf.match_structures()
 
 
