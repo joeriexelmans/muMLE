@@ -74,6 +74,8 @@ def bootstrap_scd(state: State) -> UUID:
     # # INHERITANCES, i.e. elements typed by Inheritance
     # # Class inherits from Element
     add_edge_element("class_inh_element", class_node, element_node)
+    # # GlobalConstraint inherits from Element
+    add_edge_element("gc_inh_element", glob_constr_node, element_node)
     # # Attribute inherits from Element
     add_edge_element("attr_inh_element", attr_node, element_node)
     # # Association inherits from Element
@@ -186,6 +188,7 @@ def bootstrap_scd(state: State) -> UUID:
     add_mcl_morphism("AttributeLink", "Association")
     # Inheritance
     add_mcl_morphism("class_inh_element", "Inheritance")
+    add_mcl_morphism("gc_inh_element", "Inheritance")
     add_mcl_morphism("attr_inh_element", "Inheritance")
     add_mcl_morphism("assoc_inh_element", "Inheritance")
     add_mcl_morphism("attr_link_inh_element", "Inheritance")
