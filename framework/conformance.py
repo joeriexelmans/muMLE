@@ -48,35 +48,21 @@ class Conformance:
                 return False
         return True
 
-    def read_attribute(self, m_element: UUID, attr_name: str):
+    def read_attribute(self, element: UUID, attr_name: str):
 
-        def has_label(_edge: UUID, _label):
-            elems = self.bottom.read_outgoing_elements(_edge)
-            for elem in elems:
-                value = self.primitive_values.get(elem, self.bottom.read_value(elem))
-                if value is not None and value == _label:
-                    return True
-            return False
-
-        def get_outgoing_edge_by_label(_element: UUID, _label):
-            edges = self.bottom.read_outgoing_edges(_element)
-            for e in edges:
-                if has_label(e, _label):
-                    return e
-
-        outgoing = self.bottom.read_outgoing_edges(m_element)
-        for edge in outgoing:
-            try:
-                edge_name = self.model_names[edge]
-                edge_type_name = self.type_mapping[edge_name]
-                edge_type, = self.bottom.read_outgoing_elements(self.type_model, edge_type_name)
-                edge_type_src = self.bottom.read_edge_source(edge_type)
-                if get_outgoing_edge_by_label(edge_type_src, attr_name) == edge_type:
-                    result = self.bottom.read_edge_target(edge)
-                    return self.primitive_values.get(result, self.bottom.read_value(result))
-
-            except KeyError:
-                pass  # non-model edge, e.g. morphism link
+        if element in self.type_model_names:
+            # type model element
+            element_name = self.type_model_names[element]
+            model = self.type_model
+        else:
+            # model element
+            element_name = self.model_names[element]
+            model = self.model
+        try:
+            attr_elem, = self.bottom.read_outgoing_elements(model, f"{element_name}.{attr_name}")
+            return self.primitive_values.get(attr_elem, self.bottom.read_value(attr_elem))
+        except ValueError:
+            return None
 
     def precompute_sub_types(self):
         inh_element, = self.bottom.read_outgoing_elements(self.scd_model, "Inheritance")
@@ -299,19 +285,39 @@ class Conformance:
                             return False
         return True
 
+    def evaluate_constraint(self, code, **kwargs):
+        funcs = {
+            'read_value': self.state.read_value
+        }
+        return eval(
+            code,
+            {'__builtins__': {'isinstance': isinstance, 'print': print,
+                              'int': int, 'float': float, 'bool': bool, 'str': str, 'tuple': tuple}
+             },  # globals
+            {**kwargs, **funcs}  # locals
+        )
+
     def check_constraints(self):
         # local constraints
         for m_name, tm_name in self.type_mapping.items():
             if tm_name != "GlobalConstraint":
                 tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
                 code = self.read_attribute(tm_element, "constraint")
-                print(code)
+                if code is not None:
+                    morphisms = self.bottom.read_incoming_elements(tm_element, "Morphism")
+                    morphisms = [m for m in morphisms if m in self.model_names]
+                    for m_element in morphisms:
+                        if not self.evaluate_constraint(code, element=m_element):
+                            return False
+
         # global constraints
         for m_name, tm_name in self.type_mapping.items():
             if tm_name == "GlobalConstraint":
                 tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
                 code = self.read_attribute(tm_element, "constraint")
-                print(code)
+                if code is not None:
+                    if not self.evaluate_constraint(code, model=self.model):
+                        return False
         return True
 
     def precompute_structures(self):
@@ -427,12 +433,12 @@ if __name__ == '__main__':
     PNserv.create_place("p2", 0)
     PNserv.create_transition("t1")
     PNserv.create_p2t("p1", "t1", 1)
-    PNserv.create_p2t("t1", "p2", 1)
+    PNserv.create_t2p("t1", "p2", 1)
     
     cf = Conformance(s, scd, my_pn, ltm_pn)
     # cf = Conformance(s, scd, ltm_pn, scd)
-    # cf.check_nominal()
-    cf.precompute_structures()
-    cf.match_structures()
+    print(cf.check_nominal())
+    # cf.precompute_structures()
+    # cf.match_structures()
 
 

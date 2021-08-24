@@ -36,5 +36,5 @@ def bootstrap_pn(state: State, model_name: str) -> UUID:
     service.create_attribute_link("P2T", "Integer", "w", False)
     service.create_attribute_link("T2P", "Integer", "w", False)
     # Create test constraint
-    service.add_constraint("P", "print(element)\nreturn True")
+    service.add_constraint("P", "True")
     return model_uuid
