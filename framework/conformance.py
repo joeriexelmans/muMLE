@@ -160,9 +160,8 @@ class Conformance:
             # optional for attribute links
             opt = self.read_attribute(tm_element, "optional")
             if opt is not None:
-                mult = (0 if opt else 1, 1)
-                self.source_multiplicities[tm_name] = mult
-                self.target_multiplicities[tm_name] = mult
+                self.source_multiplicities[tm_name] = (0 if opt else 1, 1)
+                self.target_multiplicities[tm_name] = (0, 1)
 
     def get_type(self, element: UUID):
         morphisms = self.bottom.read_outgoing_elements(element, "Morphism")
@@ -266,14 +265,14 @@ class Conformance:
             # association target multiplicities
             if tm_name in self.target_multiplicities:
                 tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
-                tm_target_element = self.bottom.read_edge_source(tm_element)
+                tm_target_element = self.bottom.read_edge_target(tm_element)
                 tm_target_name = self.type_model_names[tm_target_element]
                 lc, uc = self.target_multiplicities[tm_name]
                 for i, t in self.type_mapping.items():
                     if t == tm_target_name or t in self.sub_types[tm_target_name]:
                         count = 0
                         i_element, = self.bottom.read_outgoing_elements(self.model, i)
-                        outgoing = self.bottom.read_outgoing_edges(i_element)
+                        outgoing = self.bottom.read_incoming_edges(i_element)
                         for o in outgoing:
                             try:
                                 if self.type_mapping[self.model_names[o]] == tm_name:
@@ -404,6 +403,7 @@ class Conformance:
                             # linguistically conforms to the specified type
                             # if its an internally defined attribute, this will be checked by constraints
                             morphisms = self.bottom.read_outgoing_elements(attr_tm, "Morphism")
+                            attr_conforms = True
                             if ref_element in morphisms:
                                 # check conformance of reference model
                                 type_model_uuid = UUID(self.bottom.read_value(attr_tm))
@@ -415,7 +415,8 @@ class Conformance:
                                 code = self.read_attribute(attr_tm, "constraint")
                                 if code is not None:
                                     attr_conforms = self.evaluate_constraint(code, element=attr)
-                            matched += 1
+                            if attr_conforms:
+                                matched += 1
                         except ValueError:
                             # attr not found or failed parsing UUID
                             if optional:
