@@ -67,7 +67,7 @@ def main():
                         'type': 'input',
                         'name': p.name,
                         'message': f'{p.name.replace("_", " ")}?',
-                        'filter': lambda x: False if x.lower() == 'false' else x
+                        'filter': lambda x: '' if x.lower() == 'false' else x
                     })
             args = prompt(args_questions)
             args = {k: types[k](v) if len(v) > 0 else None for k, v in args.items()}
