@@ -70,7 +70,7 @@ def main():
                         'filter': lambda x: False if x.lower() == 'false' else x
                     })
             args = prompt(args_questions)
-            args = {k: types[k](v) for k, v in args.items()}
+            args = {k: types[k](v) if len(v) > 0 else None for k, v in args.items()}
             try:
                 output = method(**args)
                 if output is not None:

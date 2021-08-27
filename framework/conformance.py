@@ -445,10 +445,12 @@ class Conformance:
                     candidate_element, = self.bottom.read_outgoing_elements(self.type_model, candidate_name)
                     candidate_source = self.type_model_names[self.bottom.read_edge_source(candidate_element)]
                     if candidate_source not in source_candidates:
-                        remove.add(candidate_name)
+                        if len(source_candidates.intersection(set(self.sub_types[candidate_source]))) == 0:
+                            remove.add(candidate_name)
                     candidate_target = self.type_model_names[self.bottom.read_edge_target(candidate_element)]
                     if candidate_target not in target_candidates:
-                        remove.add(candidate_name)
+                        if len(target_candidates.intersection(set(self.sub_types[candidate_target]))) == 0:
+                            remove.add(candidate_name)
                 self.candidates[m_name] = self.candidates[m_name].difference(remove)
 
     def build_morphisms(self):
