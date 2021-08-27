@@ -6,10 +6,11 @@ from pprint import pprint
 
 
 class Conformance:
-    def __init__(self, state: State, scd_model: UUID, model: UUID, type_model: UUID):
+    def __init__(self, state: State, model: UUID, type_model: UUID):
         self.state = state
         self.bottom = Bottom(state)
-        self.scd_model = scd_model
+        type_model_id = state.read_dict(state.read_root(), "SCD")
+        self.scd_model = UUID(state.read_value(type_model_id))
         self.model = model
         self.type_model = type_model
         self.type_mapping: Dict[str, str] = {}
@@ -35,18 +36,30 @@ class Conformance:
         self.matches = {}
         self.candidates = {}
 
-    def check_nominal(self):
-        steps = [
-            self.check_typing,
-            self.check_link_typing,
-            self.check_multiplicities,
-            self.check_constraints
-        ]
-        for step in steps:
-            conforms = step()
-            if not conforms:
-                return False
-        return True
+    def check_nominal(self, *, log=False):
+        try:
+            self.check_typing()
+            self.check_link_typing()
+            self.check_multiplicities()
+            self.check_constraints()
+            return True
+        except RuntimeError as e:
+            if log:
+                print(e)
+            return False
+
+    def check_structural(self, *, build_morphisms=True, log=False):
+        try:
+            self.precompute_structures()
+            self.match_structures()
+            if build_morphisms:
+                self.build_morphisms()
+                self.check_nominal(log=log)
+            return True
+        except RuntimeError as e:
+            if log:
+                print(e)
+            return False
 
     def read_attribute(self, element: UUID, attr_name: str):
 
@@ -184,12 +197,11 @@ class Conformance:
                 if ref_element in self.bottom.read_outgoing_elements(tm_element, "Morphism"):
                     sub_m = UUID(self.bottom.read_value(m_element))
                     sub_tm = UUID(self.bottom.read_value(tm_element))
-                    if not Conformance(self.state, self.scd_model, sub_m, sub_tm).check_nominal():
-                        return False
+                    if not Conformance(self.state, sub_m, sub_tm).check_nominal():
+                        raise RuntimeError(f"Incorrectly model reference: {m_name}")
             except ValueError:
                 # no or too many morphism links found
-                print(f"Incorrectly typed element: {m_name}")
-                return False
+                raise RuntimeError(f"Incorrectly typed element: {m_name}")
         return True
 
     def check_link_typing(self):
@@ -210,16 +222,14 @@ class Conformance:
             source_type_expected = self.type_model_names[tm_source]
             if source_type_actual != source_type_expected:
                 if source_type_actual not in self.sub_types[source_type_expected]:
-                    print(f"Invalid source type {source_type_actual} for element {m_name}")
-                    return False
+                    raise RuntimeError(f"Invalid source type {source_type_actual} for element {m_name}")
             # check if target is typed correctly
             target_name = self.model_names[m_target]
             target_type_actual = self.type_mapping[target_name]
             target_type_expected = self.type_model_names[tm_target]
             if target_type_actual != target_type_expected:
                 if target_type_actual not in self.sub_types[target_type_expected]:
-                    print(f"Invalid target type {target_type_actual} for element {m_name}")
-                    return False
+                    raise RuntimeError(f"Invalid target type {target_type_actual} for element {m_name}")
         return True
 
     def check_multiplicities(self):
@@ -230,8 +240,7 @@ class Conformance:
             if tm_name in self.abstract_types:
                 type_count = list(self.type_mapping.values()).count(tm_name)
                 if type_count > 0:
-                    print(f"Invalid instantiation of abstract class: {tm_name}")
-                    return False
+                    raise RuntimeError(f"Invalid instantiation of abstract class: {tm_name}")
             # class multiplicities
             if tm_name in self.multiplicities:
                 lc, uc = self.multiplicities[tm_name]
@@ -239,8 +248,7 @@ class Conformance:
                 for sub_type in self.sub_types[tm_name]:
                     type_count += list(self.type_mapping.values()).count(sub_type)
                 if type_count < lc or type_count > uc:
-                    print(f"Cardinality of type exceeds valid multiplicity range: {tm_name} ({type_count})")
-                    return False
+                    raise RuntimeError(f"Cardinality of type exceeds valid multiplicity range: {tm_name} ({type_count})")
             # association source multiplicities
             if tm_name in self.source_multiplicities:
                 tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
@@ -259,8 +267,7 @@ class Conformance:
                             except KeyError:
                                 pass  # for elements not part of model, e.g. morphism links
                         if count < lc or count > uc:
-                            print(f"Source cardinality of type {tm_name} exceeds valid multiplicity range in {i}.")
-                            return False
+                            raise RuntimeError(f"Source cardinality of type {tm_name} exceeds valid multiplicity range in {i}.")
 
             # association target multiplicities
             if tm_name in self.target_multiplicities:
@@ -307,7 +314,7 @@ class Conformance:
                     morphisms = [m for m in morphisms if m in self.model_names]
                     for m_element in morphisms:
                         if not self.evaluate_constraint(code, element=m_element):
-                            return False
+                            raise RuntimeError(f"Local constraint of {tm_name} not satisfied in {m_name}.")
 
         # global constraints
         for m_name, tm_name in self.type_mapping.items():
@@ -316,7 +323,7 @@ class Conformance:
                 code = self.read_attribute(tm_element, "constraint")
                 if code is not None:
                     if not self.evaluate_constraint(code, model=self.model):
-                        return False
+                        raise RuntimeError(f"Global constraint {tm_name} not satisfied.")
         return True
 
     def precompute_structures(self):
@@ -408,7 +415,7 @@ class Conformance:
                                 # check conformance of reference model
                                 type_model_uuid = UUID(self.bottom.read_value(attr_tm))
                                 model_uuid = UUID(self.bottom.read_value(attr))
-                                attr_conforms = Conformance(self.state, self.scd_model, model_uuid, type_model_uuid)\
+                                attr_conforms = Conformance(self.state, model_uuid, type_model_uuid)\
                                     .check_nominal()
                             else:
                                 # eval constraints
@@ -446,8 +453,7 @@ class Conformance:
 
     def build_morphisms(self):
         if not all([len(c) == 1 for c in self.candidates.values()]):
-            print("Ambiguous structural matches found, unable to build unique morphism.")
-            return False
+            raise RuntimeError("Cannot build incomplete or ambiguous morphism.")
         mapping = {k: v.pop() for k, v in self.candidates.items()}
         for m_name, tm_name in mapping.items():
             # morphism to class/assoc
@@ -480,14 +486,14 @@ if __name__ == '__main__':
     ltm_pn_lola = bootstrap_pn(s, "PNlola")
     from services.pn import PN
     my_pn = s.create_node()
-    PNserv = PN(ltm_pn, my_pn, s)
+    PNserv = PN(my_pn, s)
     PNserv.create_place("p1", 5)
     PNserv.create_place("p2", 0)
     PNserv.create_transition("t1")
     PNserv.create_p2t("p1", "t1", 1)
     PNserv.create_t2p("t1", "p2", 1)
     
-    cf = Conformance(s, scd, my_pn, ltm_pn_lola)
+    cf = Conformance(s, my_pn, ltm_pn_lola)
     # cf = Conformance(s, scd, ltm_pn, scd)
     cf.precompute_structures()
     cf.match_structures()

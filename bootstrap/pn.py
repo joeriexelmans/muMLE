@@ -18,7 +18,7 @@ def bootstrap_pn(state: State, model_name: str) -> UUID:
     model_uuid = state.create_node()
     mcl_root_id = state.create_nodevalue(str(model_uuid))
     state.create_dict(state.read_root(), model_name, mcl_root_id)
-    service = SCD(scd, model_uuid, state)
+    service = SCD(model_uuid, state)
     # Create classes
     service.create_class("P")
     service.create_class("T")

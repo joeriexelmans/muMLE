@@ -8,8 +8,9 @@ import re
 
 
 class PN:
-    def __init__(self, ltm_pn: UUID, model: UUID, state: State):
-        self.ltm_pn = ltm_pn
+    def __init__(self, model: UUID, state: State):
+        ltm_pn_id = state.read_dict(state.read_root(), "PN")
+        self.ltm_pn = UUID(state.read_value(ltm_pn_id))
         self.model = model
         self.bottom = Bottom(state)
 

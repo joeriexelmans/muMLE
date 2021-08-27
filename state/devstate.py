@@ -8,15 +8,13 @@ class DevState(PyState):
     + node id's are generated sequentially to make writing tests easier
     """
 
-    free_id = 0
-
     def __init__(self):
+        self.free_id = 0
         super().__init__()
 
-    @staticmethod
-    def new_id() -> UUID:
-        DevState.free_id += 1
-        return UUID(int=DevState.free_id - 1)
+    def new_id(self) -> UUID:
+        self.free_id += 1
+        return UUID(int=self.free_id - 1)
 
     def dump(self, path: str, png_path: str = None):
         """Dumps the whole MV graph to a graphviz .dot-file

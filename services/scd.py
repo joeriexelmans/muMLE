@@ -9,8 +9,9 @@ import re
 
 
 class SCD:
-    def __init__(self, scd_model: UUID, model: UUID, state: State):
-        self.scd_model = scd_model
+    def __init__(self, model: UUID, state: State):
+        type_model_id = state.read_dict(state.read_root(), "SCD")
+        self.scd_model = UUID(state.read_value(type_model_id))
         self.model = model
         self.bottom = Bottom(state)
 
@@ -168,9 +169,8 @@ class SCD:
             element_types = self.bottom.read_outgoing_elements(element, "Morphism")
             type_model_elements = self.bottom.read_outgoing_elements(self.scd_model)
             element_type_node, = [e for e in element_types if e in type_model_elements]
-            unsorted.append((key, scd_names[element_type_node]))
-        for elem in sorted(unsorted, key=lambda e: e[0]):
-            print("{} : {}".format(*elem))
+            unsorted.append(f"{key} : {scd_names[element_type_node]}")
+        return sorted(unsorted)
 
     def delete_element(self, name: str):
         keys = self.bottom.read_keys(self.model)
@@ -180,6 +180,12 @@ class SCD:
             # TODO: find way to solve memory leak, primitive models are not deleted this way
             node, = self.bottom.read_outgoing_elements(self.model, label=key)
             self.bottom.delete_element(node)
+
+    def to_bottom(self):
+        pass
+
+    def from_bottom(self):
+        pass
 
 
 if __name__ == '__main__':
@@ -199,7 +205,7 @@ if __name__ == '__main__':
     # Create LTM_PN
     model_uuid = s.create_node()
     print(f"LTM_PN Model UUID: {model_uuid}")  # 845
-    service = SCD(scd, model_uuid, s)
+    service = SCD(model_uuid, s)
     # Create classes
     service.create_class("P")
     service.create_class("T")
