@@ -7,7 +7,7 @@ from state.neo4jstate import Neo4jState
 @pytest.fixture(params=[
     (PyState,),
     (RDFState, "http://example.org/#"),
-    (Neo4jState,)
+#    (Neo4jState,)
 ])
 def state(request):
     if len(request.param) > 1:

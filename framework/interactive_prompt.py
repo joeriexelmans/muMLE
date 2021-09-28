@@ -5,6 +5,7 @@ from pprint import pprint
 import prompt_questions as questions
 from inspect import signature
 from uuid import UUID
+from ast import literal_eval
 
 
 def generate_context_question(ctx_type, services):
@@ -53,7 +54,7 @@ def main():
             args_questions = []
             types = {}
             for p in signature(method).parameters.values():
-                types[p.name] = p.annotation  # can't use filter in question dict, doesn't work for some reason...
+                types[p.name] = p.annotation if p.annotation else literal_eval  # can't use filter in question dict, doesn't work for some reason...
                 if p.annotation == UUID:
                     args_questions.append({
                         'type': 'list',
