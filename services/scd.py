@@ -9,6 +9,10 @@ import re
 
 
 class SCD:
+    """
+    Implements services for the simple class diagrams LTM.
+    Implementation is done in terms of services provided by LTM-bottom
+    """
     def __init__(self, model: UUID, state: State):
         type_model_id = state.read_dict(state.read_root(), "SCD")
         self.scd_model = UUID(state.read_value(type_model_id))
@@ -16,16 +20,33 @@ class SCD:
         self.bottom = Bottom(state)
 
     def create_class(self, name: str, abstract: bool = None, min_c: int = None, max_c: int = None):
+        """
+        Creates an instance of a class.
+
+        Args:
+            name: the name of the class to be created
+            abstract: indicates whether or not the class is an abstract class
+            min_c: lower bound for class multicplicity
+            max_c: upper bound for class multicplicity
+
+        Returns:
+            Nothing.
+        """
         
         def set_cardinality(bound: str, value: int):
+            """ Helper for setting cardinality attributes """
+            # Create cardinality attribute root node
+            # Do note that this is an instance of a ModelRef!
             _c_model = self.bottom.create_node()
             Integer(_c_model, self.bottom.state).create(value)
-            _c_node = self.bottom.create_node(str(_c_model))
-            self.bottom.create_edge(self.model, _c_node, f"{name}.{bound}_cardinality")
-            _c_link = self.bottom.create_edge(class_node, _c_node)
-            self.bottom.create_edge(self.model, _c_link, f"{name}.{bound}_cardinality_link")
+            _c_node = self.bottom.create_node(str(_c_model))  # store UUID of primitive value model
+            self.bottom.create_edge(self.model, _c_node, f"{name}.{bound}_cardinality")  # link to model root
+            _c_link = self.bottom.create_edge(class_node, _c_node)  # link class to attribute
+            self.bottom.create_edge(self.model, _c_link, f"{name}.{bound}_cardinality_link")  # link attr link to model root
+            # retrieve types from metamodel
             _scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "Integer")
             _scd_link, = self.bottom.read_outgoing_elements(self.scd_model, f"Class_{bound}_cardinality")
+            # type newly created elements
             self.bottom.create_edge(_c_node, _scd_node, "Morphism")
             self.bottom.create_edge(_c_link, _scd_link, "Morphism")
         
@@ -35,6 +56,7 @@ class SCD:
         scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "Class")  # retrieve type
         self.bottom.create_edge(class_node, scd_node, "Morphism")  # create morphism link
         if abstract is not None:
+            # operations similar to set_cardinality function defined above
             abstract_model = self.bottom.create_node()
             Boolean(abstract_model, self.bottom.state).create(abstract)
             abstract_node = self.bottom.create_node(str(abstract_model))
@@ -53,8 +75,24 @@ class SCD:
     def create_association(self, name: str, source: str, target: str,
                            src_min_c: int = None, src_max_c: int = None,
                            tgt_min_c: int = None, tgt_max_c: int = None):
+        """
+        Creates an instance of an association.
+
+        Args:
+            name: the name of the association to be created
+            source: the name of the source of the association
+            target: the name of the target of the association
+            src_min_c: lower bound for source multicplicity
+            src_max_c: upper bound for source multicplicity
+            tgt_min_c: lower bound for target multicplicity
+            tgt_max_c: upper bound for target multicplicity
+
+        Returns:
+            Nothing.
+        """
 
         def set_cardinality(bound: str, value: int):
+            # similar to set_cardinality function defined in create_class
             _c_model = self.bottom.create_node()
             Integer(_c_model, self.bottom.state).create(value)
             _c_node = self.bottom.create_node(str(_c_model))
@@ -66,7 +104,7 @@ class SCD:
             self.bottom.create_edge(_c_node, _scd_node, "Morphism")
             self.bottom.create_edge(_c_link, _scd_link, "Morphism")
 
-        # create class + attributes + morphism links
+        # create association + attributes + morphism links
         assoc_edge = self.bottom.create_edge(
             *self.bottom.read_outgoing_elements(self.model, source),
             *self.bottom.read_outgoing_elements(self.model, target),
@@ -84,6 +122,15 @@ class SCD:
             set_cardinality("target_upper", tgt_max_c)
 
     def create_global_constraint(self, name: str):
+        """
+        Defines a global constraint element.
+
+        Args:
+            name: the name of the global constraint to be created
+
+        Returns:
+            Nothing.
+        """
         # create element + morphism links
         element_node = self.bottom.create_node()  # create element node
         self.bottom.create_edge(self.model, element_node, name)  # attach to model
@@ -91,6 +138,15 @@ class SCD:
         self.bottom.create_edge(element_node, scd_node, "Morphism")  # create morphism link
 
     def create_attribute(self, name: str):
+        """
+        Defines an attribute element.
+
+        Args:
+            name: the name of the attribute to be created
+
+        Returns:
+            Nothing.
+        """
         # create element + morphism links
         element_node = self.bottom.create_node()  # create element node
         self.bottom.create_edge(self.model, element_node, name)  # attach to model
@@ -98,15 +154,28 @@ class SCD:
         self.bottom.create_edge(element_node, scd_node, "Morphism")  # create morphism link
 
     def create_attribute_link(self, source: str, target: str, name: str, optional: bool):
+        """
+        Defines an attribute link element.
+
+        Args:
+            source: element attribute will be attached to
+            target: attribute element
+            name: name of the attribute
+            optional: indicates whether attribute is optional
+
+        Returns:
+            Nothing.
+        """
         # create attribute link + morphism links
         assoc_edge = self.bottom.create_edge(
             *self.bottom.read_outgoing_elements(self.model, source),
             *self.bottom.read_outgoing_elements(self.model, target),
-        )  # create inheritance edge
+        )  # create v edge
         self.bottom.create_edge(self.model, assoc_edge, f"{source}_{name}")  # attach to model
         scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "AttributeLink")  # retrieve type
         self.bottom.create_edge(assoc_edge, scd_node, "Morphism")  # create morphism link
         # name attribute
+        # Do note that this is an instance of a ModelRef!
         name_model = self.bottom.create_node()
         String(name_model, self.bottom.state).create(name)
         name_node = self.bottom.create_node(str(name_model))
@@ -118,6 +187,7 @@ class SCD:
         self.bottom.create_edge(name_node, scd_node, "Morphism")
         self.bottom.create_edge(name_link, scd_link, "Morphism")
         # optional attribute
+        # Do note that this is an instance of a ModelRef!
         optional_model = self.bottom.create_node()
         Boolean(optional_model, self.bottom.state).create(optional)
         optional_node = self.bottom.create_node(str(optional_model))
@@ -130,6 +200,16 @@ class SCD:
         self.bottom.create_edge(optional_link, scd_link, "Morphism")
 
     def create_model_ref(self, name: str, model: UUID):
+        """
+        Defines a model ref element.
+
+        Args:
+            name: name of the model ref
+            model: uuid of the external model
+
+        Returns:
+            Nothing.
+        """
         # create element + morphism links
         element_node = self.bottom.create_node(str(model))  # create element node
         self.bottom.create_edge(self.model, element_node, name)  # attach to model
@@ -137,6 +217,16 @@ class SCD:
         self.bottom.create_edge(element_node, scd_node, "Morphism")  # create morphism link
 
     def create_inheritance(self, child: str, parent: str):
+        """
+        Defines an inheritance link element.
+
+        Args:
+            child: child element of the inheritance relationship
+            parent: parent element of the inheritance relationship
+
+        Returns:
+            Nothing.
+        """
         # create inheritance + morphism links
         assoc_edge = self.bottom.create_edge(
             *self.bottom.read_outgoing_elements(self.model, child),
@@ -147,6 +237,16 @@ class SCD:
         self.bottom.create_edge(assoc_edge, scd_node, "Morphism")  # create morphism link
 
     def add_constraint(self, element: str, code: str):
+        """
+        Defines a constraint on an element.
+
+        Args:
+            element: element the constraint is attached to
+            code: constraint code
+
+        Returns:
+            Nothing.
+        """
         element_node, = self.bottom.read_outgoing_elements(self.model, element)  # retrieve element
         # code attribute
         code_node = self.bottom.create_node(code)
@@ -159,6 +259,12 @@ class SCD:
         self.bottom.create_edge(code_link, scd_link, "Morphism")
 
     def list_elements(self):
+        """
+        Lists elements in the model.
+
+        Returns:
+            A list of elements in alphabetical order.
+        """
         scd_names = {}
         for key in self.bottom.read_keys(self.scd_model):
             element, = self.bottom.read_outgoing_elements(self.scd_model, key)
@@ -173,6 +279,15 @@ class SCD:
         return sorted(unsorted)
 
     def delete_element(self, name: str):
+        """
+        Deletes an element from the model.
+
+        Args:
+            name: name of the element to delete
+
+        Returns:
+            Nothing.
+        """
         keys = self.bottom.read_keys(self.model)
         r = re.compile(r"{}\..*".format(name))
         to_delete = list(filter(r.match, keys))
@@ -182,9 +297,11 @@ class SCD:
             self.bottom.delete_element(node)
 
     def to_bottom(self):
+        # already implemented in terms of LTM bottom
         pass
 
     def from_bottom(self):
+        # already implemented in terms of LTM bottom
         pass
 
 
