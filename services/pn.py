@@ -8,6 +8,11 @@ import re
 
 
 class PN:
+    """
+    Implements services for the petri nets LTM.
+    Implementation is done in terms of services provided by LTM-bottom.
+    Implementation is very similar to that in scd.py, which has more extensive comments
+    """
     def __init__(self, model: UUID, state: State):
         ltm_pn_id = state.read_dict(state.read_root(), "PN")
         self.ltm_pn = UUID(state.read_value(ltm_pn_id))
@@ -15,6 +20,15 @@ class PN:
         self.bottom = Bottom(state)
 
     def create_place(self, name: str, tokens: int):
+        """
+        Creates a place element.
+
+        Args:
+            name: name of the place
+
+        Returns:
+            Nothing.
+        """
         # instantiate Place class
         place_node = self.bottom.create_node()  # create place node
         self.bottom.create_edge(self.model, place_node, name)  # attach to model
@@ -44,6 +58,15 @@ class PN:
         self.bottom.create_edge(tokens_link, ltm_pn_link, "Morphism")
 
     def create_transition(self, name: str):
+        """
+        Creates a transition element.
+
+        Args:
+            name: name of the transition
+
+        Returns:
+            Nothing.
+        """
         # instantiate Transition class
         transition_node = self.bottom.create_node()  # create transition node
         self.bottom.create_edge(self.model, transition_node, name)  # attach to model
@@ -62,6 +85,17 @@ class PN:
         self.bottom.create_edge(name_link, ltm_pn_link, "Morphism")
 
     def create_p2t(self, place: str, transition: str, weight: int):
+        """
+        Creates a place to transition  link.
+
+        Args:
+            place: source of the link
+            transition: target of the link
+            weight: weight of the link
+
+        Returns:
+            Nothing.
+        """
         # create p2t link + morphism links
         edge = self.bottom.create_edge(
             *self.bottom.read_outgoing_elements(self.model, place),
@@ -83,6 +117,17 @@ class PN:
         self.bottom.create_edge(weight_link, scd_link, "Morphism")
 
     def create_t2p(self, transition: str, place: str, weight: int):
+        """
+        Creates a transition to place link.
+
+        Args:
+            transition: source of the link
+            place: target of the link
+            weight: weight of the link
+
+        Returns:
+            Nothing.
+        """
         # create t2p link + morphism links
         edge = self.bottom.create_edge(
             *self.bottom.read_outgoing_elements(self.model, transition),
@@ -104,6 +149,12 @@ class PN:
         self.bottom.create_edge(weight_link, scd_link, "Morphism")
 
     def list_elements(self):
+        """
+        Lists elements in the model.
+
+        Returns:
+            A list of elements in alphabetical order.
+        """
         pn_names = {}
         for key in self.bottom.read_keys(self.ltm_pn):
             element, = self.bottom.read_outgoing_elements(self.ltm_pn, key)
@@ -119,6 +170,15 @@ class PN:
             print("{} : {}".format(*elem))
 
     def delete_element(self, name: str):
+        """
+        Deletes an element from the model.
+
+        Args:
+            name: name of the element to delete
+
+        Returns:
+            Nothing.
+        """
         keys = self.bottom.read_keys(self.model)
         r = re.compile(r"{}\..*".format(name))
         to_delete = list(filter(r.match, keys))
@@ -126,3 +186,11 @@ class PN:
             # TODO: find way to solve memory leak, primitive models are not deleted this way
             node, = self.bottom.read_outgoing_elements(self.model, label=key)
             self.bottom.delete_element(node)
+    
+    def to_bottom(self):
+        # already implemented in terms of LTM bottom
+        pass
+
+    def from_bottom(self):
+        # already implemented in terms of LTM bottom
+        pass
