@@ -7,6 +7,10 @@ import math
 
 
 class PointPolar:
+    """
+    Implements services for the point polar LTM.
+    Implementation is done in terms of Python data structures
+    """
     def __init__(self, model: UUID, state: State):
         type_model_id = state.read_dict(state.read_root(), "PointPolar")
         self.type_model = UUID(state.read_value(type_model_id))
@@ -16,27 +20,66 @@ class PointPolar:
         self.point = None
 
     def create_point(self, r: float, theta: float):
+        """
+        Creates a point.
+
+        Args:
+            r: distance from pole
+            theta: angle from polar axis
+
+        Returns:
+            Nothing.
+        """
         if self.point is None:
             self.point = (r, theta)
         else:
             raise RuntimeError("A PointPolar model can contain at most 1 point.")
 
     def read_point(self):
+        """
+        Reads point.
+
+        Returns:
+            Textual representation of the point data.
+        """
         if self.point is None:
             raise RuntimeError("No point found in model.")
         else:
             return f"(r = {self.point[0]}, \u03B8 = {self.point[1]})"
 
     def delete_point(self):
+        """
+        Deletes point.
+
+        Returns:
+            Nothing.
+        """
         self.point = None
 
     def apply_movement(self, delta_r: float, delta_theta: float):
+        """
+        Moves point.
+
+        Args:
+            delta_r: change in distance from pole
+            delta_theta: change in angle from polar axis
+
+        Returns:
+            Nothing.
+        """
         if self.point is not None:
             self.point = (self.point[0] + delta_r, self.point[1] + delta_theta)
         else:
             raise RuntimeError("No point found in model.")
 
     def to_bottom(self):
+        """
+        Converts implementation specific model representation to 
+        canonical representation.
+
+        Returns:
+            Nothing.
+        """
         x = self.point[0]*math.cos(self.point[1])  # x = r * cos(theta)
         y = self.point[0]*math.sin(self.point[1])  # y = r * sin(theta)
         bottom = Bottom(self.state)
@@ -73,6 +116,13 @@ class PointPolar:
         bottom.create_edge(c2_link, ltm_point_link, "Morphism")
 
     def from_bottom(self):
+        """
+        Converts canonical representation to 
+        implementation specific model representation.
+
+        Returns:
+            Nothing.
+        """
         bottom = Bottom(self.state)
         keys = bottom.read_keys(self.model)
         x_key, = filter(lambda k: k.endswith(".c1"), keys)
