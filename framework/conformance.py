@@ -37,6 +37,15 @@ class Conformance:
         self.candidates = {}
 
     def check_nominal(self, *, log=False):
+        """
+        Perform a nominal conformance check
+
+        Args:
+            log: boolean indicating whether to log errors
+
+        Returns:
+            Boolean indicating whether the check has passed
+        """
         try:
             self.check_typing()
             self.check_link_typing()
@@ -49,6 +58,16 @@ class Conformance:
             return False
 
     def check_structural(self, *, build_morphisms=True, log=False):
+        """
+        Perform a structural conformance check
+
+        Args:
+            build_morphisms: boolean indicating whether to create morpishm links
+            log: boolean indicating whether to log errors
+
+        Returns:
+            Boolean indicating whether the check has passed
+        """
         try:
             self.precompute_structures()
             self.match_structures()
@@ -62,7 +81,16 @@ class Conformance:
             return False
 
     def read_attribute(self, element: UUID, attr_name: str):
+        """
+        Read an attribute value attached to an element
 
+        Args:
+            element: UUID of the element
+            attr_name: name of the attribute to read
+
+        Returns:
+            The value of hte attribute, if no attribute with given name is found, returns None
+        """
         if element in self.type_model_names:
             # type model element
             element_name = self.type_model_names[element]
@@ -78,13 +106,20 @@ class Conformance:
             return None
 
     def precompute_sub_types(self):
+        """
+        Creates an internal representation of sub-type hierarchies that is
+        more easily queryable that the state graph
+        """
+        # collect inheritance link instances
         inh_element, = self.bottom.read_outgoing_elements(self.scd_model, "Inheritance")
         inh_links = []
         for tm_element, tm_name in self.type_model_names.items():
             morphisms = self.bottom.read_outgoing_elements(tm_element, "Morphism")
             if inh_element in morphisms:
+                # we have an instance of an inheritance link
                 inh_links.append(tm_element)
 
+        # for each inheritance link we add the parent and child to the sub types map
         for link in inh_links:
             tm_source = self.bottom.read_edge_source(link)
             tm_target = self.bottom.read_edge_target(link)
@@ -92,6 +127,7 @@ class Conformance:
             child_name = self.type_model_names[tm_source]
             self.sub_types[parent_name].add(child_name)
 
+        # iteratively expand the sub type hierarchies in the sub types map
         stop = False
         while not stop:
             stop = True
@@ -104,6 +140,9 @@ class Conformance:
                             stop = False
 
     def deref_primitive_values(self):
+        """
+        Prefetch the values stored in referenced primitive type models
+        """
         ref_element, = self.bottom.read_outgoing_elements(self.scd_model, "ModelRef")
         string_element, = self.bottom.read_outgoing_elements(self.scd_model, "String")
         boolean_element, = self.bottom.read_outgoing_elements(self.scd_model, "Boolean")
@@ -140,6 +179,10 @@ class Conformance:
                     pass  # multiple elements in model indicate that we're not dealing with a primitive
 
     def precompute_multiplicities(self):
+        """
+        Creates an internal representation of type multiplicities that is
+        more easily queryable that the state graph
+        """
         for tm_element, tm_name in self.type_model_names.items():
             # class abstract flags and multiplicities
             abstract = self.read_attribute(tm_element, "abstract")
@@ -177,6 +220,9 @@ class Conformance:
                 self.target_multiplicities[tm_name] = (0, 1)
 
     def get_type(self, element: UUID):
+        """
+        Retrieve the type of an element (wrt. current type model)
+        """
         morphisms = self.bottom.read_outgoing_elements(element, "Morphism")
         tm_element, = [m for m in morphisms if m in self.type_model_names.keys()]
         return tm_element
@@ -205,6 +251,9 @@ class Conformance:
         return True
 
     def check_link_typing(self):
+        """
+        for each link, check whether its source and target are of a valid type
+        """
         self.precompute_sub_types()
         for m_name, tm_name in self.type_mapping.items():
             m_element, = self.bottom.read_outgoing_elements(self.model, m_name)
@@ -233,6 +282,9 @@ class Conformance:
         return True
 
     def check_multiplicities(self):
+        """
+        Check whether multiplicities for all types are respected
+        """
         self.deref_primitive_values()
         self.precompute_multiplicities()
         for tm_name in self.type_model_names.values():
@@ -292,6 +344,9 @@ class Conformance:
         return True
 
     def evaluate_constraint(self, code, **kwargs):
+        """
+        Evaluate constraint code (Python code)
+        """
         funcs = {
             'read_value': self.state.read_value
         }
@@ -304,6 +359,9 @@ class Conformance:
         )
 
     def check_constraints(self):
+        """
+        Check whether all constraints defined for a model are respected
+        """
         # local constraints
         for m_name, tm_name in self.type_mapping.items():
             if tm_name != "GlobalConstraint":
@@ -327,6 +385,9 @@ class Conformance:
         return True
 
     def precompute_structures(self):
+        """
+        Make an internal representation of type structures such that comparing type structures is easier
+        """
         self.precompute_sub_types()
         scd_elements = self.bottom.read_outgoing_elements(self.scd_model)
         # collect types
@@ -393,6 +454,9 @@ class Conformance:
                     self.structures.pop(type_name)
 
     def match_structures(self):
+        """
+        Try to match the structure of each element in the instance model to some element in the type model
+        """
         ref_element, = self.bottom.read_outgoing_elements(self.scd_model, "ModelRef")
         # matching
         for m_element, m_name in self.model_names.items():
@@ -454,6 +518,9 @@ class Conformance:
                 self.candidates[m_name] = self.candidates[m_name].difference(remove)
 
     def build_morphisms(self):
+        """
+        Build the morphisms between an instance and a type model that structurally match
+        """
         if not all([len(c) == 1 for c in self.candidates.values()]):
             raise RuntimeError("Cannot build incomplete or ambiguous morphism.")
         mapping = {k: v.pop() for k, v in self.candidates.items()}

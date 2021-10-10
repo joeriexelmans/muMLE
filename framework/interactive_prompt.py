@@ -9,6 +9,9 @@ from ast import literal_eval
 
 
 def generate_context_question(ctx_type, services):
+    """
+    Converts service names to human readable form
+    """
     choices = [
         s.__name__.replace('_', ' ') for s in services
     ]
@@ -33,9 +36,11 @@ def main():
 
     while True:
         if man.current_model is not None and man.current_context is None:
+            # we have selected a model, so we display typing questions
             answer = prompt(questions.MODEL_SELECTED)
             ctx = man
         elif man.current_model is not None and man.current_context is not None:
+            # we have selected both a model and a context, so we display available services
             qs = generate_context_question(type(man.current_context), man.get_services())
             answer = prompt(qs)
             if answer['op'] == 'close_context':

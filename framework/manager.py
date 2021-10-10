@@ -17,10 +17,26 @@ class Manager:
             self.state.create_edge(model_node, scd_node)
 
     def get_models(self):
+        """ 
+        Retrieves all existing models 
+        
+        Returns:
+            Names of exising models
+        """
         for key_node in self.state.read_dict_keys(self.state.read_root()):
             yield self.state.read_value(key_node)
 
     def instantiate_model(self, type_model_name: str, name: str):
+        """ 
+        Retrieves all existing models 
+        
+        Args:
+            type_model_name: name of the type model we want to instantiate
+            name: name of the instance model to be created
+
+        Returns:
+            Nothing
+        """
         root = self.state.read_root()
         type_model_node = self.state.read_dict(root, type_model_name)
         if type_model_node is None:
@@ -44,6 +60,15 @@ class Manager:
         self.current_context = services[type_model_name](self.current_model[1], self.state)
 
     def select_model(self, name: str):
+        """
+        Select a model to interact with
+
+        Args:
+            name: name of the model we want to interact with
+
+        Returns:
+            Nothing
+        """
         root = self.state.read_root()
         model_node = self.state.read_dict(root, name)
         if model_node is None:
@@ -52,10 +77,22 @@ class Manager:
         self.current_model = (name, model_root)
 
     def close_model(self):
+        """
+        Clear the currently selected model
+
+        Returns:
+            Nothing
+        """
         self.current_model = None
         self.current_context = None
 
     def get_types(self):
+        """
+        Retrieve the types of the currently selected model
+
+        Returns:
+            Names of the model's types
+        """
         root = self.state.read_root()
         if self.current_model is None:
             raise RuntimeError(f"No model currently selected.")
@@ -72,6 +109,15 @@ class Manager:
             yield self.state.read_value(label_node)
 
     def select_context(self, name: str):
+        """
+        Select a type to set as the current context
+
+        Args:
+            name: name of the type/context
+
+        Returns:
+            Nothing
+        """
         if name not in self.get_types():
             raise RuntimeError(f"No type {name} that currently selected model conforms to.")
         if name not in services:
@@ -80,10 +126,22 @@ class Manager:
         self.current_context.from_bottom()
 
     def close_context(self):
+        """
+        Exit the current (type) context
+
+        Returns:
+            Nothing
+        """
         self.current_context.to_bottom()
         self.current_context = None
 
     def get_services(self):
+        """
+        Retrieve the services available in the current context
+
+        Returns:
+            Functions exposed by the current context's implementation
+        """
         if self.current_model is None:
             raise RuntimeError(f"No model currently selected.")
         if self.current_context is None:
@@ -98,6 +156,19 @@ class Manager:
         ]
 
     def check_conformance(self, type_model_name: str, model_name: str):
+        """
+        If there are existing morphisms between the model and type model
+            check nominal conformance
+        Else
+            find conformance using structural conformance check
+
+        Args:
+            type_model_name: name of the type model to check conformance against
+            model_name: name of the instance model
+
+        Returns:
+            Boolean indicating whether conformance was found
+        """
         root = self.state.read_root()
         type_model_node = self.state.read_dict(root, type_model_name)
         if type_model_node is None:
@@ -120,11 +191,17 @@ class Manager:
                                UUID(self.state.read_value(type_model_node))).check_nominal(log=True)
 
     def dump_state(self):
+        """
+        Dumps the current state of the Modelverse to a pickle file
+        """
         import pickle
         with open("state.p", "wb") as file:
             pickle.dump(self.state, file)
 
     def load_state(self):
+        """
+        Loas a state of the Modelverse from a pickle file
+        """
         import pickle
         with open("state.p", "rb") as file:
             self.state = pickle.load(file)
