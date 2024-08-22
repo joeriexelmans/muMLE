@@ -1,6 +1,6 @@
 from framework.manager import Manager
 from state.devstate import DevState
-from PyInquirer import prompt, Separator
+from InquirerPy import prompt, separator
 from pprint import pprint
 import prompt_questions as questions
 from inspect import signature
@@ -16,7 +16,7 @@ def generate_context_question(ctx_type, services):
         s.__name__.replace('_', ' ') for s in services
     ]
     choices = sorted(choices)
-    choices.append(Separator())
+    choices.append(separator.Separator())
     choices.append("close context")
     ctx_question = [
         {
@@ -94,12 +94,5 @@ def main():
 
 
 if __name__ == '__main__':
-    print("""Welcome to...
-      __  ____      _____  
-     |  \/  \ \    / /__ \ 
-     | \  / |\ \  / /   ) |
-     | |\/| | \ \/ /   / / 
-     | |  | |  \  /   / /_ 
-     |_|  |_|   \/   |____|
-    """)
+    print("""Welcome to...\r\n      __  ____      _____  \r\n     |  \\/  \\ \\    / /__ \\ \r\n     | \\  / |\\ \\  / /   ) |\r\n     | |\\/| | \\ \\/ /   / / \r\n     | |  | |  \\  /   / /_ \r\n     |_|  |_|   \\/   |____|    """)
     main()

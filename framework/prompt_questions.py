@@ -1,4 +1,4 @@
-from PyInquirer import Separator
+from InquirerPy.separator import Separator
 
 MODEL_SELECTED = [
     {
