@@ -100,7 +100,7 @@ class SCD:
             _c_link = self.bottom.create_edge(assoc_edge, _c_node)
             self.bottom.create_edge(self.model, _c_link, f"{name}.{bound}_cardinality_link")
             _scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "Integer")
-            _scd_link, = self.bottom.read_outgoing_elements(self.scd_model, f"Class_{bound}_cardinality")
+            _scd_link, = self.bottom.read_outgoing_elements(self.scd_model, f"Association_{bound}_cardinality")
             self.bottom.create_edge(_c_node, _scd_node, "Morphism")
             self.bottom.create_edge(_c_link, _scd_link, "Morphism")
 
