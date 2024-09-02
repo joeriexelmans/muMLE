@@ -465,6 +465,7 @@ class Conformance:
                 tm_element, = self.bottom.read_outgoing_elements(self.type_model, type_name)
                 type_is_edge = self.bottom.read_edge_source(tm_element) is not None
                 if is_edge == type_is_edge:
+                    mismatch = False
                     matched = 0
                     for name, optional, attr_type in structure:
                         try:
@@ -493,8 +494,10 @@ class Conformance:
                             if optional:
                                 continue
                             else:
+                                mismatch = True
                                 break
-                    if matched == len(structure):
+                    # if matched == len(structure):
+                    if not mismatch:
                         self.candidates.setdefault(m_name, set()).add(type_name)
         # filter out candidates for links based on source and target types
         for m_element, m_name in self.model_names.items():
