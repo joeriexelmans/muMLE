@@ -18,11 +18,8 @@ It is intended as a guideline, even for novices, and provides an in-depth look
 at the workings behind various techniques for efficient pattern matching.
 """
 
-from planGraph import *
-
 import collections
 import itertools
-# import numpy as np
 
 class PatternMatching(object):
 	"""
@@ -562,9 +559,6 @@ class PatternMatching(object):
 				return True
 
 			return False
-
-
-		print("graph:", graph)
 
 		# create adjecency matrix of the graph
 		H, h	= self.createAdjacencyMatrixMap(graph, pattern)

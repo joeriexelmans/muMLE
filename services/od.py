@@ -45,24 +45,37 @@ class OD:
 
         return object_node
 
-
-    def create_slot(self, object_name: str, attr_name: str, value: UUID):
-        attr_node = self.bottom.read_outgoing_elements(self.type_model, attr_name) # get the attribute
+    def get_class_of_object(self, object_name: str):
         object_node, = self.bottom.read_outgoing_elements(self.model, object_name) # get the object
-        slot_node = value
+        type_el, = self.bottom.read_outgoing_elements(object_node, "Morphism")
+        for key in self.bottom.read_keys(self.type_model):
+            type_el2, = self.bottom.read_outgoing_elements(self.type_model, key)
+            if type_el == type_el2:
+                return key
 
-        # generate a unique name for the slot
-        i = 0;
-        while len(self.bottom.read_outgoing_elements(self.model, f"{object_name}.{attr_name}{i}")) != 0:
-            i += 1
+    def create_slot(self, attr_name: str, object_name: str, target_name: str):
+        class_name = self.get_class_of_object(object_name)
+        attr_link_name = f"{class_name}_{attr_name}"
+        # An attribute-link is indistinguishable from an ordinary link:
+        return self.create_link(attr_link_name, object_name, target_name)
 
-        self.bottom.create_edge(self.model, slot_node, f"{object_name}.{attr_name}{i}") # attach to model root
-        slot_link = self.bottom.create_edge(object_node, slot_node) # attach to object
-        self.bottom.create_edge(self.model, slot_link, f"{object_name}.{attr_name}{i}_link") # attach attr-link to model
+    def create_integer_value(self, value: int):
+        from services.primitives.integer_type import Integer
+        int_node = self.bottom.create_node()
+        integer_t = Integer(int_node, self.bottom.state)
+        integer_t.create(value)
+        name = 'int'+str(value) # name of the ref to the created integer
+        # By convention, the type model must have a ModelRef named "Integer"
+        self.create_model_ref(name, "Integer", int_node)
+        return name
 
-        self.bottom.create_edge(slot_node, attr_node, "Morphism") # slot typed-by attribute
-        slot_link_type, = self.bottom.read_outgoing_elements(self.type_model, "AttributeLink")
-        self.bottom.create_edge(slot_link, slot_link_type)
+    # Identical to the same SCD method:
+    def create_model_ref(self, name: str, type_name: str, model: UUID):
+        # create element + morphism links
+        element_node = self.bottom.create_node(str(model))  # create element node
+        self.bottom.create_edge(self.model, element_node, name)  # attach to model
+        scd_node, = self.bottom.read_outgoing_elements(self.type_model, type_name)  # retrieve type
+        self.bottom.create_edge(element_node, scd_node, "Morphism")  # create morphism link
 
 
     def create_link(self, assoc_name: str, src_obj_name: str, tgt_obj_name: str):
