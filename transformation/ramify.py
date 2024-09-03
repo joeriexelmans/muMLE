@@ -75,7 +75,7 @@ def ramify(state: State, model: UUID) -> UUID:
         uuid = bottom.read_value(node)
         return UUID(uuid)
 
-    def find_upper_cardinality(class_node: UUID, type_node: UUID):
+    def find_cardinality(class_node: UUID, type_node: UUID):
         upper_card_edges = find_outgoing_typed_by(class_node, type_node)
         if len(upper_card_edges) == 1:
             ref = bottom.read_edge_target(upper_card_edges[0])
@@ -115,7 +115,7 @@ def ramify(state: State, model: UUID) -> UUID:
         #   - abstract: False
         #   - min-card: 0
         #   - max-card: same as original
-        upper_card = find_upper_cardinality(class_node, class_upper_card_node)
+        upper_card = find_cardinality(class_node, class_upper_card_node)
         print('creating class', class_name, "with upper card", upper_card)
         ramified_scd.create_class(class_name, abstract=None, max_c=upper_card)
 
@@ -132,8 +132,8 @@ def ramify(state: State, model: UUID) -> UUID:
         #   - src-max-card: same as original
         #   - tgt-min-card: 0
         #   - tgt-max-card: same as original
-        src_upper_card = find_upper_cardinality(assoc_node, src_upper_card_node)
-        tgt_upper_card = find_upper_cardinality(assoc_node, tgt_upper_card_node)
+        src_upper_card = find_cardinality(assoc_node, src_upper_card_node)
+        tgt_upper_card = find_cardinality(assoc_node, tgt_upper_card_node)
         src = scd.get_class_name(bottom.read_edge_source(assoc_node))
         tgt = scd.get_class_name(bottom.read_edge_target(assoc_node))
         print('creating assoc', src, "->", tgt, ", name =", assoc_name, ", src card = 0 ..", src_upper_card, "and tgt card = 0 ..", tgt_upper_card)
