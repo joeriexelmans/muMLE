@@ -36,6 +36,7 @@ class PatternMatching(object):
 		self.result			= None
 		self.previous		= []
 		self.optimize		= optimize
+		self.results        = []
 
 	def match(self, pattern, graph):
 		"""
@@ -68,6 +69,7 @@ class PatternMatching(object):
 		self.bound_vertices	= {}
 		self.bound_edges	= {}
 		self.result			= None
+		self.results        = []
 
 		return result
 
@@ -845,7 +847,21 @@ class PatternMatching(object):
 				"""
 				# all candidate pair (n, m) represent graph x pattern
 
+				candidate = frozenset(itertools.chain(
+					((i, j) for i,j in VF2_obj.mapping.items()),
+					# ((self.reverseMapH[i], self.reverseMapP[j]) for i,j in VF2_obj.mapping.items()),
+					[(h[n],p[m])],
+				))
+
+				if candidate in self.alreadyVisited:
+				# print(self.indent*"  ", "candidate:", candidate)
+				# for match in self.alreadyVisited.get(index_M, []):
+					# if match == candidate:
+						return False # already visited this (partial) match -> skip
+
+
 				if feasibilityTest(H, P, h, p, VF2_obj, n, m):
+					print(self.indent*"  ","adding to match:", n, "->", m)
 					# adapt VF2_obj
 					VF2_obj.core_graph[n]	= True
 					VF2_obj.core_pattern[m]	= True
@@ -855,17 +871,30 @@ class PatternMatching(object):
 					addOutNeighbours(P[m], VF2_obj.N_out_pattern, index_M)
 					addIncNeighbours(P, m, VF2_obj.N_inc_pattern, index_M)
 
-					if findM(H, P, h, p, VF2_obj, index_M + 1):
-						return True
+					if index_M > 0:
+						# remember our partial match (shallow copy) so we don't visit it again
+						self.alreadyVisited.add(frozenset([ (i, j) for i,j in VF2_obj.mapping.items()]))
+						# self.alreadyVisited.setdefault(index_M, set()).add(frozenset([ (self.reverseMapH[i], self.reverseMapP[j]) for i,j in VF2_obj.mapping.items()]))
+						# print(self.alreadyVisited)
 
-					# else, cleanup, adapt VF2_obj
-					VF2_obj.core_graph[n]	= False
-					VF2_obj.core_pattern[m]	= False
-					del VF2_obj.mapping[h[n]]
-					delNeighbours(VF2_obj.N_out_graph, index_M)
-					delNeighbours(VF2_obj.N_inc_graph, index_M)
-					delNeighbours(VF2_obj.N_out_pattern, index_M)
-					delNeighbours(VF2_obj.N_inc_pattern, index_M)
+					self.indent += 1
+					if findM(H, P, h, p, VF2_obj, index_M + 1):
+						# return True
+						print(self.indent*"  ","found match", len(self.results), ", continuing...")
+					self.indent -= 1
+
+					if True:
+					# else:
+						print(self.indent*"  ","backtracking... remove", n, "->", m)
+
+						# else, backtrack, adapt VF2_obj
+						VF2_obj.core_graph[n]	= False
+						VF2_obj.core_pattern[m]	= False
+						del VF2_obj.mapping[h[n]]
+						delNeighbours(VF2_obj.N_out_graph, index_M)
+						delNeighbours(VF2_obj.N_inc_graph, index_M)
+						delNeighbours(VF2_obj.N_out_pattern, index_M)
+						delNeighbours(VF2_obj.N_inc_pattern, index_M)
 
 				return False
 
@@ -879,12 +908,15 @@ class PatternMatching(object):
 					# skip graph vertices that are not in VF2_obj.N_out_graph
 					# (or already matched)
 					if N_graph[n] == -1 or VF2_obj.core_graph[n]:
+						# print(self.indent*"  ","    skipping")
 						continue
+					print(self.indent*"  ","  n:", n)
 					for m in range(0, len(N_pattern)):
 						# skip graph vertices that are not in VF2_obj.N_out_pattern
 						# (or already matched)
 						if N_pattern[m] == -1 or VF2_obj.core_pattern[m]:
 							continue
+						print(self.indent*"  ","  m:", m)
 						if matchPhase(H, P, h, p, index_M, VF2_obj, n, m):
 							return True
 
@@ -899,35 +931,48 @@ class PatternMatching(object):
 					# skip vertices that are connected to the graph 
 					# (or already matched)
 					if not (VF2_obj.N_out_graph[n] == -1 and VF2_obj.N_inc_graph[n] == -1) or VF2_obj.core_graph[n]:
+						# print(self.indent*"  ","    skipping")
 						continue
+					print("  n:", n)
 					for m in range(0, len(VF2_obj.N_out_pattern)):
 						# skip vertices that are connected to the graph 
 						# (or already matched)
 						if not (VF2_obj.N_out_pattern[m] == -1 and VF2_obj.N_inc_pattern[m] == -1) or VF2_obj.core_pattern[m]:
+							# print(self.indent*"  ","      skipping")
 							continue
+						print(self.indent*"  ","    m:", m)
 						if matchPhase(H, P, h, p, index_M, VF2_obj, n, m):
 							return True
 
 				return False
 
+			print(self.indent*"  ","index_M:", index_M)
+
 			# We are at the end, we found an candidate.
 			if index_M == len(p):
+				print(self.indent*"  ","end...")
 				bound_graph_vertices	= {}
 				for vertex_bound, _ in VF2_obj.mapping.items():
 					bound_graph_vertices.setdefault(vertex_bound.type, set()).add(vertex_bound)
 
 				self.result	= self.matchNaive(vertices=bound_graph_vertices, edges=self.graph.edges)
+				if self.result != None:
+					self.results.append(self.result)
 				return self.result != None
 
-			# try the candidates is the preffered order
-			# first try the adjacent vertices connected via the outgoing edges.
-			if preferred(H, P, h, p, index_M, VF2_obj, VF2_obj.N_out_graph, VF2_obj.N_out_pattern):
-				return True
+			if index_M > 0:
+				# try the candidates is the preffered order
+				# first try the adjacent vertices connected via the outgoing edges.
+				print(self.indent*"  ","preferred L1")
+				if preferred(H, P, h, p, index_M, VF2_obj, VF2_obj.N_out_graph, VF2_obj.N_out_pattern):
+					return True
 
-			# then try the adjacent vertices connected via the incoming edges.
-			if preferred(H, P, h, p, index_M, VF2_obj, VF2_obj.N_inc_graph, VF2_obj.N_inc_pattern):
-				return True
+				print(self.indent*"  ","preferred L2")
+				# then try the adjacent vertices connected via the incoming edges.
+				if preferred(H, P, h, p, index_M, VF2_obj, VF2_obj.N_inc_graph, VF2_obj.N_inc_pattern):
+					return True
 
+			print(self.indent*"  ","leastPreferred")
 			# and lastly, try the vertices not connected to the currently matched vertices
 			if leastPreferred(H, P, h, p, index_M, VF2_obj):
 				return True
@@ -937,11 +982,23 @@ class PatternMatching(object):
 
 		# create adjecency matrix of the graph
 		H, h	= self.createAdjacencyMatrixMap(self.graph)
+		print("adjacency:", H)
+		print("h:", len(h))
 		# create adjecency matrix of the pattern
 		P, p	= self.createAdjacencyMatrixMap(self.pattern)
 
 		VF2_obj	= VF2_Obj(len(h), len(p))
 
+		self.indent = 0
+
+		# Only for debugging:
+		self.reverseMapH = { h[i] : i for i in range(len(h))}
+		self.reverseMapP = { p[i] : i for i in range(len(p))}
+
+		# Set of partial matches already explored - prevents us from producing the same match multiple times
+		# Encoded as a mapping from match size to the partial match
+		self.alreadyVisited = set()
+		
 		findM(H, P, h, p, VF2_obj)
 
-		return self.result
+		# return self.results

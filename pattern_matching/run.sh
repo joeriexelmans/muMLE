@@ -1,8 +1,11 @@
 #!/bin/sh
 
+rm *.svg
+rm *.dot
 python main.py
-dot randomGraph.dot -Tsvg > randomGraph.svg
-dot randomPattern.dot -Tsvg > randomPattern.svg
+# dot randomGraph.dot -Tsvg > randomGraph.svg
+for filename in randomGraph-*.dot; do
+  dot $filename -Tsvg > $filename.svg
+done
 
-firefox randomGraph.svg
-firefox randomPattern.svg
+firefox *.svg
