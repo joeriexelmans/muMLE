@@ -1001,4 +1001,4 @@ class PatternMatching(object):
 		
 		findM(H, P, h, p, VF2_obj)
 
-		# return self.results
+		return self.results
