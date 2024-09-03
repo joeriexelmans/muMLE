@@ -26,6 +26,13 @@ def main():
 
     def print_tree(root, max_depth, depth=0):
         print("  "*depth, "root=", root, "value=", state.read_value(root))
+        src,tgt = state.read_edge(root)
+        if src != None:
+            print("  "*depth, "src...")
+            print_tree(src, max_depth, depth+1)
+        if tgt != None:
+            print("  "*depth, "tgt...")
+            print_tree(tgt, max_depth, depth+1)
         for edge in state.read_outgoing(root):
             for edge_label in state.read_outgoing(edge):
                 [_,tgt] = state.read_edge(edge_label)
@@ -50,19 +57,21 @@ def main():
                 print_tree(tgt, max_depth, depth+1)
 
     print("explore...")
-    print_tree(root, 2)
+    # print_tree(root, 2)
 
     int_type_id = state.read_dict(state.read_root(), "Integer")
     int_type = UUID(state.read_value(int_type_id))
 
-    scd2 = SCD(scd_node, state)
-    for el in scd2.list_elements():
-        print(el)
+    # scd2 = SCD(scd_node, state)
+    # for el in scd2.list_elements():
+    #     print(el)
 
 
     model_id = state.create_node()
     scd = SCD(model_id, state)
-    scd.create_class("A")
+    scd.create_class("Abstract", abstract=True)
+    scd.create_class("A", min_c=1, max_c=10)
+    scd.create_inheritance("A", "Abstract")
     scd.create_model_ref("Integer", int_type)
     scd.create_attribute_link("A", "Integer", "size", False)
     scd.create_class("B")
@@ -73,7 +82,7 @@ def main():
         tgt_max_c=2,
     )
 
-    print_tree(model_id, 2)
+    # print_tree(model_id, 3)
 
 
     conf = Conformance(state, model_id, scd_node)
@@ -95,9 +104,9 @@ def main():
 
     print("checking conformance....")
     conf2 = Conformance(state, inst_id, model_id)
-    print(conf2.check_nominal(log=True))
+    print("conforms?", conf2.check_nominal(log=True))
 
-    # ramify(state, model_id)
+    ramify(state, model_id)
 
 if __name__ == "__main__":
     main()

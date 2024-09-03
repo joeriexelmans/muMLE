@@ -90,6 +90,15 @@ class SCD:
         Returns:
             Nothing.
         """
+        src, = self.bottom.read_outgoing_elements(self.model, source)
+        tgt, = self.bottom.read_outgoing_elements(self.model, target)
+        return self._create_association(name, src, tgt,
+            src_min_c, src_max_c,
+            tgt_min_c, tgt_max_c)
+
+    def _create_association(self, name: str, source: UUID, target: UUID,
+                           src_min_c: int = None, src_max_c: int = None,
+                           tgt_min_c: int = None, tgt_max_c: int = None):
 
         def set_cardinality(bound: str, value: int):
             # similar to set_cardinality function defined in create_class
@@ -105,10 +114,7 @@ class SCD:
             self.bottom.create_edge(_c_link, _scd_link, "Morphism")
 
         # create association + attributes + morphism links
-        assoc_edge = self.bottom.create_edge(
-            *self.bottom.read_outgoing_elements(self.model, source),
-            *self.bottom.read_outgoing_elements(self.model, target),
-        )  # create assoc edge
+        assoc_edge = self.bottom.create_edge(source, target)  # create assoc edge
         self.bottom.create_edge(self.model, assoc_edge, name)  # attach to model
         scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "Association")  # retrieve type
         self.bottom.create_edge(assoc_edge, scd_node, "Morphism")  # create morphism link
@@ -166,11 +172,13 @@ class SCD:
         Returns:
             Nothing.
         """
+        tgt, = self.bottom.read_outgoing_elements(self.model, target)
+        return self._create_attribute_link(source, tgt, name, optional)
+
+    def _create_attribute_link(self, source: str, target: UUID, name: str, optional: bool):
         # create attribute link + morphism links
-        assoc_edge = self.bottom.create_edge(
-            *self.bottom.read_outgoing_elements(self.model, source),
-            *self.bottom.read_outgoing_elements(self.model, target),
-        )  # create v edge
+        src, = self.bottom.read_outgoing_elements(self.model, source)
+        assoc_edge = self.bottom.create_edge(src, target)  # create v edge
         self.bottom.create_edge(self.model, assoc_edge, f"{source}_{name}")  # attach to model
         scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "AttributeLink")  # retrieve type
         self.bottom.create_edge(assoc_edge, scd_node, "Morphism")  # create morphism link
@@ -215,6 +223,7 @@ class SCD:
         self.bottom.create_edge(self.model, element_node, name)  # attach to model
         scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "ModelRef")  # retrieve type
         self.bottom.create_edge(element_node, scd_node, "Morphism")  # create morphism link
+        return element_node
 
     def create_inheritance(self, child: str, parent: str):
         """
@@ -227,14 +236,25 @@ class SCD:
         Returns:
             Nothing.
         """
+        c, = self.bottom.read_outgoing_elements(self.model, child)
+        p, = self.bottom.read_outgoing_elements(self.model, parent)
+        return self._create_inheritance(c, p)
+
+
+    def _create_inheritance(self, child: UUID, parent: UUID):
         # create inheritance + morphism links
-        assoc_edge = self.bottom.create_edge(
-            *self.bottom.read_outgoing_elements(self.model, child),
-            *self.bottom.read_outgoing_elements(self.model, parent),
-        )  # create inheritance edge
-        self.bottom.create_edge(self.model, assoc_edge, f"{child}_inh_{parent}")  # attach to model
+        inh_edge = self.bottom.create_edge(child, parent)
+        child_name = self.get_class_name(child)
+        parent_name = self.get_class_name(parent)
+        self.bottom.create_edge(self.model, inh_edge, f"{child_name}_inh_{parent_name}")  # attach to model
         scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "Inheritance")  # retrieve type
-        self.bottom.create_edge(assoc_edge, scd_node, "Morphism")  # create morphism link
+        self.bottom.create_edge(inh_edge, scd_node, "Morphism")  # create morphism link
+
+    def get_class_name(self, cls: UUID):
+        for key in self.bottom.read_keys(self.model):
+            el, = self.bottom.read_outgoing_elements(self.model, key)
+            if el == cls:
+                return key
 
     def add_constraint(self, element: str, code: str):
         """
@@ -277,6 +297,39 @@ class SCD:
             element_type_node, = [e for e in element_types if e in type_model_elements]
             unsorted.append(f"{key} : {scd_names[element_type_node]}")
         return sorted(unsorted)
+
+    def get_classes(self):
+        class_node, = self.bottom.read_outgoing_elements(self.scd_model, "Class")
+        return self.get_typed_by(class_node)
+
+    def get_associations(self):
+        assoc_node, = self.bottom.read_outgoing_elements(self.scd_model, "Association")
+        return self.get_typed_by(assoc_node)
+
+    def get_inheritances(self):
+        inh_node, = self.bottom.read_outgoing_elements(self.scd_model, "Inheritance")
+        return self.get_typed_by(inh_node)
+
+    def get_typed_by(self, type_node: UUID):
+        name_to_instance = {}
+        for key in self.bottom.read_keys(self.model):
+            element, = self.bottom.read_outgoing_elements(self.model, key)
+            element_types = self.bottom.read_outgoing_elements(element, "Morphism")
+            if type_node in element_types:
+                name_to_instance[key] = element
+        # mapping from instance name to UUID
+        return name_to_instance
+
+
+    def get_attributes(self, class_name: str):
+        attr_link_node, = self.bottom.read_outgoing_elements(self.scd_model, "AttributeLink")
+        class_node, = self.bottom.read_outgoing_elements(self.model, class_name)
+        name_to_attr = {}
+        for edge in self.bottom.read_outgoing_edges(class_node):
+            edge_types = self.bottom.read_outgoing_elements(edge, "Morphism")
+            if attr_link_node in edge_types:
+                name_to_attr[key] = edge
+        return name_to_attr
 
     def delete_element(self, name: str):
         """
