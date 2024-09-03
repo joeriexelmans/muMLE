@@ -134,20 +134,24 @@ def ramify(state: State, model: UUID) -> UUID:
         #   - tgt-max-card: same as original
         src_upper_card = find_upper_cardinality(assoc_node, src_upper_card_node)
         tgt_upper_card = find_upper_cardinality(assoc_node, tgt_upper_card_node)
-        print('creating assoc', assoc_name, "with src upper card", src_upper_card, "and tgt upper card", tgt_upper_card)
-        ramified_scd._create_association(assoc_name,
-            bottom.read_edge_source(assoc_node),
-            bottom.read_edge_target(assoc_node),
+        src = scd.get_class_name(bottom.read_edge_source(assoc_node))
+        tgt = scd.get_class_name(bottom.read_edge_target(assoc_node))
+        print('creating assoc', src, "->", tgt, ", name =", assoc_name, ", src card = 0 ..", src_upper_card, "and tgt card = 0 ..", tgt_upper_card)
+        ramified_scd.create_association(assoc_name,
+            src,
+            tgt,
             src_max_c=src_upper_card,
             tgt_max_c=tgt_upper_card)
 
     for inh_name, inh_node in scd.get_inheritances().items():
         # Re-create inheritance links like in our original model:
-        print('creating inheritance', inh_name)
-        ramified_scd._create_inheritance(
-            bottom.read_edge_source(inh_node),
-            bottom.read_edge_target(inh_node))
+        src = scd.get_class_name(bottom.read_edge_source(inh_node))
+        tgt = scd.get_class_name(bottom.read_edge_target(inh_node))
+        print('creating inheritance link', src, '->', tgt)
+        ramified_scd.create_inheritance(src, tgt)
 
     # The RAMified meta-model should also conform to 'SCD':
-    conf = Conformance(state, model, scd_metamodel)
+    conf = Conformance(state, ramified, scd_metamodel)
     print("conforms?", conf.check_nominal(log=True))
+
+    return ramified
