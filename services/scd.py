@@ -70,7 +70,7 @@ class SCD:
         if min_c is not None:
             set_cardinality("lower", min_c)
         if max_c is not None:
-            set_cardinality("upper", min_c)
+            set_cardinality("upper", max_c)
 
     def create_association(self, name: str, source: str, target: str,
                            src_min_c: int = None, src_max_c: int = None,
