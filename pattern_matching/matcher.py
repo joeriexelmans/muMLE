@@ -172,7 +172,7 @@ class MatcherVF2:
             h_indegree = len(h_candidate_vtx.incoming)
             if g_indegree > h_indegree:
                 return
-            if not self.compare_fn(h_candidate_vtx.value, g_candidate_vtx.value):
+            if not self.compare_fn(g_candidate_vtx.value, h_candidate_vtx.value):
                 return
             new_state = state.grow_vtx(
                 h_candidate_vtx,
@@ -205,16 +205,19 @@ if __name__ == "__main__":
     ]
 
     guest = Graph()
-    guest.vtxs = [Vertex('src'), Vertex('tgt')]
+    guest.vtxs = [
+        Vertex('v != 3'), # cannot be matched with Vertex(3) - changing this to True, you get 2 morphisms instead of one
+        Vertex('True')] # can be matched with any node
     guest.edges = [
+        # Look for a simple loop:
         Edge(guest.vtxs[0], guest.vtxs[1]),
         Edge(guest.vtxs[1], guest.vtxs[0]),
     ]
 
-    m = MatcherVF2(host, guest, lambda hv, gv: True)
+    m = MatcherVF2(host, guest, lambda g_val, h_val: eval(g_val, {}, {'v':h_val}))
     import time
     durations = 0
-    iterations = 100
+    iterations = 1
     print("Patience...")
     for n in range(iterations):
         time_start = time.perf_counter_ns()
