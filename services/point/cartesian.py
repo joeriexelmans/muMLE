@@ -28,7 +28,7 @@ class PointCartesian:
         Returns:
             Nothing.
         """
-        if self.point is None:
+        if self.point == None:
             self.point = (x, y)
         else:
             raise RuntimeError("A PointCartesian model can contain at most 1 point.")
@@ -40,7 +40,7 @@ class PointCartesian:
         Returns:
             Textual representation of the point data.
         """
-        if self.point is None:
+        if self.point == None:
             raise RuntimeError("No point found in model.")
         else:
             return f"(X = {self.point[0]}, Y = {self.point[1]})"
@@ -65,7 +65,7 @@ class PointCartesian:
         Returns:
             Nothing.
         """
-        if self.point is not None:
+        if self.point != None:
             self.point = (self.point[0] + delta_x, self.point[1] + delta_y)
         else:
             raise RuntimeError("No point found in model.")

@@ -48,7 +48,7 @@ class Neo4jState(State):
             return result.single()[0]
 
         node = self._run_and_return(query, nid=str(self.new_id()))
-        return UUID(node) if node is not None else None
+        return UUID(node) if node != None else None
 
     def create_edge(self, source: Element, target: Element) -> Optional[Edge]:
         def query(tx, eid, sid, tid):
@@ -66,7 +66,7 @@ class Neo4jState(State):
                 return None
 
         edge = self._run_and_return(query, eid=str(self.new_id()), sid=str(source), tid=str(target))
-        return UUID(edge) if edge is not None else None
+        return UUID(edge) if edge != None else None
 
     def create_nodevalue(self, value: Any) -> Optional[Node]:
         def query(tx, nid, val):
@@ -80,7 +80,7 @@ class Neo4jState(State):
             return None
 
         node = self._run_and_return(query, nid=str(self.new_id()), val=repr(value))
-        return UUID(node) if node is not None else None
+        return UUID(node) if node != None else None
 
     def create_dict(self, source: Element, value: Any, target: Element) -> Optional[Tuple[Edge, Edge, Node]]:
         if not self.is_valid_datavalue(value):
@@ -88,7 +88,7 @@ class Neo4jState(State):
 
         edge_node = self.create_edge(source, target)
         val_node = self.create_nodevalue(value)
-        if edge_node is not None and val_node is not None:
+        if edge_node != None and val_node != None:
             self.create_edge(edge_node, val_node)
 
     def read_root(self) -> Node:
@@ -107,7 +107,7 @@ class Neo4jState(State):
                 return None
 
         value = self._run_and_return(query, nid=str(node))
-        return literal_eval(value) if value is not None else None
+        return literal_eval(value) if value != None else None
 
     def read_outgoing(self, elem: Element) -> Optional[List[Edge]]:
         def query(tx, eid):
@@ -117,10 +117,10 @@ class Neo4jState(State):
                             eid=eid)
             return result.value()
 
-        source_exists = self._run_and_return(self._existence_check, eid=str(elem)) is not None
+        source_exists = self._run_and_return(self._existence_check, eid=str(elem)) != None
         if source_exists:
             result = self._run_and_return(query, eid=str(elem))
-            return [UUID(x) for x in result] if result is not None else None
+            return [UUID(x) for x in result] if result != None else None
 
     def read_incoming(self, elem: Element) -> Optional[List[Edge]]:
         def query(tx, eid):
@@ -130,10 +130,10 @@ class Neo4jState(State):
                             eid=eid)
             return result.value()
 
-        target_exists = self._run_and_return(self._existence_check, eid=str(elem)) is not None
+        target_exists = self._run_and_return(self._existence_check, eid=str(elem)) != None
         if target_exists:
             result = self._run_and_return(query, eid=str(elem))
-            return [UUID(x) for x in result] if result is not None else None
+            return [UUID(x) for x in result] if result != None else None
 
     def read_edge(self, edge: Edge) -> Tuple[Optional[Node], Optional[Node]]:
         def query(tx, eid):
@@ -143,7 +143,7 @@ class Neo4jState(State):
                             eid=eid)
             return result.single()
 
-        edge_exists = self._run_and_return(self._existence_check, eid=str(edge), label="Edge") is not None
+        edge_exists = self._run_and_return(self._existence_check, eid=str(edge), label="Edge") != None
         if edge_exists:
             try:
                 src, tgt = self._run_and_return(query, eid=str(edge))
@@ -167,12 +167,12 @@ class Neo4jState(State):
                 # No edge found with given label
                 return None
 
-        elem_exists = self._run_and_return(self._existence_check, eid=str(elem)) is not None
+        elem_exists = self._run_and_return(self._existence_check, eid=str(elem)) != None
         if elem_exists:
             if isinstance(value, UUID):
                 return None
             result = self._run_and_return(query, eid=str(elem), label_value=repr(value))
-            return UUID(result) if result is not None else None
+            return UUID(result) if result != None else None
 
     def read_dict_keys(self, elem: Element) -> Optional[List[Any]]:
         def query(tx, eid):
@@ -187,10 +187,10 @@ class Neo4jState(State):
                 # No edge found with given label
                 return None
 
-        elem_exists = self._run_and_return(self._existence_check, eid=str(elem)) is not None
+        elem_exists = self._run_and_return(self._existence_check, eid=str(elem)) != None
         if elem_exists:
             result = self._run_and_return(query, eid=str(elem))
-            return [UUID(x) for x in result if x is not None]
+            return [UUID(x) for x in result if x != None]
 
     def read_dict_edge(self, elem: Element, value: Any) -> Optional[Edge]:
         def query(tx, eid, label_value):
@@ -206,10 +206,10 @@ class Neo4jState(State):
                 # No edge found with given label
                 return None
 
-        elem_exists = self._run_and_return(self._existence_check, eid=str(elem)) is not None
+        elem_exists = self._run_and_return(self._existence_check, eid=str(elem)) != None
         if elem_exists:
             result = self._run_and_return(query, eid=str(elem), label_value=repr(value))
-            return UUID(result) if result is not None else None
+            return UUID(result) if result != None else None
 
     def read_dict_node(self, elem: Element, value_node: Node) -> Optional[Element]:
         def query(tx, eid, label_id):
@@ -225,10 +225,10 @@ class Neo4jState(State):
                 # No edge found with given label
                 return None
 
-        elem_exists = self._run_and_return(self._existence_check, eid=str(elem)) is not None
+        elem_exists = self._run_and_return(self._existence_check, eid=str(elem)) != None
         if elem_exists:
             result = self._run_and_return(query, eid=str(elem), label_id=str(value_node))
-            return UUID(result) if result is not None else None
+            return UUID(result) if result != None else None
 
     def read_dict_node_edge(self, elem: Element, value_node: Node) -> Optional[Edge]:
         def query(tx, eid, label_id):
@@ -244,10 +244,10 @@ class Neo4jState(State):
                 # No edge found with given label
                 return None
 
-        elem_exists = self._run_and_return(self._existence_check, eid=str(elem)) is not None
+        elem_exists = self._run_and_return(self._existence_check, eid=str(elem)) != None
         if elem_exists:
             result = self._run_and_return(query, eid=str(elem), label_id=str(value_node))
-            return UUID(result) if result is not None else None
+            return UUID(result) if result != None else None
 
     def read_reverse_dict(self, elem: Element, value: Any) -> Optional[List[Element]]:
         def query(tx, eid, label_value):
@@ -263,10 +263,10 @@ class Neo4jState(State):
                 # No edge found with given label
                 return None
 
-        elem_exists = self._run_and_return(self._existence_check, eid=str(elem)) is not None
+        elem_exists = self._run_and_return(self._existence_check, eid=str(elem)) != None
         if elem_exists:
             result = self._run_and_return(query, eid=str(elem), label_value=repr(value))
-            return [UUID(x) for x in result if x is not None]
+            return [UUID(x) for x in result if x != None]
 
     def delete_node(self, node: Node) -> None:
         def query(tx, nid):
@@ -279,7 +279,7 @@ class Neo4jState(State):
             return result.value()
 
         to_be_deleted = self._run_and_return(query, nid=str(node))
-        to_be_deleted = [UUID(x) for x in to_be_deleted if x is not None]
+        to_be_deleted = [UUID(x) for x in to_be_deleted if x != None]
         for edge in to_be_deleted:
             self.delete_edge(edge)
 
@@ -296,6 +296,6 @@ class Neo4jState(State):
             return result.value()
 
         to_be_deleted = self._run_and_return(query, eid=str(edge))
-        to_be_deleted = [UUID(x) for x in to_be_deleted if x is not None]
+        to_be_deleted = [UUID(x) for x in to_be_deleted if x != None]
         for edge in to_be_deleted:
             self.delete_edge(edge)

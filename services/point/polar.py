@@ -30,7 +30,7 @@ class PointPolar:
         Returns:
             Nothing.
         """
-        if self.point is None:
+        if self.point == None:
             self.point = (r, theta)
         else:
             raise RuntimeError("A PointPolar model can contain at most 1 point.")
@@ -42,7 +42,7 @@ class PointPolar:
         Returns:
             Textual representation of the point data.
         """
-        if self.point is None:
+        if self.point == None:
             raise RuntimeError("No point found in model.")
         else:
             return f"(r = {self.point[0]}, \u03B8 = {self.point[1]})"
@@ -67,7 +67,7 @@ class PointPolar:
         Returns:
             Nothing.
         """
-        if self.point is not None:
+        if self.point != None:
             self.point = (self.point[0] + delta_r, self.point[1] + delta_theta)
         else:
             raise RuntimeError("No point found in model.")

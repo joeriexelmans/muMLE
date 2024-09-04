@@ -4,25 +4,25 @@ import pytest
 @pytest.mark.usefixtures("state")
 def test_delete_edge_no_exists(state):
     e = state.delete_edge(1)
-    assert e is None
+    assert e == None
 
 
 @pytest.mark.usefixtures("state")
 def test_delete_edge_node(state):
     a = state.create_node()
-    assert a is not None
+    assert a != None
 
     e = state.delete_edge(a)
-    assert e is None
+    assert e == None
 
 
 @pytest.mark.usefixtures("state")
 def test_delete_edge_nodevalue(state):
     a = state.create_nodevalue(1)
-    assert a is not None
+    assert a != None
 
     e = state.delete_edge(a)
-    assert e is None
+    assert e == None
 
 
 @pytest.mark.usefixtures("state")
@@ -30,27 +30,27 @@ def test_delete_edge_normal(state):
     a = state.create_nodevalue(1)
     b = state.create_node()
     c = state.create_edge(a, b)
-    assert a is not None
-    assert b is not None
-    assert c is not None
+    assert a != None
+    assert b != None
+    assert c != None
 
     n = state.delete_edge(c)
-    assert n is None
+    assert n == None
 
     l = state.read_outgoing(a)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_incoming(a)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_outgoing(b)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_incoming(b)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
 
@@ -60,35 +60,35 @@ def test_delete_edge_remove_recursive(state):
     b = state.create_node()
     c = state.create_edge(a, b)
     d = state.create_edge(c, b)
-    assert a is not None
-    assert b is not None
-    assert c is not None
-    assert d is not None
+    assert a != None
+    assert b != None
+    assert c != None
+    assert d != None
 
     n = state.delete_edge(c)
-    assert n is None
+    assert n == None
 
     l = state.read_value(a)
     assert l == 1
 
     l = state.read_outgoing(a)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_incoming(a)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     s, t = state.read_edge(c)
-    assert s is None
-    assert t is None
+    assert s == None
+    assert t == None
 
     s, t = state.read_edge(d)
-    assert s is None
-    assert t is None
+    assert s == None
+    assert t == None
 
     l = state.read_outgoing(b)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
 
@@ -102,60 +102,60 @@ def test_delete_edge_remove_edge_recursive_deep(state):
     f = state.create_node()
     g = state.create_edge(f, e)
     h = state.create_edge(b, c)
-    assert a is not None
-    assert b is not None
-    assert c is not None
-    assert d is not None
-    assert e is not None
-    assert f is not None
-    assert g is not None
-    assert h is not None
+    assert a != None
+    assert b != None
+    assert c != None
+    assert d != None
+    assert e != None
+    assert f != None
+    assert g != None
+    assert h != None
 
     n = state.delete_edge(d)
-    assert n is None
+    assert n == None
 
     l = state.read_outgoing(a)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_incoming(a)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_outgoing(b)
-    assert l is not None
+    assert l != None
     assert set(l) == set([h])
 
     l = state.read_incoming(b)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_outgoing(c)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_incoming(c)
-    assert l is not None
+    assert l != None
     assert set(l) == set([h])
 
     s, t = state.read_edge(d)
-    assert s is None
-    assert t is None
+    assert s == None
+    assert t == None
 
     s, t = state.read_edge(e)
-    assert s is None
-    assert t is None
+    assert s == None
+    assert t == None
 
     s, t = state.read_edge(g)
-    assert s is None
-    assert t is None
+    assert s == None
+    assert t == None
 
     l = state.read_outgoing(f)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_incoming(f)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     s, t = state.read_edge(h)
@@ -173,40 +173,40 @@ def test_delete_edge_remove_edge_recursive_steps(state):
     f = state.create_node()
     g = state.create_edge(f, e)
     h = state.create_edge(b, c)
-    assert a is not None
-    assert b is not None
-    assert c is not None
-    assert d is not None
-    assert e is not None
-    assert f is not None
-    assert g is not None
-    assert h is not None
+    assert a != None
+    assert b != None
+    assert c != None
+    assert d != None
+    assert e != None
+    assert f != None
+    assert g != None
+    assert h != None
 
     n = state.delete_edge(g)
-    assert n is None
+    assert n == None
 
     l = state.read_outgoing(a)
-    assert l is not None
+    assert l != None
     assert set(l) == set([d])
 
     l = state.read_incoming(a)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_outgoing(b)
-    assert l is not None
+    assert l != None
     assert set(l) == set([h])
 
     l = state.read_incoming(b)
-    assert l is not None
+    assert l != None
     assert set(l) == set([d])
 
     l = state.read_outgoing(c)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_incoming(c)
-    assert l is not None
+    assert l != None
     assert set(l) == set([h, e])
 
     s, t = state.read_edge(d)
@@ -214,11 +214,11 @@ def test_delete_edge_remove_edge_recursive_steps(state):
     assert t == b
 
     l = state.read_outgoing(d)
-    assert l is not None
+    assert l != None
     assert set(l) == set([e])
 
     l = state.read_incoming(d)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     s, t = state.read_edge(e)
@@ -226,29 +226,29 @@ def test_delete_edge_remove_edge_recursive_steps(state):
     assert t == c
 
     l = state.read_outgoing(e)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_incoming(e)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     s, t = state.read_edge(g)
-    assert s is None
-    assert t is None
+    assert s == None
+    assert t == None
 
     l = state.read_outgoing(g)
-    assert l is None
+    assert l == None
 
     l = state.read_incoming(g)
-    assert l is None
+    assert l == None
 
     l = state.read_outgoing(f)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_incoming(f)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     s, t = state.read_edge(h)
@@ -256,30 +256,30 @@ def test_delete_edge_remove_edge_recursive_steps(state):
     assert t == c
 
     n = state.delete_edge(e)
-    assert n is None
+    assert n == None
 
     l = state.read_outgoing(a)
-    assert l is not None
+    assert l != None
     assert set(l) == set([d])
 
     l = state.read_incoming(a)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_outgoing(b)
-    assert l is not None
+    assert l != None
     assert set(l) == set([h])
 
     l = state.read_incoming(b)
-    assert l is not None
+    assert l != None
     assert set(l) == set([d])
 
     l = state.read_outgoing(c)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_incoming(c)
-    assert l is not None
+    assert l != None
     assert set(l) == set([h])
 
     s, t = state.read_edge(d)
@@ -287,39 +287,39 @@ def test_delete_edge_remove_edge_recursive_steps(state):
     assert t == b
 
     l = state.read_outgoing(d)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_incoming(d)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     s, t = state.read_edge(e)
-    assert s is None
-    assert t is None
+    assert s == None
+    assert t == None
 
     l = state.read_outgoing(e)
-    assert l is None
+    assert l == None
 
     l = state.read_incoming(e)
-    assert l is None
+    assert l == None
 
     s, t = state.read_edge(g)
-    assert s is None
-    assert t is None
+    assert s == None
+    assert t == None
 
     l = state.read_outgoing(g)
-    assert l is None
+    assert l == None
 
     l = state.read_incoming(g)
-    assert l is None
+    assert l == None
 
     l = state.read_outgoing(f)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_incoming(f)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     s, t = state.read_edge(h)
@@ -327,55 +327,55 @@ def test_delete_edge_remove_edge_recursive_steps(state):
     assert t == c
 
     n = state.delete_edge(d)
-    assert n is None
+    assert n == None
 
     l = state.read_outgoing(a)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_incoming(a)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_outgoing(b)
-    assert l is not None
+    assert l != None
     assert set(l) == set([h])
 
     l = state.read_incoming(b)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_outgoing(c)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_incoming(c)
-    assert l is not None
+    assert l != None
     assert set(l) == set([h])
 
     s, t = state.read_edge(d)
-    assert s is None
-    assert t is None
+    assert s == None
+    assert t == None
 
     l = state.read_outgoing(d)
-    assert l is None
+    assert l == None
 
     l = state.read_incoming(d)
-    assert l is None
+    assert l == None
 
     s, t = state.read_edge(e)
-    assert s is None
-    assert t is None
+    assert s == None
+    assert t == None
 
     l = state.read_outgoing(e)
-    assert l is None
+    assert l == None
 
     l = state.read_incoming(e)
-    assert l is None
+    assert l == None
 
     s, t = state.read_edge(g)
-    assert s is None
-    assert t is None
+    assert s == None
+    assert t == None
 
     l = state.read_outgoing(g)
     assert l == None
@@ -384,11 +384,11 @@ def test_delete_edge_remove_edge_recursive_steps(state):
     assert l == None
 
     l = state.read_outgoing(f)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     l = state.read_incoming(f)
-    assert l is not None
+    assert l != None
     assert set(l) == set([])
 
     s, t = state.read_edge(h)

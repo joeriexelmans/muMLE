@@ -25,7 +25,7 @@ class Bottom:
         Returns:
             Nothing
         """
-        if value is None:
+        if value == None:
             n = self.bottom.create_node()
         else:
             n = self.bottom.create_node(value)

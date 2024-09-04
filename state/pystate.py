@@ -67,7 +67,7 @@ class PyState(State):
         else:
             n = self.create_nodevalue(value)
             e = self.create_edge(source, target)
-            assert n is not None and e is not None
+            assert n != None and e != None
             e2 = self.create_edge(e, n)
             self.cache.setdefault(source, {})[value] = e
             self.cache_node.setdefault(source, {})[n] = e
@@ -107,7 +107,7 @@ class PyState(State):
 
     def read_dict(self, elem: Element, value: Any) -> Optional[Element]:
         e = self.read_dict_edge(elem, value)
-        if e is None:
+        if e == None:
             return None
         else:
             return self.edges[e][1]
@@ -142,7 +142,7 @@ class PyState(State):
 
     def read_dict_node(self, elem: Element, value_node: Node) -> Optional[Element]:
         e = self.read_dict_node_edge(elem, value_node)
-        if e is None:
+        if e == None:
             return None
         else:
             self.cache_node.setdefault(elem, {})[value_node] = e

@@ -55,7 +55,7 @@ class SCD:
         self.bottom.create_edge(self.model, class_node, name)  # attach to model
         scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "Class")  # retrieve type
         self.bottom.create_edge(class_node, scd_node, "Morphism")  # create morphism link
-        if abstract is not None:
+        if abstract != None:
             # operations similar to set_cardinality function defined above
             abstract_model = self.bottom.create_node()
             Boolean(abstract_model, self.bottom.state).create(abstract)
@@ -67,9 +67,9 @@ class SCD:
             scd_link, = self.bottom.read_outgoing_elements(self.scd_model, "Class_abstract")
             self.bottom.create_edge(abstract_node, scd_node, "Morphism")
             self.bottom.create_edge(abstract_link, scd_link, "Morphism")
-        if min_c is not None:
+        if min_c != None:
             set_cardinality("lower", min_c)
-        if max_c is not None:
+        if max_c != None:
             set_cardinality("upper", max_c)
 
     def create_association(self, name: str, source: str, target: str,
@@ -118,13 +118,13 @@ class SCD:
         self.bottom.create_edge(self.model, assoc_edge, name)  # attach to model
         scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "Association")  # retrieve type
         self.bottom.create_edge(assoc_edge, scd_node, "Morphism")  # create morphism link
-        if src_min_c is not None:
+        if src_min_c != None:
             set_cardinality("source_lower", src_min_c)
-        if src_max_c is not None:
+        if src_max_c != None:
             set_cardinality("source_upper", src_max_c)
-        if tgt_min_c is not None:
+        if tgt_min_c != None:
             set_cardinality("target_lower", tgt_min_c)
-        if tgt_max_c is not None:
+        if tgt_max_c != None:
             set_cardinality("target_upper", tgt_max_c)
 
     def create_global_constraint(self, name: str):

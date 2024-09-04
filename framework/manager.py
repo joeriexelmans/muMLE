@@ -1,5 +1,6 @@
 from state.base import State
 from bootstrap.scd import bootstrap_scd
+from bootstrap.pn import bootstrap_pn
 from services import implemented as services
 from framework.conformance import Conformance
 from uuid import UUID
@@ -11,6 +12,7 @@ class Manager:
         self.current_context = None
         self.state = state
         bootstrap_scd(state)
+        # bootstrap_pn(state, "PN")
         scd_node = self.state.read_dict(self.state.read_root(), "SCD")
         for key_node in self.state.read_dict_keys(self.state.read_root()):
             model_node = self.state.read_dict_node(self.state.read_root(), key_node)
@@ -39,7 +41,7 @@ class Manager:
         """
         root = self.state.read_root()
         type_model_node = self.state.read_dict(root, type_model_name)
-        if type_model_node is None:
+        if type_model_node == None:
             raise RuntimeError(f"No type model with name {type_model_name} found.")
         else:
             # check if model is a linguistic type model
@@ -71,7 +73,7 @@ class Manager:
         """
         root = self.state.read_root()
         model_node = self.state.read_dict(root, name)
-        if model_node is None:
+        if model_node == None:
             raise RuntimeError(f"No model with name {name} found.")
         model_root = UUID(self.state.read_value(model_node))
         self.current_model = (name, model_root)
@@ -94,7 +96,7 @@ class Manager:
             Names of the model's types
         """
         root = self.state.read_root()
-        if self.current_model is None:
+        if self.current_model == None:
             raise RuntimeError(f"No model currently selected.")
         name, model = self.current_model
         model_id = self.state.read_dict(root, name)
@@ -142,9 +144,9 @@ class Manager:
         Returns:
             Functions exposed by the current context's implementation
         """
-        if self.current_model is None:
+        if self.current_model == None:
             raise RuntimeError(f"No model currently selected.")
-        if self.current_context is None:
+        if self.current_context == None:
             raise RuntimeError(f"No context currently selected.")
         yield from [
             getattr(self.current_context, func)
@@ -171,14 +173,16 @@ class Manager:
         """
         root = self.state.read_root()
         type_model_node = self.state.read_dict(root, type_model_name)
-        if type_model_node is None:
+        if type_model_node == None:
             raise RuntimeError(f"No type model with name {type_model_name} found.")
         model_node = self.state.read_dict(root, model_name)
-        if model_node is None:
+        if model_node == None:
             raise RuntimeError(f"No model with name {model_node} found.")
         types = self.state.read_outgoing(model_node)
         types = [self.state.read_edge(e)[1] for e in types]
-        if type_model_node not in types:
+        # if type_model_node not in types:
+        if True:
+            print("checking structural conformance")
             conf = Conformance(self.state,
                                UUID(self.state.read_value(model_node)),
                                UUID(self.state.read_value(type_model_node))).check_structural(log=True)
@@ -186,6 +190,7 @@ class Manager:
                 self.state.create_edge(model_node, type_model_node)
             return conf
         else:
+            print("checking nominal conformance")
             return Conformance(self.state,
                                UUID(self.state.read_value(model_node)),
                                UUID(self.state.read_value(type_model_node))).check_nominal(log=True)
@@ -205,6 +210,9 @@ class Manager:
         import pickle
         with open("state.p", "rb") as file:
             self.state = pickle.load(file)
+
+    def to_graphviz(self):
+        self.state.dump("state.dot")
 
 
 if __name__ == '__main__':

@@ -4,28 +4,28 @@ import pytest
 @pytest.mark.usefixtures("state")
 def test_read_edge_node(state):
     b = state.create_node()
-    assert b is not None
+    assert b != None
 
     s, t = state.read_edge(b)
-    assert s is None
-    assert t is None
+    assert s == None
+    assert t == None
 
 
 @pytest.mark.usefixtures("state")
 def test_read_edge_no_exists(state):
     s, t = state.read_edge(-1)
-    assert s is None
-    assert t is None
+    assert s == None
+    assert t == None
 
 
 @pytest.mark.usefixtures("state")
 def test_read_edge_nodevalue(state):
     b = state.create_nodevalue(1)
-    assert b is not None
+    assert b != None
 
     s, t = state.read_edge(b)
-    assert s is None
-    assert t is None
+    assert s == None
+    assert t == None
 
 
 @pytest.mark.usefixtures("state")
@@ -33,9 +33,9 @@ def test_read_edge_normal(state):
     a = state.create_node()
     b = state.create_node()
     c = state.create_edge(a, b)
-    assert a is not None
-    assert b is not None
-    assert c is not None
+    assert a != None
+    assert b != None
+    assert c != None
 
     s, t = state.read_edge(c)
     assert s == a
@@ -49,11 +49,11 @@ def test_read_edge_edge_to_edge(state):
     c = state.create_edge(a, b)
     d = state.create_edge(a, b)
     e = state.create_edge(c, d)
-    assert a is not None
-    assert b is not None
-    assert c is not None
-    assert d is not None
-    assert e is not None
+    assert a != None
+    assert b != None
+    assert c != None
+    assert d != None
+    assert e != None
 
     s, t = state.read_edge(c)
     assert s == a
@@ -74,10 +74,10 @@ def test_read_edge_edge_to_node(state):
     b = state.create_node()
     c = state.create_edge(a, b)
     d = state.create_edge(c, b)
-    assert a is not None
-    assert b is not None
-    assert c is not None
-    assert d is not None
+    assert a != None
+    assert b != None
+    assert c != None
+    assert d != None
 
     s, t = state.read_edge(c)
     assert s == a
@@ -94,10 +94,10 @@ def test_read_edge_node_to_edge(state):
     b = state.create_node()
     c = state.create_edge(a, b)
     d = state.create_edge(b, c)
-    assert a is not None
-    assert b is not None
-    assert c is not None
-    assert d is not None
+    assert a != None
+    assert b != None
+    assert c != None
+    assert d != None
 
     s, t = state.read_edge(c)
     assert s == a
@@ -113,9 +113,9 @@ def test_read_edge_node_to_nodevalue(state):
     a = state.create_node()
     b = state.create_nodevalue(1)
     c = state.create_edge(a, b)
-    assert a is not None
-    assert b is not None
-    assert c is not None
+    assert a != None
+    assert b != None
+    assert c != None
 
     s, t = state.read_edge(c)
     assert s == a
@@ -127,9 +127,9 @@ def test_read_edge_nodevalue_to_nodevalue(state):
     a = state.create_nodevalue(1)
     b = state.create_nodevalue(1)
     c = state.create_edge(a, b)
-    assert a is not None
-    assert b is not None
-    assert c is not None
+    assert a != None
+    assert b != None
+    assert c != None
 
     s, t = state.read_edge(c)
     assert s == a

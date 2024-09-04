@@ -4,6 +4,8 @@ from state.base import State
 from typing import Dict, Tuple, Set, Any, List
 from pprint import pprint
 
+import functools
+
 
 class Conformance:
     def __init__(self, state: State, model: UUID, type_model: UUID):
@@ -21,8 +23,8 @@ class Conformance:
         }
         self.type_model_names = {
             # map type model elements to their names to prevent iterating too much
-            self.bottom.read_outgoing_elements(self.type_model, e)[0]: e
-            for e in self.bottom.read_keys(self.type_model)
+            self.bottom.read_outgoing_elements(self.type_model, e)[0]
+                : e for e in self.bottom.read_keys(self.type_model)
         }
         self.sub_types: Dict[str, Set[str]] = {
             k: set() for k in self.bottom.read_keys(self.type_model)
@@ -192,8 +194,8 @@ class Conformance:
                 self.abstract_types.append(tm_name)
             if lc or uc:
                 mult = (
-                    lc if lc is not None else float("-inf"),
-                    uc if uc is not None else float("inf")
+                    lc if lc != None else float("-inf"),
+                    uc if uc != None else float("inf")
                 )
                 self.multiplicities[tm_name] = mult
             # multiplicities for associations
@@ -201,21 +203,21 @@ class Conformance:
             suc = self.read_attribute(tm_element, "source_upper_cardinality")
             if slc or suc:
                 mult = (
-                    slc if slc is not None else float("-inf"),
-                    suc if suc is not None else float("inf")
+                    slc if slc != None else float("-inf"),
+                    suc if suc != None else float("inf")
                 )
                 self.source_multiplicities[tm_name] = mult
             tlc = self.read_attribute(tm_element, "target_lower_cardinality")
             tuc = self.read_attribute(tm_element, "target_upper_cardinality")
             if tlc or tuc:
                 mult = (
-                    tlc if tlc is not None else float("-inf"),
-                    tuc if tuc is not None else float("inf")
+                    tlc if tlc != None else float("-inf"),
+                    tuc if tuc != None else float("inf")
                 )
                 self.target_multiplicities[tm_name] = mult
             # optional for attribute links
             opt = self.read_attribute(tm_element, "optional")
-            if opt is not None:
+            if opt != None:
                 self.source_multiplicities[tm_name] = (0 if opt else 1, 1)
                 self.target_multiplicities[tm_name] = (0, 1)
 
@@ -245,7 +247,9 @@ class Conformance:
                     sub_tm = UUID(self.bottom.read_value(tm_element))
                     if not Conformance(self.state, sub_m, sub_tm).check_nominal():
                         raise RuntimeError(f"Incorrectly model reference: {m_name}")
-            except ValueError:
+            except ValueError as e:
+                import traceback
+                traceback.format_exc(e)
                 # no or too many morphism links found
                 raise RuntimeError(f"Incorrectly typed element: {m_name}")
         return True
@@ -259,7 +263,7 @@ class Conformance:
             m_element, = self.bottom.read_outgoing_elements(self.model, m_name)
             m_source = self.bottom.read_edge_source(m_element)
             m_target = self.bottom.read_edge_target(m_element)
-            if m_source is None or m_target is None:
+            if m_source == None or m_target == None:
                 # element is not a link
                 continue
             tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
@@ -367,7 +371,7 @@ class Conformance:
             if tm_name != "GlobalConstraint":
                 tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
                 code = self.read_attribute(tm_element, "constraint")
-                if code is not None:
+                if code != None:
                     morphisms = self.bottom.read_incoming_elements(tm_element, "Morphism")
                     morphisms = [m for m in morphisms if m in self.model_names]
                     for m_element in morphisms:
@@ -379,7 +383,7 @@ class Conformance:
             if tm_name == "GlobalConstraint":
                 tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
                 code = self.read_attribute(tm_element, "constraint")
-                if code is not None:
+                if code != None:
                     if not self.evaluate_constraint(code, model=self.model):
                         raise RuntimeError(f"Global constraint {tm_name} not satisfied.")
         return True
@@ -460,14 +464,17 @@ class Conformance:
         ref_element, = self.bottom.read_outgoing_elements(self.scd_model, "ModelRef")
         # matching
         for m_element, m_name in self.model_names.items():
-            is_edge = self.bottom.read_edge_source(m_element) is not None
+            is_edge = self.bottom.read_edge_source(m_element) != None
+            print('element:', m_element, 'name:', m_name, 'is_edge', is_edge)
             for type_name, structure in self.structures.items():
                 tm_element, = self.bottom.read_outgoing_elements(self.type_model, type_name)
-                type_is_edge = self.bottom.read_edge_source(tm_element) is not None
+                type_is_edge = self.bottom.read_edge_source(tm_element) != None
                 if is_edge == type_is_edge:
+                    print('  type_name:', type_name, 'type_is_edge:', type_is_edge, "structure:", structure)
                     mismatch = False
                     matched = 0
                     for name, optional, attr_type in structure:
+                        print('    name:', name, "optional:", optional, "attr_type:", attr_type)
                         try:
                             attr, = self.bottom.read_outgoing_elements(self.model, f"{m_name}.{name}")
                             attr_tm, = self.bottom.read_outgoing_elements(self.type_model, attr_type)
@@ -485,26 +492,34 @@ class Conformance:
                             else:
                                 # eval constraints
                                 code = self.read_attribute(attr_tm, "constraint")
-                                if code is not None:
+                                if code != None:
                                     attr_conforms = self.evaluate_constraint(code, element=attr)
                             if attr_conforms:
                                 matched += 1
-                        except ValueError:
+                                print("     attr_conforms -> matched:", matched)
+                        except ValueError as e:
                             # attr not found or failed parsing UUID
                             if optional:
+                                print("     skipping:", e)
                                 continue
                             else:
+                                # did not match mandatory attribute
+                                print("     breaking:", e)
                                 mismatch = True
                                 break
+
+                    print('  matched:', matched, 'len(structure):', len(structure))
                     # if matched == len(structure):
                     if not mismatch:
+                        print('  add to candidates:', m_name, type_name)
                         self.candidates.setdefault(m_name, set()).add(type_name)
         # filter out candidates for links based on source and target types
         for m_element, m_name in self.model_names.items():
-            is_edge = self.bottom.read_edge_source(m_element) is not None
+            is_edge = self.bottom.read_edge_source(m_element) != None
             if is_edge and m_name in self.candidates:
                 m_source = self.bottom.read_edge_source(m_element)
                 m_target = self.bottom.read_edge_target(m_element)
+                print(self.candidates)
                 source_candidates = self.candidates[self.model_names[m_source]]
                 target_candidates = self.candidates[self.model_names[m_target]]
                 remove = set()

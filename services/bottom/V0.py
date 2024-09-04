@@ -21,7 +21,7 @@ class Bottom:
         Returns:
             UUID of the node.
         """
-        if value is None:
+        if value == None:
             return self.state.create_node()
         else:
             return self.state.create_nodevalue(value)
@@ -38,7 +38,7 @@ class Bottom:
         Returns:
             UUID of the edge.
         """
-        if label is None:
+        if label == None:
             return self.state.create_edge(source, target)
         else:
             return self.state.create_dict(source, label, target)
@@ -66,7 +66,7 @@ class Bottom:
             UUID of source element of the edge
         """
         result = self.state.read_edge(edge)
-        return result[0] if result is not None else result
+        return result[0] if result != None else result
 
     def read_edge_target(self, edge: UUID) -> UUID:
         """
@@ -79,7 +79,7 @@ class Bottom:
             UUID of target element of the edge
         """
         result = self.state.read_edge(edge)
-        return result[1] if result is not None else result
+        return result[1] if result != None else result
 
     def read_incoming_edges(self, target: UUID, label=None) -> List[UUID]:
         """
@@ -102,9 +102,9 @@ class Bottom:
                 return None
 
         edges = self.state.read_incoming(target)
-        if edges is None:
+        if edges == None:
             return []
-        if label is not None:
+        if label != None:
             edges = [e for e in edges if read_label(e) == label]
         return edges
 
@@ -129,9 +129,9 @@ class Bottom:
                 return None
 
         edges = self.state.read_outgoing(source)
-        if edges is None:
+        if edges == None:
             return []
-        if label is not None:
+        if label != None:
             edges = [e for e in edges if read_label(e) == label]
         return edges
 
@@ -148,7 +148,7 @@ class Bottom:
             List of UUIDs of elements connected via incoming edges
         """
         edges = self.read_incoming_edges(target, label)
-        if edges is None or len(edges) == 0:
+        if edges == None or len(edges) == 0:
             return []
         else:
             return [self.read_edge_source(e) for e in edges]
@@ -166,7 +166,7 @@ class Bottom:
             List of UUIDs of elements connected via outgoing edges
         """
         edges = self.read_outgoing_edges(source, label)
-        if edges is None or len(edges) == 0:
+        if edges == None or len(edges) == 0:
             return []
         else:
             return [self.read_edge_target(e) for e in edges]
@@ -196,7 +196,7 @@ class Bottom:
             Nothing
         """
         src, tgt = self.state.read_edge(element)
-        if src is None and tgt is None:
+        if src == None and tgt == None:
             # node
             self.state.delete_node(element)
         else:

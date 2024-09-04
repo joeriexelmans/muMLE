@@ -42,7 +42,7 @@ class DevState(PyState):
                 f.write("\"a_%s\" -> \"a_%s\";\n" % (i.int, e[1].int))
             f.write("}")
 
-        if png_path is not None:
+        if png_path != None:
             # generate png from dot-file
             bashCommand = f"dot -Tpng {path} -o {png_path}"
             import subprocess

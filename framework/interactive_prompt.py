@@ -35,11 +35,11 @@ def main():
     man = Manager(state)
 
     while True:
-        if man.current_model is not None and man.current_context is None:
+        if man.current_model != None and man.current_context == None:
             # we have selected a model, so we display typing questions
             answer = prompt(questions.MODEL_SELECTED)
             ctx = man
-        elif man.current_model is not None and man.current_context is not None:
+        elif man.current_model != None and man.current_context != None:
             # we have selected both a model and a context, so we display available services
             qs = generate_context_question(type(man.current_context), man.get_services())
             answer = prompt(qs)
@@ -79,7 +79,7 @@ def main():
             args = {k: types[k](v) if len(v) > 0 else None for k, v in args.items()}
             try:
                 output = method(**args)
-                if output is not None:
+                if output != None:
                     try:
                         if isinstance(output, str):
                             raise TypeError

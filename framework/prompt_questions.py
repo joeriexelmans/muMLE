@@ -28,6 +28,7 @@ MODEL_MGMT = [
             Separator(),
             'load state',
             'dump state',
+            'to graphviz',
             Separator(),
             'exit'
         ],
