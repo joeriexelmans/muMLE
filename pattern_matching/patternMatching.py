@@ -26,7 +26,6 @@ class PatternMatching(object):
     Returns an occurrence of a given pattern from the given Graph
     """
     def __init__(self, optimize=True):
-        # store the type of matching we want to use
         self.optimize        = optimize
 
     def matchNaive(self, pattern, vertices, edges, pattern_vertices=None):
@@ -34,17 +33,19 @@ class PatternMatching(object):
         Try to find an occurrence of the pattern in the Graph naively. 
         """
 
-        print('matchNaive...')
-        print('pattern:', pattern)
-        print('vertices:', vertices)
-        print('edges:', edges)
-        print('pattern_vertices:', pattern_vertices)
+        # print('matchNaive...')
+        # print('pattern.vertices:', pattern.vertices)
+        # print('pattern.edges:', pattern.edges)
+        # print('vertices:', vertices)
+        # print('edges:', edges)
+        # print('pattern_vertices:', pattern_vertices)
 
         # allow call with specific arguments
         if pattern_vertices        == None:
             pattern_vertices    = pattern.vertices
 
         def visitEdge(pattern_vertices, p_edge, inc, g_edges, visited_p_vertices, visited_p_edges, visited_g_vertices, visited_g_edges, vertices, edges):
+            # print('visitEdge')
             """
             Visit a pattern edge, and try to bind it to a graph edge.
             (If the first fails, try the second, and so on...)
@@ -70,6 +71,7 @@ class PatternMatching(object):
             return False
 
         def visitEdges(pattern_vertices, p_edges, inc, g_edges, visited_p_vertices, visited_p_edges, visited_g_vertices, visited_g_edges, vertices, edges):
+            # print('visitEdges')
             """
             Visit all edges of the pattern vertex (edges given as argument).
             We need to try visiting them for all its permutations, as matching
@@ -130,6 +132,7 @@ class PatternMatching(object):
             return foundallEdges
 
         def visitVertex(pattern_vertices, p_vertex, g_vertex, visited_p_vertices, visited_p_edges, visited_g_vertices, visited_g_edges, vertices, edges):
+            # print('visitVertex')
             """
             Visit a pattern vertex, and try to bind it to the graph vertex
             (both are given as argument). A binding is successful if all the
@@ -153,6 +156,7 @@ class PatternMatching(object):
             return False
 
         def visitVertices(pattern_vertices, p_vertex, visited_p_vertices, visited_p_edges, visited_g_vertices, visited_g_edges, vertices, edges):
+            # print('visitVertices')
             """
             Visit a pattern vertex and try to bind a graph vertex to it.
             """
@@ -201,9 +205,9 @@ class PatternMatching(object):
         """
         Return adjacency matrix and the order of the vertices.
         """
-        print('createAdjacencyMatrixMap...')
-        print('graph:', graph)
-        print('pattern:', pattern)
+        # print('createAdjacencyMatrixMap...')
+        # print('graph:', graph)
+        # print('pattern:', pattern)
 
         matrix        = collections.OrderedDict()    # { vertex, (index, [has edge from index to pos?]) }
 
@@ -253,9 +257,9 @@ class PatternMatching(object):
         return AM, vertices_order
 
     def matchVF2(self, pattern, graph):
-        print('matchVF2...')
-        print('pattern:', pattern)
-        print('graph:', graph)
+        # print('matchVF2...')
+        # print('pattern:', pattern)
+        # print('graph:', graph)
 
         class VF2_Obj(object):
             """
@@ -263,23 +267,24 @@ class PatternMatching(object):
             """
             def __init__(self, len_graph_vertices, len_pattern_vertices):
                 # represents if n-the element (h[n] or p[n]) matched
-                self.core_graph        = [False]*len_graph_vertices
-                self.core_pattern    = [False]*len_pattern_vertices
+                self.host_vtx_is_matched      = [False]*len_graph_vertices
+                self.pattern_vtx_is_matched    = [False]*len_pattern_vertices
 
                 # save mapping from pattern to graph
                 self.mapping        = {}
+                self.edge_mapping   = {}
 
                 # preference lvl 1
                 # ordered set of vertices adjecent to M_graph connected via an outgoing edge
                 self.N_out_graph    = [-1]*len_graph_vertices
                 # ordered set of vertices adjecent to M_pattern connected via an outgoing edge
-                self.N_out_pattern    = [-1]*len_pattern_vertices
+                self.N_out_pattern  = [-1]*len_pattern_vertices
                 
                 # preference lvl 2
                 # ordered set of vertices adjecent to M_graph connected via an incoming edge
                 self.N_inc_graph    = [-1]*len_graph_vertices
                 # ordered set of vertices adjecent to M_pattern connected via an incoming edge
-                self.N_inc_pattern    = [-1]*len_pattern_vertices
+                self.N_inc_pattern  = [-1]*len_pattern_vertices
 
                 # preference lvl 3
                 # not in the above
@@ -361,51 +366,53 @@ class PatternMatching(object):
 
                 # add all neihgbours of pattern vertex m
                 for i in range(0, len(P)):    # P is a nxn-matrix
-                    if (P[m][i] or P[i][m])  and VF2_obj.core_pattern[i]:
+                    if (P[m][i] or P[i][m])  and VF2_obj.pattern_vtx_is_matched[i]:
                         neighbours_pattern.setdefault(p[i].type, set()).add(p[i])
 
                 # add all neihgbours of graph vertex n
                 for i in range(0, len(H)):    # P is a nxn-matrix
-                    if (H[n][i] or H[i][n])  and VF2_obj.core_graph[i]:
+                    if (H[n][i] or H[i][n])  and VF2_obj.host_vtx_is_matched[i]:
                         neighbours_graph.setdefault(h[i].type, set()).add(h[i])
 
                 # take a coding shortcut,
                 # use self.matchNaive function to see if it is feasable.
                 # this way, we immidiatly test the semantic attributes
-                if not self.matchNaive(pattern, pattern_vertices=neighbours_pattern, vertices=neighbours_graph, edges=graph.edges):
+                # print('pattern.vertices', pattern.vertices)
+                matched = self.matchNaive(pattern, pattern_vertices=neighbours_pattern, vertices=neighbours_graph, edges=graph.edges)
+                if matched == None:
                     return False
 
-                # count ext_edges from core_graph to a adjecent vertices and
+                # count ext_edges from host_vtx_is_matched to a adjecent vertices and
                 # cuotn ext_edges for adjecent vertices and not matched vertices
                 # connected via the ext_edges
                 ext_edges_graph_ca    = 0
                 ext_edges_graph_an    = 0
                 # for all core vertices
-                for x in range(0, len(VF2_obj.core_graph)):
+                for x in range(0, len(VF2_obj.host_vtx_is_matched)):
                     # for all its neighbours
                     for y in range(0, len(H)):
                         if H[x][y]:
                             # if it is a neighbor and not yet matched
-                            if (VF2_obj.N_out_graph[y] != -1 or VF2_obj.N_inc_graph[y] != -1) and VF2_obj.core_graph[y]:
+                            if (VF2_obj.N_out_graph[y] != -1 or VF2_obj.N_inc_graph[y] != -1) and VF2_obj.host_vtx_is_matched[y]:
                                 # if we matched it
-                                if VF2_obj.core_graph[x] != -1:
+                                if VF2_obj.host_vtx_is_matched[x] != -1:
                                     ext_edges_graph_ca    += 1
                                 else:
                                     ext_edges_graph_an    += 1
 
-                # count ext_edges from core_pattern to a adjecent vertices
+                # count ext_edges from pattern_vtx_is_matched to a adjecent vertices
                 # connected via the ext_edges
                 ext_edges_pattern_ca    = 0
                 ext_edges_pattern_an    = 0
                 # for all core vertices
-                for x in range(0, len(VF2_obj.core_pattern)):
+                for x in range(0, len(VF2_obj.pattern_vtx_is_matched)):
                     # for all its neighbours
                     for y in range(0, len(P)):
                         if P[x][y]:
                             # if it is a neighbor and not yet matched
-                            if (VF2_obj.N_out_pattern[y] != -1 or VF2_obj.N_inc_pattern[y] != -1) and VF2_obj.core_pattern[y]:
+                            if (VF2_obj.N_out_pattern[y] != -1 or VF2_obj.N_inc_pattern[y] != -1) and VF2_obj.pattern_vtx_is_matched[y]:
                                 # if we matched it
-                                if VF2_obj.core_pattern[x] != -1:
+                                if VF2_obj.pattern_vtx_is_matched[x] != -1:
                                     ext_edges_pattern_ca    += 1
                                 else:
                                     ext_edges_pattern_an    += 1
@@ -425,9 +432,9 @@ class PatternMatching(object):
                 if ext_edges_pattern_an > ext_edges_graph_an:
                     return False
 
-                return True
+                return matched
 
-            def matchPhase(H, P, h, p, index_M, VF2_obj, n, m):
+            def matchPhase(index_M, VF2_obj, n, m):
                 """
                 The matching fase of the VF2 algorithm. If the chosen n, m pair
                 passes the feasibilityTest, the pair gets added and we start
@@ -448,12 +455,15 @@ class PatternMatching(object):
                         return False # already visited this (partial) match -> skip
 
 
-                if feasibilityTest(H, P, h, p, VF2_obj, n, m):
-                    print(self.indent*"  ","adding to match:", n, "->", m)
+                matched = feasibilityTest(H, P, h, p, VF2_obj, n, m)
+
+                if matched != False:
+                    # print(self.indent*"  ","adding to match:", n, "->", m)
                     # adapt VF2_obj
-                    VF2_obj.core_graph[n]    = True
-                    VF2_obj.core_pattern[m]    = True
+                    VF2_obj.host_vtx_is_matched[n]    = True
+                    VF2_obj.pattern_vtx_is_matched[m]    = True
                     VF2_obj.mapping[h[n]]    = p[m]
+                    # VF2_obj.edge_mapping
                     addOutNeighbours(H[n], VF2_obj.N_out_graph, index_M)
                     addIncNeighbours(H, n, VF2_obj.N_inc_graph, index_M)
                     addOutNeighbours(P[m], VF2_obj.N_out_pattern, index_M)
@@ -475,11 +485,11 @@ class PatternMatching(object):
 
                     if True:
                     # else:
-                        print(self.indent*"  ","backtracking... remove", n, "->", m)
+                        # print(self.indent*"  ","backtracking... remove", n, "->", m)
 
                         # else, backtrack, adapt VF2_obj
-                        VF2_obj.core_graph[n]    = False
-                        VF2_obj.core_pattern[m]    = False
+                        VF2_obj.host_vtx_is_matched[n]    = False
+                        VF2_obj.pattern_vtx_is_matched[m]    = False
                         del VF2_obj.mapping[h[n]]
                         delNeighbours(VF2_obj.N_out_graph, index_M)
                         delNeighbours(VF2_obj.N_inc_graph, index_M)
@@ -488,7 +498,7 @@ class PatternMatching(object):
 
                 return False
 
-            def preferred(H, P, h, p, index_M, VF2_obj, N_graph, N_pattern):
+            def preferred(index_M, VF2_obj, N_graph, N_pattern):
                 """
                 Try to match the adjacency vertices connected via outgoing
                 or incoming edges. (Depending on what is given for N_graph and
@@ -497,23 +507,23 @@ class PatternMatching(object):
                 for n in range(0, len(N_graph)):
                     # skip graph vertices that are not in VF2_obj.N_out_graph
                     # (or already matched)
-                    if N_graph[n] == -1 or VF2_obj.core_graph[n]:
+                    if N_graph[n] == -1 or VF2_obj.host_vtx_is_matched[n]:
                         # print(self.indent*"  ","    skipping")
                         continue
-                    print(self.indent*"  ","  n:", n)
+                    # print(self.indent*"  ","  n:", n)
                     for m in range(0, len(N_pattern)):
                         # skip graph vertices that are not in VF2_obj.N_out_pattern
                         # (or already matched)
-                        if N_pattern[m] == -1 or VF2_obj.core_pattern[m]:
+                        if N_pattern[m] == -1 or VF2_obj.pattern_vtx_is_matched[m]:
                             continue
-                        print(self.indent*"  ","  m:", m)
-                        matched = yield from matchPhase(H, P, h, p, index_M, VF2_obj, n, m)
+                        # print(self.indent*"  ","  m:", m)
+                        matched = yield from matchPhase(index_M, VF2_obj, n, m)
                         if matched:
                             return True
 
                 return False
 
-            def leastPreferred(H, P, h, p, index_M, VF2_obj):
+            def leastPreferred(index_M, VF2_obj):
                 """
                 Try to match the vertices that are not connected to the curretly
                 matched vertices.
@@ -521,28 +531,28 @@ class PatternMatching(object):
                 for n in range(0, len(VF2_obj.N_out_graph)):
                     # skip vertices that are connected to the graph 
                     # (or already matched)
-                    if not (VF2_obj.N_out_graph[n] == -1 and VF2_obj.N_inc_graph[n] == -1) or VF2_obj.core_graph[n]:
+                    if not (VF2_obj.N_out_graph[n] == -1 and VF2_obj.N_inc_graph[n] == -1) or VF2_obj.host_vtx_is_matched[n]:
                         # print(self.indent*"  ","    skipping")
                         continue
-                    print("  n:", n)
+                    # print("  n:", n)
                     for m in range(0, len(VF2_obj.N_out_pattern)):
                         # skip vertices that are connected to the graph 
                         # (or already matched)
-                        if not (VF2_obj.N_out_pattern[m] == -1 and VF2_obj.N_inc_pattern[m] == -1) or VF2_obj.core_pattern[m]:
+                        if not (VF2_obj.N_out_pattern[m] == -1 and VF2_obj.N_inc_pattern[m] == -1) or VF2_obj.pattern_vtx_is_matched[m]:
                             # print(self.indent*"  ","      skipping")
                             continue
-                        print(self.indent*"  ","    m:", m)
-                        matched = yield from matchPhase(H, P, h, p, index_M, VF2_obj, n, m)
+                        # print(self.indent*"  ","    m:", m)
+                        matched = yield from matchPhase(index_M, VF2_obj, n, m)
                         if matched:
                             return True
 
                 return False
 
-            print(self.indent*"  ","index_M:", index_M)
+            # print(self.indent*"  ","index_M:", index_M)
 
             # We are at the end, we found an candidate.
             if index_M == len(p):
-                print(self.indent*"  ","end...")
+                # print(self.indent*"  ","end...")
                 bound_graph_vertices    = {}
                 for vertex_bound, _ in VF2_obj.mapping.items():
                     bound_graph_vertices.setdefault(vertex_bound.type, set()).add(vertex_bound)
@@ -555,28 +565,28 @@ class PatternMatching(object):
             if index_M > 0:
                 # try the candidates is the preffered order
                 # first try the adjacent vertices connected via the outgoing edges.
-                print(self.indent*"  ","preferred L1")
-                matched = yield from preferred(H, P, h, p, index_M, VF2_obj, VF2_obj.N_out_graph, VF2_obj.N_out_pattern)
+                # print(self.indent*"  ","preferred L1")
+                matched = yield from preferred(index_M, VF2_obj, VF2_obj.N_out_graph, VF2_obj.N_out_pattern)
                 if matched:
                     return True
 
-                print(self.indent*"  ","preferred L2")
+                # print(self.indent*"  ","preferred L2")
                 # then try the adjacent vertices connected via the incoming edges.
-                matched = yield from preferred(H, P, h, p, index_M, VF2_obj, VF2_obj.N_inc_graph, VF2_obj.N_inc_pattern)
+                matched = yield from preferred(index_M, VF2_obj, VF2_obj.N_inc_graph, VF2_obj.N_inc_pattern)
                 if matched:
                     return True
 
-            print(self.indent*"  ","leastPreferred")
+            # print(self.indent*"  ","leastPreferred")
             # and lastly, try the vertices not connected to the currently matched vertices
-            matched = yield from leastPreferred(H, P, h, p, index_M, VF2_obj)
+            matched = yield from leastPreferred(index_M, VF2_obj)
             if matched:
                 return True
 
             return False
 
-        # create adjecency matrix of the graph
+        # create adjacency matrix of the graph
         H, h    = self.createAdjacencyMatrixMap(graph, pattern)
-        # create adjecency matrix of the pattern
+        # create adjacency matrix of the pattern
         P, p    = self.createAdjacencyMatrixMap(pattern, pattern)
 
         VF2_obj    = VF2_Obj(len(h), len(p))
