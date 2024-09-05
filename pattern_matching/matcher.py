@@ -102,23 +102,28 @@ class MatcherVF2:
             state=MatcherState.make_initial(self.host, self.guest),
             already_visited=set())
 
+
     def _match(self, state, already_visited, indent=0):
-        # print("  "*indent, "match")
+        def print_debug(*args):
+            pass
+            # print(*args) # uncomment to see a trace of the matching process
+
+        print_debug("  "*indent, "match")
 
         hashable_state = state.make_hashable()
         if hashable_state in already_visited:
-            # print("  "*indent, "    SKIP - ALREADY VISITED")
-            # print("  "*indent, "   ", hashable_state)
+            print_debug("  "*indent, "    SKIP - ALREADY VISITED")
+            print_debug("  "*indent, "   ", hashable_state)
             return
-        # print("  "*indent, "    ADD STATE")
-        # print("  "*indent, "   ", hashable_state)
+        print_debug("  "*indent, "    ADD STATE")
+        print_debug("  "*indent, "   ", hashable_state)
         already_visited.add(hashable_state)
 
 
-        if len(state.mapping_edges) == len(self.guest.edges):
-            # print("  "*indent, "GOT MATCH:")
-            # print("  "*indent, " ", state.mapping_vtxs)
-            # print("  "*indent, " ", state.mapping_edges)
+        if len(state.mapping_vtxs) == len(self.guest.vtxs) and len(state.mapping_edges) == len(self.guest.edges):
+            print_debug("  "*indent, "GOT MATCH:")
+            print_debug("  "*indent, " ", state.mapping_vtxs)
+            print_debug("  "*indent, " ", state.mapping_edges)
             yield state
             return
 
@@ -131,22 +136,22 @@ class MatcherVF2:
                 raise Exception("wtf!")
 
         def attempt_grow(direction, indent):
-            # print("  "*indent, 'attempt_grow', direction)
+            print_debug("  "*indent, 'attempt_grow', direction)
             if state.boundary != None:
                 g_vtx, h_vtx = state.boundary
                 for g_candidate_edge in getattr(g_vtx, direction):
-                    # print("  "*indent, 'g_candidate_edge:', g_candidate_edge)
+                    print_debug("  "*indent, 'g_candidate_edge:', g_candidate_edge)
                     if g_candidate_edge in state.mapping_edges:
-                        # print("  "*indent, "  skip, guest edge already matched")
+                        print_debug("  "*indent, "  skip, guest edge already matched")
                         continue # skip already matched guest edge
                     g_candidate_vtx = read_edge(g_candidate_edge, direction)
                     for h_candidate_edge in getattr(h_vtx, direction):
-                        # print("  "*indent, 'h_candidate_edge:', h_candidate_edge)
+                        print_debug("  "*indent, 'h_candidate_edge:', h_candidate_edge)
                         if h_candidate_edge in state.r_mapping_edges:
-                            # print("  "*indent, "  skip, host edge already matched")
+                            print_debug("  "*indent, "  skip, host edge already matched")
                             continue # skip already matched host edge
                         h_candidate_vtx = read_edge(h_candidate_edge, direction)
-                        # print("  "*indent, 'grow edge', g_candidate_edge, ':', h_candidate_edge)
+                        print_debug("  "*indent, 'grow edge', g_candidate_edge, ':', h_candidate_edge)
                         new_state = state.grow_edge(h_candidate_edge, g_candidate_edge)
                         yield from attempt_match_vtxs(
                             new_state,
@@ -155,14 +160,14 @@ class MatcherVF2:
                             indent+1)
 
         def attempt_match_vtxs(state, g_candidate_vtx, h_candidate_vtx, indent):
-            # print("  "*indent, 'attempt_match_vtxs')
+            print_debug("  "*indent, 'attempt_match_vtxs')
             if g_candidate_vtx in state.mapping_vtxs:
                 if state.mapping_vtxs[g_candidate_vtx] != h_candidate_vtx:
-                    # print("  "*indent, "  nope, guest already mapped (mismatch)")
+                    print_debug("  "*indent, "  nope, guest already mapped (mismatch)")
                     return # guest vtx is already mapped but doesn't match host vtx
             if h_candidate_vtx in state.r_mapping_vtxs:
                 if state.r_mapping_vtxs[h_candidate_vtx] != g_candidate_vtx:
-                    # print("  "*indent, "  nope, host already mapped (mismatch)")
+                    print_debug("  "*indent, "  nope, host already mapped (mismatch)")
                     return # host vtx is already mapped but doesn't match guest vtx
             g_outdegree = len(g_candidate_vtx.outgoing)
             h_outdegree = len(h_candidate_vtx.outgoing)
@@ -177,20 +182,20 @@ class MatcherVF2:
             new_state = state.grow_vtx(
                 h_candidate_vtx,
                 g_candidate_vtx)
-            # print("  "*indent, 'grow vtx', g_candidate_vtx, ':', h_candidate_vtx)
+            print_debug("  "*indent, 'grow vtx', g_candidate_vtx, ':', h_candidate_vtx)
             yield from self._match(new_state, already_visited, indent+1)
 
-        # print("  "*indent, 'preferred...')
+        print_debug("  "*indent, 'preferred...')
         yield from attempt_grow('outgoing', indent+1)
         yield from attempt_grow('incoming', indent+1)
 
-        # print("  "*indent, 'least preferred...')
+        print_debug("  "*indent, 'least preferred...')
         for g_candidate_vtx in state.g_unmatched_vtxs:
             for h_candidate_vtx in state.h_unmatched_vtxs:
                 yield from attempt_match_vtxs(state, g_candidate_vtx, h_candidate_vtx, indent+1)
 
-        # if indent == 0:
-        #     print('visited', len(already_visited), 'states total')
+        if indent == 0:
+            print_debug('visited', len(already_visited), 'states total')
 
 # demo time...
 if __name__ == "__main__":
@@ -211,10 +216,54 @@ if __name__ == "__main__":
     guest.edges = [
         # Look for a simple loop:
         Edge(guest.vtxs[0], guest.vtxs[1]),
-        Edge(guest.vtxs[1], guest.vtxs[0]),
+        # Edge(guest.vtxs[1], guest.vtxs[0]),
     ]
 
     m = MatcherVF2(host, guest, lambda g_val, h_val: eval(g_val, {}, {'v':h_val}))
+    import time
+    durations = 0
+    iterations = 1
+    print("Patience...")
+    for n in range(iterations):
+        time_start = time.perf_counter_ns()
+        matches = [mm for mm in m.match()]
+        time_end = time.perf_counter_ns()
+        time_duration = time_end - time_start
+        durations += time_duration
+
+    print(f'{iterations} iterations, took {durations/1000000:.3f} ms, {durations/iterations/1000000:.3f} ms per iteration')
+    print("found", len(matches), "matches")
+    for mm in matches:
+        print("match:")
+        print(" ", mm.mapping_vtxs)
+        print(" ", mm.mapping_edges)
+
+    print("######################")
+
+    host = Graph()
+    host.vtxs = [
+        Vertex('pony'),   # 1
+        Vertex('pony'),   # 3
+        Vertex('bear'),
+        Vertex('bear'),
+    ]
+    host.edges = [
+        # match:
+        Edge(host.vtxs[0], host.vtxs[1]),
+        Edge(host.vtxs[1], host.vtxs[0]),
+    ]
+
+    guest = Graph()
+    guest.vtxs = [
+        Vertex('pony'), # 0
+        Vertex('pony'), # 1
+        Vertex('bear')]
+    guest.edges = [
+        Edge(guest.vtxs[0], guest.vtxs[1]),
+        Edge(guest.vtxs[1], guest.vtxs[0]),
+    ]
+
+    m = MatcherVF2(host, guest, lambda g_val, h_val: g_val == h_val)
     import time
     durations = 0
     iterations = 1
