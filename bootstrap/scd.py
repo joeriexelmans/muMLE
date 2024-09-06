@@ -53,6 +53,8 @@ def bootstrap_scd(state: State) -> UUID:
         _optional_edge = add_edge_element(f"{attribute_element_name}.optional_link", attribute_element, _optional_node)
         return _name_model, _optional_model
 
+    ##### SCD META-MODEL #####
+
     # # CLASSES, i.e. elements typed by Class
     # # Element
     element_node = add_node_element("Element")
@@ -64,6 +66,7 @@ def bootstrap_scd(state: State) -> UUID:
     model_ref_node = add_node_element("ModelRef")
     # # Global Constraint
     glob_constr_node = add_node_element("GlobalConstraint")
+
     # # ASSOCIATIONS, i.e. elements typed by Association
     # # Association
     assoc_edge = add_edge_element("Association", class_node, class_node)
@@ -71,6 +74,7 @@ def bootstrap_scd(state: State) -> UUID:
     inh_edge = add_edge_element("Inheritance", element_node, element_node)
     # # Attribute Link
     attr_link_edge = add_edge_element("AttributeLink", element_node, attr_node)
+
     # # INHERITANCES, i.e. elements typed by Inheritance
     # # Class inherits from Element
     add_edge_element("class_inh_element", class_node, element_node)
@@ -84,9 +88,11 @@ def bootstrap_scd(state: State) -> UUID:
     add_edge_element("attr_link_inh_element", attr_link_edge, element_node)
     # # ModelRef inherits from Attribute
     add_edge_element("model_ref_inh_attr", model_ref_node, attr_node)
+
     # # ATTRIBUTES, i.e. elements typed by Attribute
     # # Action Code # TODO: Update to ModelRef when action code is explicitly modelled
     action_code_node = add_node_element("ActionCode")
+
     # # MODELREFS, i.e. elements typed by ModelRef
     # # Integer
     integer_node = add_node_element("Integer", str(integer_type_root))
@@ -94,6 +100,7 @@ def bootstrap_scd(state: State) -> UUID:
     string_node = add_node_element("String", str(string_type_root))
     # # Boolean
     boolean_node = add_node_element("Boolean", str(boolean_type_root))
+
     # # ATTRIBUTE LINKS, i.e. elements typed by AttributeLink
     # # name attribute of AttributeLink
     attr_name_edge = add_edge_element("AttributeLink_name", attr_link_edge, string_node)
@@ -111,6 +118,7 @@ def bootstrap_scd(state: State) -> UUID:
     assoc_s_u_c_edge = add_edge_element("Association_source_upper_cardinality", assoc_edge, integer_node)
     assoc_t_l_c_edge = add_edge_element("Association_target_lower_cardinality", assoc_edge, integer_node)
     assoc_t_u_c_edge = add_edge_element("Association_target_upper_cardinality", assoc_edge, integer_node)
+
     # # bootstrap primitive types
     # # order is important, integer must be first
     bootstrap_integer_type(mcl_root, integer_type_root, state)
@@ -118,6 +126,7 @@ def bootstrap_scd(state: State) -> UUID:
     bootstrap_float_type(mcl_root, float_type_root, state)
     bootstrap_string_type(mcl_root, string_type_root, state)
     bootstrap_type_type(mcl_root, type_type_root, state)
+
     # # ATTRIBUTE ATTRIBUTES, assign 'name' and 'optional' attributes to all AttributeLinks
     # # AttributeLink_name
     m_name, m_opt = add_attribute_attributes("AttributeLink_name", attr_name_edge)

@@ -81,6 +81,9 @@ class Bottom:
         result = self.state.read_edge(edge)
         return result[1] if result != None else result
 
+    def is_edge(self, elem: UUID) -> bool:
+        return self.state.is_edge(elem)
+
     def read_incoming_edges(self, target: UUID, label=None) -> List[UUID]:
         """
         Reads incoming edges of an element. Optionally, filter them based on their label

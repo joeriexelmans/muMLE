@@ -117,7 +117,10 @@ def ramify(state: State, model: UUID) -> UUID:
         #   - max-card: same as original
         upper_card = find_cardinality(class_node, class_upper_card_node)
         print('creating class', class_name, "with card 0 ..", upper_card)
-        ramified_scd.create_class(class_name, abstract=None, max_c=upper_card)
+        ramified_class = ramified_scd.create_class(class_name, abstract=None, max_c=upper_card)
+
+        # traceability link
+        bottom.create_edge(ramified_class, class_node, "RAMifies")
 
         for (attr_name, attr_type) in get_attributes(class_node):
             print('  creating attribute', attr_name, "with type String")

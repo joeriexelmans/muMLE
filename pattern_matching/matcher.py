@@ -3,6 +3,34 @@
 
 import itertools
 
+from util.timer import Timer
+
+# like finding the 'strongly connected componenets', but edges are navigable in any direction
+def find_connected_components(graph):
+    next_component = 0
+    vtx_to_component = {}
+    component_to_vtxs = []
+    for vtx in graph.vtxs:
+        if vtx in vtx_to_component:
+            continue
+        vtx_to_component[vtx] = next_component
+        vtxs = []
+        component_to_vtxs.append(vtxs)
+        add_recursively(vtx, vtxs, vtx_to_component, next_component)
+        next_component += 1
+    return (vtx_to_component, component_to_vtxs)
+
+def add_recursively(vtx, vtxs: list, d: dict, component: int, already_visited: set = set()):
+    if vtx in already_visited:
+        return
+    already_visited.add(vtx)
+    vtxs.append(vtx)
+    d[vtx] = component
+    for edge in vtx.outgoing:
+        add_recursively(edge.tgt, vtxs, d, component, already_visited)
+    for edge in vtx.incoming:
+        add_recursively(edge.src, vtxs, d, component, already_visited)
+
 class Graph:
     def __init__(self):
         self.vtxs = []
@@ -18,14 +46,20 @@ class Vertex:
         return f"V({self.value})"
 
 class Edge:
-    def __init__(self, src: Vertex, tgt: Vertex):
+    def __init__(self, src: Vertex, tgt: Vertex, label=None):
         self.src = src
         self.tgt = tgt
+        self.label = label
+
+        # Add ourselves to src/tgt vertices
         self.src.outgoing.append(self)
         self.tgt.incoming.append(self)
 
     def __repr__(self):
-        return f"E({self.src}->{self.tgt})"
+        if self.label != None:
+            return f"E({self.src}--{self.label}->{self.tgt})"
+        else:
+            return f"E({self.src}->{self.tgt})"
 
 class MatcherState:
     def __init__(self):
@@ -38,8 +72,7 @@ class MatcherState:
         self.h_unmatched_vtxs = []
         self.g_unmatched_vtxs = []
 
-        # the most recently added pair of (guest,host) vertices
-        # will always try to grow mapping via outgoing/incoming edges of this pair before attempting other non-connected vertices
+        # boundary is the most recently added (to the mapping) pair of (guest -> host) vertices
         self.boundary = None
 
     @staticmethod
@@ -89,6 +122,9 @@ class MatcherState:
             ((ge,he) for ge,he in self.mapping_edges.items()),
         ))
 
+    def __repr__(self):
+        # return self.make_hashable().__repr__()
+        return "VTXS: "+self.mapping_vtxs.__repr__()+"\nEDGES: "+self.mapping_edges.__repr__()
 
 class MatcherVF2:
     # Guest is the pattern
@@ -97,6 +133,14 @@ class MatcherVF2:
         self.guest = guest
         self.compare_fn = compare_fn
 
+        with Timer("find_connected_components - host"):
+            self.host_vtx_to_component, self.host_component_to_vtxs = find_connected_components(host)
+        with Timer("find_connected_components - guest"):
+            self.guest_vtx_to_component, self.guest_component_to_vtxs = find_connected_components(guest)
+
+        print("number of host connected components:", len(self.host_component_to_vtxs))
+        print("number of guest connected components:", len(self.guest_component_to_vtxs))
+
     def match(self):
         yield from self._match(
             state=MatcherState.make_initial(self.host, self.guest),
@@ -104,26 +148,30 @@ class MatcherVF2:
 
 
     def _match(self, state, already_visited, indent=0):
+        # input()
+
         def print_debug(*args):
             pass
-            # print(*args) # uncomment to see a trace of the matching process
+            # print("  "*indent, *args) # uncomment to see a trace of the matching process
 
-        print_debug("  "*indent, "match")
+        print_debug("match")
 
-        hashable_state = state.make_hashable()
-        if hashable_state in already_visited:
-            print_debug("  "*indent, "    SKIP - ALREADY VISITED")
-            print_debug("  "*indent, "   ", hashable_state)
+        # Keep track of the states in the search space that we already visited
+        hashable = state.make_hashable()
+        if hashable in already_visited:
+            print_debug("    SKIP - ALREADY VISITED")
+            # print_debug("   ", hashable)
             return
-        print_debug("  "*indent, "    ADD STATE")
-        print_debug("  "*indent, "   ", hashable_state)
-        already_visited.add(hashable_state)
+        # print_debug("   ", [hash(a) for a in already_visited])
+        # print_debug("    ADD STATE")
+        # print_debug("   ", hash(hashable))
+        already_visited.add(hashable)
 
 
         if len(state.mapping_vtxs) == len(self.guest.vtxs) and len(state.mapping_edges) == len(self.guest.edges):
-            print_debug("  "*indent, "GOT MATCH:")
-            print_debug("  "*indent, " ", state.mapping_vtxs)
-            print_debug("  "*indent, " ", state.mapping_edges)
+            print_debug("GOT MATCH:")
+            print_debug(" ", state.mapping_vtxs)
+            print_debug(" ", state.mapping_edges)
             yield state
             return
 
@@ -136,63 +184,84 @@ class MatcherVF2:
                 raise Exception("wtf!")
 
         def attempt_grow(direction, indent):
-            print_debug("  "*indent, 'attempt_grow', direction)
-            if state.boundary != None:
-                g_vtx, h_vtx = state.boundary
-                for g_candidate_edge in getattr(g_vtx, direction):
-                    print_debug("  "*indent, 'g_candidate_edge:', g_candidate_edge)
-                    if g_candidate_edge in state.mapping_edges:
-                        print_debug("  "*indent, "  skip, guest edge already matched")
-                        continue # skip already matched guest edge
+            for g_matched_vtx, h_matched_vtx in state.mapping_vtxs.items():
+                print_debug('attempt_grow', direction)
+                for g_candidate_edge in getattr(g_matched_vtx, direction):
+                    print_debug('g_candidate_edge:', g_candidate_edge)
                     g_candidate_vtx = read_edge(g_candidate_edge, direction)
-                    for h_candidate_edge in getattr(h_vtx, direction):
-                        print_debug("  "*indent, 'h_candidate_edge:', h_candidate_edge)
+                    # g_to_skip_vtxs.add(g_candidate_vtx)
+                    if g_candidate_edge in state.mapping_edges:
+                        print_debug("  skip, guest edge already matched")
+                        continue # skip already matched guest edge
+                    for h_candidate_edge in getattr(h_matched_vtx, direction):
+                        if g_candidate_edge.label != h_candidate_edge.label:
+                            print_debug("  labels differ")
+                            continue
+                        print_debug('h_candidate_edge:', h_candidate_edge)
                         if h_candidate_edge in state.r_mapping_edges:
-                            print_debug("  "*indent, "  skip, host edge already matched")
+                            print_debug("  skip, host edge already matched")
                             continue # skip already matched host edge
                         h_candidate_vtx = read_edge(h_candidate_edge, direction)
-                        print_debug("  "*indent, 'grow edge', g_candidate_edge, ':', h_candidate_edge)
+                        print_debug('grow edge', g_candidate_edge, ':', h_candidate_edge, id(g_candidate_edge), id(h_candidate_edge))
                         new_state = state.grow_edge(h_candidate_edge, g_candidate_edge)
                         yield from attempt_match_vtxs(
                             new_state,
                             g_candidate_vtx,
                             h_candidate_vtx,
                             indent+1)
+                        print_debug('backtrack edge', g_candidate_edge, ':', h_candidate_edge, id(g_candidate_edge), id(h_candidate_edge))
 
         def attempt_match_vtxs(state, g_candidate_vtx, h_candidate_vtx, indent):
-            print_debug("  "*indent, 'attempt_match_vtxs')
+            print_debug('attempt_match_vtxs')
             if g_candidate_vtx in state.mapping_vtxs:
                 if state.mapping_vtxs[g_candidate_vtx] != h_candidate_vtx:
-                    print_debug("  "*indent, "  nope, guest already mapped (mismatch)")
+                    print_debug("  nope, guest already mapped (mismatch)")
                     return # guest vtx is already mapped but doesn't match host vtx
             if h_candidate_vtx in state.r_mapping_vtxs:
                 if state.r_mapping_vtxs[h_candidate_vtx] != g_candidate_vtx:
-                    print_debug("  "*indent, "  nope, host already mapped (mismatch)")
+                    print_debug("  nope, host already mapped (mismatch)")
                     return # host vtx is already mapped but doesn't match guest vtx
             g_outdegree = len(g_candidate_vtx.outgoing)
             h_outdegree = len(h_candidate_vtx.outgoing)
             if g_outdegree > h_outdegree:
+                print_debug("  nope, outdegree")
                 return
             g_indegree = len(g_candidate_vtx.incoming)
             h_indegree = len(h_candidate_vtx.incoming)
             if g_indegree > h_indegree:
+                print_debug("  nope, indegree")
                 return
             if not self.compare_fn(g_candidate_vtx.value, h_candidate_vtx.value):
+                print_debug("  nope, bad compare")
                 return
             new_state = state.grow_vtx(
                 h_candidate_vtx,
                 g_candidate_vtx)
-            print_debug("  "*indent, 'grow vtx', g_candidate_vtx, ':', h_candidate_vtx)
+            print_debug('grow vtx', g_candidate_vtx, ':', h_candidate_vtx, id(g_candidate_vtx), id(h_candidate_vtx))
             yield from self._match(new_state, already_visited, indent+1)
+            print_debug('backtrack vtx', g_candidate_vtx, ':', h_candidate_vtx, id(g_candidate_vtx), id(h_candidate_vtx))
 
-        print_debug("  "*indent, 'preferred...')
+        print_debug('preferred...')
         yield from attempt_grow('outgoing', indent+1)
         yield from attempt_grow('incoming', indent+1)
 
-        print_debug("  "*indent, 'least preferred...')
-        for g_candidate_vtx in state.g_unmatched_vtxs:
-            for h_candidate_vtx in state.h_unmatched_vtxs:
-                yield from attempt_match_vtxs(state, g_candidate_vtx, h_candidate_vtx, indent+1)
+        print_debug('least preferred...')
+        if state.boundary != None:
+            g_boundary_vtx, _ = state.boundary
+            guest_boundary_component = self.guest_vtx_to_component[g_boundary_vtx]
+            # only try guest vertices that are in a different component (all vertices in the same component are already discovered via 'attempt_grow')
+            guest_components_to_try = (c for i,c in enumerate(self.guest_component_to_vtxs) if i != guest_boundary_component)
+            # for the host vertices however, we have to try them from all components, because different connected components of our pattern (=guest) could be mapped onto the same connected component in the host
+        else:
+            guest_components_to_try = self.guest_component_to_vtxs
+
+        for g_candidate_vtxs in guest_components_to_try:
+            for g_candidate_vtx in g_candidate_vtxs:
+                if g_candidate_vtx in state.mapping_vtxs:
+                    print_debug("skip (already matched)", g_candidate_vtx)
+                    continue
+                for h_candidate_vtx in state.h_unmatched_vtxs:
+                    yield from attempt_match_vtxs(state, g_candidate_vtx, h_candidate_vtx, indent+1)
 
         if indent == 0:
             print_debug('visited', len(already_visited), 'states total')

@@ -72,6 +72,8 @@ class SCD:
         if max_c != None:
             set_cardinality("upper", max_c)
 
+        return class_node
+
     def create_association(self, name: str, source: str, target: str,
                            src_min_c: int = None, src_max_c: int = None,
                            tgt_min_c: int = None, tgt_max_c: int = None):

@@ -105,6 +105,9 @@ class PyState(State):
         else:
             return None, None
 
+    def is_edge(self, elem: Element) -> bool:
+        return elem in self.edges
+
     def read_dict(self, elem: Element, value: Any) -> Optional[Element]:
         e = self.read_dict_edge(elem, value)
         if e == None:

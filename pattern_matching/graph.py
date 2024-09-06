@@ -94,8 +94,9 @@ class Graph(object):
     def __init__(self):
         # member variables:
         # redundant type keeping, "needed" for fast iterating over specific type
-        self.vertices    = {}    # {type, set(v1, v2, ...)}
+        self.vertices     = {}    # {type, set(v1, v2, ...)}
         self.edges        = {}    # {type, set(e1, e2, ...)}
+        self.num_vertices = 0
         
     def addCreateVertex(self, str_type):
         """
@@ -114,6 +115,8 @@ class Graph(object):
             raise TypeError('addVertex expects a Vertex')
         # add vertex, but it first creates a new set for the vertex type
         # if the type does not exist in the dictionary
+        if vertex not in self.vertices.get(vertex.type, set()):
+            self.num_vertices += 1
         self.vertices.setdefault(vertex.type, set()).add(vertex)
 
     def getVerticesOfType(self, str_type):

@@ -59,14 +59,24 @@ class OD:
         # An attribute-link is indistinguishable from an ordinary link:
         return self.create_link(attr_link_name, object_name, target_name)
 
-    def create_integer_value(self, value: int):
+    def create_integer_value(self, name: str, value: int):
         from services.primitives.integer_type import Integer
         int_node = self.bottom.create_node()
         integer_t = Integer(int_node, self.bottom.state)
         integer_t.create(value)
-        name = 'int'+str(value) # name of the ref to the created integer
+        # name = 'int'+str(value) # name of the ref to the created integer
         # By convention, the type model must have a ModelRef named "Integer"
         self.create_model_ref(name, "Integer", int_node)
+        return name
+
+    def create_string_value(self, name: str, value: str):
+        from services.primitives.string_type import String
+        string_node = self.bottom.create_node()
+        string_t = String(string_node, self.bottom.state)
+        string_t.create(value)
+        # name = 'str-'+value # name of the ref to the created integer
+        # By convention, the type model must have a ModelRef named "Integer"
+        self.create_model_ref(name, "String", string_node)
         return name
 
     # Identical to the same SCD method:
@@ -79,6 +89,7 @@ class OD:
 
 
     def create_link(self, assoc_name: str, src_obj_name: str, tgt_obj_name: str):
+        print(tgt_obj_name)
         src_obj_node, = self.bottom.read_outgoing_elements(self.model, src_obj_name)
         tgt_obj_node, = self.bottom.read_outgoing_elements(self.model, tgt_obj_name)
 
