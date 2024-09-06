@@ -1,6 +1,7 @@
 from state.base import State
 from uuid import UUID
 from services.bottom.V0 import Bottom
+from services.scd import SCD
 from pattern_matching.matcher import Graph, Edge, Vertex
 import itertools
 import re
@@ -88,19 +89,28 @@ def model_to_graph(state: State, model: UUID):
                 tgt=ref_model.vtxs[0], # which node to link to?? dirty
                 label="modelref"))
 
-        # # Add typing information
-        # for i,node in enumerate(bottom.read_outgoing_elements(model)):
-        #     type_node, = bottom.read_outgoing_elements(node, "Morphism")
-        #     print('node', node, 'has type', type_node)
-        #     # We create a Vertex storing the type
-        #     type_vertex = Vertex(value=IS_TYPE(type_node))
-        #     graph.vtxs.append(type_vertex)
-        #     type_edge = Edge(
-        #         src=uuid_to_vtx[node],
-        #         tgt=type_vertex,
-        #         label="type")
-        #     print(type_edge)
-        #     graph.edges.append(type_edge)
+        def add_types(node):
+            type_node, = bottom.read_outgoing_elements(node, "Morphism")
+            print('node', node, 'has type', type_node)
+            # We create a Vertex storing the type
+            type_vertex = Vertex(value=IS_TYPE(type_node))
+            graph.vtxs.append(type_vertex)
+            type_edge = Edge(
+                src=uuid_to_vtx[node],
+                tgt=type_vertex,
+                label="type")
+            print(type_edge)
+            graph.edges.append(type_edge)
+
+
+        # Add typing information of classes, attributes, and associations
+        scd = SCD(model, state)
+        for name,node in scd.get_classes().items():
+            add_types(node)
+            for attr_name,attr_node in scd.get_attributes(name):
+                add_types(attr_node)
+        for _,node in scd.get_associations().items():
+            add_types(node)
 
         return graph
 
@@ -141,13 +151,17 @@ class RAMCompare:
             return False
 
         # types only match with their supertypes
+        # we assume that 'RAMifies'-traceability links have been created between guest and host types
+        # we need these links, because the guest types are different types (RAMified)
         if isinstance(g_val, IS_TYPE):
             if not isinstance(h_val, IS_TYPE):
                 return False
-            g_val_original_type = self.bottom.read_outgoing_elements(g_val.type, "RAMifies")
-            result = self.is_subtype_of(h_val.type, g_val_original_type)
-            print("RESULT", result)
-            return result
+            g_val_original_types = self.bottom.read_outgoing_elements(g_val.type, "RAMifies")
+            if len(g_val_original_types) > 0:
+                result = self.is_subtype_of(h_val.type, g_val_original_types[0])
+                return result
+            else:
+                return False
 
         if isinstance(h_val, IS_TYPE):
             return False

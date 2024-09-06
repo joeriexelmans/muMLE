@@ -128,6 +128,7 @@ class SCD:
             set_cardinality("target_lower", tgt_min_c)
         if tgt_max_c != None:
             set_cardinality("target_upper", tgt_max_c)
+        return assoc_edge
 
     def create_global_constraint(self, name: str):
         """
@@ -208,6 +209,7 @@ class SCD:
         scd_link, = self.bottom.read_outgoing_elements(self.scd_model, "AttributeLink_optional")
         self.bottom.create_edge(optional_node, scd_node, "Morphism")
         self.bottom.create_edge(optional_link, scd_link, "Morphism")
+        return assoc_edge
 
     def create_model_ref(self, name: str, model: UUID):
         """
@@ -251,6 +253,7 @@ class SCD:
         self.bottom.create_edge(self.model, inh_edge, f"{child_name}_inh_{parent_name}")  # attach to model
         scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "Inheritance")  # retrieve type
         self.bottom.create_edge(inh_edge, scd_node, "Morphism")  # create morphism link
+        return inh_edge
 
     def get_class_name(self, cls: UUID):
         for key in self.bottom.read_keys(self.model):
