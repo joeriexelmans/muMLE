@@ -109,6 +109,7 @@ def main():
     od.create_link("A2B", "a2", "b")
 
     od.create_slot("size", "a", od.create_integer_value("a.size", 42))
+    od.create_slot("size", "a2", od.create_integer_value("a2.size", 50))
 
     print("checking conformance....")
     conf2 = Conformance(state, inst_id, model_id)
@@ -119,28 +120,41 @@ def main():
     pattern_id = state.create_node()
     pattern = OD(ramified_MM_id, pattern_id, state)
 
-    pattern.create_object("a1", "A")
-    pattern.create_slot("size", "a1", pattern.create_string_value("a1.size", 'v < 100'))
+    pattern.create_object("pattern_a", "LHS_A")
+    # pattern.create_slot("constraint", "a1", pattern.create_string_value("a1.constraint", 'read_int(get_slot("LHS_size")) > 50'))
+    pattern.create_slot("LHS_size", "pattern_a", pattern.create_string_value("pattern_a.LHS_size", 'v < 99'))
     # pattern.create_object("a2", "A")
     # pattern.create_slot("size", "a2", pattern.create_string_value("a2.size", '99'))
 
-    pattern.create_object("b1", "B")
-    # pattern.create_link("A2B", "a1", "b1")
+    pattern.create_object("pattern_b", "LHS_B")
+
+    pattern.create_link("LHS_A2B", "pattern_a", "pattern_b")
+
 
     conf3 = Conformance(state, pattern_id, ramified_MM_id)
     print("conforms?", conf3.check_nominal(log=True))
 
-    host = mvs_adapter.model_to_graph(state, inst_id)
-    guest = mvs_adapter.model_to_graph(state, pattern_id)
+    host = mvs_adapter.model_to_graph(state, inst_id, model_id)
+    guest = mvs_adapter.model_to_graph(state, pattern_id, ramified_MM_id)
 
+    print("HOST:")
     print(host.vtxs)
     print(host.edges)
 
+    print("GUEST:")
+    print(guest.vtxs)
+    print(guest.edges)
+
     print("matching...")
-    matcher = MatcherVF2(host, guest, mvs_adapter.RAMCompare(Bottom(state)))
+    matcher = MatcherVF2(host, guest, mvs_adapter.RAMCompare(Bottom(state), od))
     prev = None
     for m in matcher.match():
         print("\nMATCH:\n", m)
+        name_to_matched = {}
+        for guest_vtx, host_vtx in m.mapping_vtxs.items():
+            if isinstance(guest_vtx, mvs_adapter.NamedNode) and isinstance(host_vtx, mvs_adapter.NamedNode):
+                name_to_matched[guest_vtx.name] = host_vtx.name
+        print(name_to_matched)
         input()
     print("DONE")
 

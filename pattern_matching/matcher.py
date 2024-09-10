@@ -57,9 +57,9 @@ class Edge:
 
     def __repr__(self):
         if self.label != None:
-            return f"E({self.src}--{self.label}->{self.tgt})"
+            return f"({self.src}--{self.label}->{self.tgt})"
         else:
-            return f"E({self.src}->{self.tgt})"
+            return f"({self.src}->{self.tgt})"
 
 class MatcherState:
     def __init__(self):
@@ -133,12 +133,9 @@ class MatcherVF2:
         self.guest = guest
         self.compare_fn = compare_fn
 
-        with Timer("find_connected_components - host"):
-            self.host_vtx_to_component, self.host_component_to_vtxs = find_connected_components(host)
         with Timer("find_connected_components - guest"):
             self.guest_vtx_to_component, self.guest_component_to_vtxs = find_connected_components(guest)
 
-        print("number of host connected components:", len(self.host_component_to_vtxs))
         print("number of guest connected components:", len(self.guest_component_to_vtxs))
 
     def match(self):
@@ -201,9 +198,9 @@ class MatcherVF2:
                         if h_candidate_edge in state.r_mapping_edges:
                             print_debug("  skip, host edge already matched")
                             continue # skip already matched host edge
-                        h_candidate_vtx = read_edge(h_candidate_edge, direction)
                         print_debug('grow edge', g_candidate_edge, ':', h_candidate_edge, id(g_candidate_edge), id(h_candidate_edge))
                         new_state = state.grow_edge(h_candidate_edge, g_candidate_edge)
+                        h_candidate_vtx = read_edge(h_candidate_edge, direction)
                         yield from attempt_match_vtxs(
                             new_state,
                             g_candidate_vtx,
@@ -231,7 +228,7 @@ class MatcherVF2:
             if g_indegree > h_indegree:
                 print_debug("  nope, indegree")
                 return
-            if not self.compare_fn(g_candidate_vtx.value, h_candidate_vtx.value):
+            if not self.compare_fn(g_candidate_vtx, h_candidate_vtx):
                 print_debug("  nope, bad compare")
                 return
             new_state = state.grow_vtx(
@@ -288,7 +285,7 @@ if __name__ == "__main__":
         # Edge(guest.vtxs[1], guest.vtxs[0]),
     ]
 
-    m = MatcherVF2(host, guest, lambda g_val, h_val: eval(g_val, {}, {'v':h_val}))
+    m = MatcherVF2(host, guest, lambda g_vtx, h_vtx: eval(g_vtx.value, {}, {'v':h_vtx.value}))
     import time
     durations = 0
     iterations = 1
@@ -332,7 +329,7 @@ if __name__ == "__main__":
         Edge(guest.vtxs[1], guest.vtxs[0]),
     ]
 
-    m = MatcherVF2(host, guest, lambda g_val, h_val: g_val == h_val)
+    m = MatcherVF2(host, guest, lambda g_vtx, h_vtx: g_vtx.value == h_vtx.value)
     import time
     durations = 0
     iterations = 1

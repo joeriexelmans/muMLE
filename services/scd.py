@@ -330,10 +330,12 @@ class SCD:
         attr_link_node, = self.bottom.read_outgoing_elements(self.scd_model, "AttributeLink")
         class_node, = self.bottom.read_outgoing_elements(self.model, class_name)
         name_to_attr = {}
-        for edge in self.bottom.read_outgoing_edges(class_node):
-            edge_types = self.bottom.read_outgoing_elements(edge, "Morphism")
-            if attr_link_node in edge_types:
-                name_to_attr[key] = edge
+        for name in self.bottom.read_keys(class_node):
+            edges = self.bottom.read_outgoing_edges(class_node, name)
+            for edge in edges:
+                edge_types = self.bottom.read_outgoing_elements(edge, "Morphism")
+                if attr_link_node in edge_types:
+                    name_to_attr[name] = edge
         return name_to_attr
 
     def delete_element(self, name: str):

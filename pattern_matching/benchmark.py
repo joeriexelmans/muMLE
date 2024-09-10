@@ -29,7 +29,7 @@ def run_benchmark(jhost, jguest, shost, sguest, expected=None):
 
     # benchmark Joeri
     m = j.MatcherVF2(host, guest,
-        lambda g_val, h_val: g_val == h_val) # all vertices can be matched
+        lambda g_vtx, h_vtx: g_vtx.value == h_vtx.value) # all vertices can be matched
     iterations = 50
     print(" Patience (joeri)...")
     for n in range(iterations):

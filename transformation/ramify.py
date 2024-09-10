@@ -5,39 +5,39 @@ from services.scd import SCD
 from framework.conformance import Conformance
 
 
-def ramify(state: State, model: UUID) -> UUID:
+def ramify(state: State, model: UUID, prefix = "LHS_") -> UUID:
 
-    def print_tree(root, max_depth, depth=0):
-        print("  "*depth, "root=", root, "value=", state.read_value(root))
-        src,tgt = state.read_edge(root)
-        if src != None:
-            print("  "*depth, "src...")
-            print_tree(src, max_depth, depth+1)
-        if tgt != None:
-            print("  "*depth, "tgt...")
-            print_tree(tgt, max_depth, depth+1)
-        for edge in state.read_outgoing(root):
-            for edge_label in state.read_outgoing(edge):
-                [_,tgt] = state.read_edge(edge_label)
-                label = state.read_value(tgt)
-                print("  "*depth, " key:", label)
-            [_, tgt] = state.read_edge(edge)
-            value = state.read_value(tgt)
-            if value != None:
-                print("  "*depth, " ->", tgt, " (value:", value, ")")
-            else:
-                print("  "*depth, " ->", tgt)
-            if depth < max_depth:
-                if isinstance(value, str) and len(value) == 36:
-                    i = None
-                    try:
-                        i = UUID(value)
-                    except ValueError as e:
-                        # print("invalid UUID:", value)
-                        pass
-                    if i != None:
-                        print_tree(i, max_depth, depth+1)
-                print_tree(tgt, max_depth, depth+1)
+    # def print_tree(root, max_depth, depth=0):
+    #     print("  "*depth, "root=", root, "value=", state.read_value(root))
+    #     src,tgt = state.read_edge(root)
+    #     if src != None:
+    #         print("  "*depth, "src...")
+    #         print_tree(src, max_depth, depth+1)
+    #     if tgt != None:
+    #         print("  "*depth, "tgt...")
+    #         print_tree(tgt, max_depth, depth+1)
+    #     for edge in state.read_outgoing(root):
+    #         for edge_label in state.read_outgoing(edge):
+    #             [_,tgt] = state.read_edge(edge_label)
+    #             label = state.read_value(tgt)
+    #             print("  "*depth, " key:", label)
+    #         [_, tgt] = state.read_edge(edge)
+    #         value = state.read_value(tgt)
+    #         if value != None:
+    #             print("  "*depth, " ->", tgt, " (value:", value, ")")
+    #         else:
+    #             print("  "*depth, " ->", tgt)
+    #         if depth < max_depth:
+    #             if isinstance(value, str) and len(value) == 36:
+    #                 i = None
+    #                 try:
+    #                     i = UUID(value)
+    #                 except ValueError as e:
+    #                     # print("invalid UUID:", value)
+    #                     pass
+    #                 if i != None:
+    #                     print_tree(i, max_depth, depth+1)
+    #             print_tree(tgt, max_depth, depth+1)
 
     bottom = Bottom(state)
 
@@ -117,19 +117,23 @@ def ramify(state: State, model: UUID) -> UUID:
         #   - max-card: same as original
         upper_card = find_cardinality(class_node, class_upper_card_node)
         print('creating class', class_name, "with card 0 ..", upper_card)
-        ramified_class = ramified_scd.create_class(class_name, abstract=None, max_c=upper_card)
+        ramified_class = ramified_scd.create_class(prefix+class_name, abstract=None, max_c=upper_card)
         # traceability link
         bottom.create_edge(ramified_class, class_node, "RAMifies")
+
+        # We don't add a 'label' attribute (as described in literature on RAMification)
+        # Instead, the names of the objects (which only exist in the scope of the object diagram 'model', and are not visible to the matcher) are used as labels
+
+        # Optional constraint on the object
+        # ramified_scd._create_attribute_link(prefix+class_name, string_modelref, "constraint", optional=True)
 
         for (attr_name, attr_edge) in get_attributes(class_node):
             print('  creating attribute', attr_name, "with type String")
             # Every attribute becomes 'string' type
             # The string will be a Python expression
-            ramified_attr_link = ramified_scd._create_attribute_link(class_name, string_modelref, attr_name, optional=False)
+            ramified_attr_link = ramified_scd._create_attribute_link(prefix+class_name, string_modelref, prefix+attr_name, optional=True)
             # traceability link
             bottom.create_edge(ramified_attr_link, attr_edge, "RAMifies")
-
-
 
     associations = scd.get_associations()
     for assoc_name, assoc_node in associations.items():
@@ -143,23 +147,25 @@ def ramify(state: State, model: UUID) -> UUID:
         src = scd.get_class_name(bottom.read_edge_source(assoc_node))
         tgt = scd.get_class_name(bottom.read_edge_target(assoc_node))
         print('creating assoc', src, "->", tgt, ", name =", assoc_name, ", src card = 0 ..", src_upper_card, "and tgt card = 0 ..", tgt_upper_card)
-        ramified_assoc = ramified_scd.create_association(assoc_name, src, tgt,
+        ramified_assoc = ramified_scd.create_association(
+            prefix+assoc_name, prefix+src, prefix+tgt,
             src_max_c=src_upper_card,
             tgt_max_c=tgt_upper_card)
         # traceability link
         bottom.create_edge(ramified_assoc, assoc_node, "RAMifies")
 
-
     for inh_name, inh_node in scd.get_inheritances().items():
         # Re-create inheritance links like in our original model:
         src = scd.get_class_name(bottom.read_edge_source(inh_node))
         tgt = scd.get_class_name(bottom.read_edge_target(inh_node))
-        print('creating inheritance link', src, '->', tgt)
-        ramified_inh_link = ramified_scd.create_inheritance(src, tgt)
+        print('creating inheritance link', prefix+src, '->', prefix+tgt)
+        ramified_inh_link = ramified_scd.create_inheritance(prefix+src, prefix+tgt)
 
-
-    # The RAMified meta-model should also conform to 'SCD':
+    # Double-check: The RAMified meta-model should also conform to 'SCD':
     conf = Conformance(state, ramified, scd_metamodel)
-    print("conforms?", conf.check_nominal(log=True))
+    if not conf.check_nominal(log=True):
+        raise Exception("Unexpected error: RAMified MM does not conform to SCD MM")
+    else:
+        print("RAMification successful.")
 
     return ramified

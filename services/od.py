@@ -4,6 +4,9 @@ from services.bottom.V0 import Bottom
 from services.primitives.integer_type import Integer
 from services.primitives.string_type import String
 
+def get_attr_link_name(class_name: str, attr_name: str):
+    return f"{class_name}_{attr_name}"
+
 # Object Diagrams service
 
 class OD:
@@ -47,6 +50,9 @@ class OD:
 
     def get_class_of_object(self, object_name: str):
         object_node, = self.bottom.read_outgoing_elements(self.model, object_name) # get the object
+        return self._get_class_of_object(object_node)
+
+    def _get_class_of_object(self, object_node: UUID):
         type_el, = self.bottom.read_outgoing_elements(object_node, "Morphism")
         for key in self.bottom.read_keys(self.type_model):
             type_el2, = self.bottom.read_outgoing_elements(self.type_model, key)
@@ -55,9 +61,21 @@ class OD:
 
     def create_slot(self, attr_name: str, object_name: str, target_name: str):
         class_name = self.get_class_of_object(object_name)
-        attr_link_name = f"{class_name}_{attr_name}"
+        attr_link_name = get_attr_link_name(class_name, attr_name)
         # An attribute-link is indistinguishable from an ordinary link:
         return self.create_link(attr_link_name, object_name, target_name)
+
+    def get_slot(self, object_node: UUID, attr_name: str):
+        # I really don't like how complex and inefficient it is to read an attribute of an object...
+        class_name = self._get_class_of_object(object_node)
+        attr_link_name = get_attr_link_name(class_name, attr_name)
+        print(attr_link_name)
+        type_edge, = self.bottom.read_outgoing_elements(self.type_model, attr_link_name)
+        for outgoing_edge in self.bottom.read_outgoing_edges(object_node):
+            if type_edge in self.bottom.read_outgoing_elements(outgoing_edge, "Morphism"):
+                slot_ref = self.bottom.read_edge_target(outgoing_edge)
+                slot_node = UUID(self.bottom.read_value(slot_ref))
+                return slot_node
 
     def create_integer_value(self, name: str, value: int):
         from services.primitives.integer_type import Integer
@@ -84,16 +102,15 @@ class OD:
         # create element + morphism links
         element_node = self.bottom.create_node(str(model))  # create element node
         self.bottom.create_edge(self.model, element_node, name)  # attach to model
-        scd_node, = self.bottom.read_outgoing_elements(self.type_model, type_name)  # retrieve type
-        self.bottom.create_edge(element_node, scd_node, "Morphism")  # create morphism link
+        type_node, = self.bottom.read_outgoing_elements(self.type_model, type_name)  # retrieve type
+        self.bottom.create_edge(element_node, type_node, "Morphism")  # create morphism link
 
 
     def create_link(self, assoc_name: str, src_obj_name: str, tgt_obj_name: str):
-        print(tgt_obj_name)
         src_obj_node, = self.bottom.read_outgoing_elements(self.model, src_obj_name)
         tgt_obj_node, = self.bottom.read_outgoing_elements(self.model, tgt_obj_name)
 
-        link_edge = self.bottom.create_edge(src_obj_node, tgt_obj_node);
+        link_edge = self.bottom.create_edge(src_obj_node, tgt_obj_node)
 
         # generate a unique name for the link
         i = 0;
