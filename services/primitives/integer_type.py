@@ -12,7 +12,7 @@ class Integer:
 
     def create(self, value: int):
         # delete existing integer, if there is one
-        if "string" in self.bottom.read_keys(self.model):
+        if "integer" in self.bottom.read_keys(self.model):
             instance, = self.bottom.read_outgoing_elements(self.model, "integer")
             self.bottom.delete_element(instance)
         _instance = self.bottom.create_node(value)

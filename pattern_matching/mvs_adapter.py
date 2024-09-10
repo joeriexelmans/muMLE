@@ -70,9 +70,9 @@ class MVSEdge(NamedNode):
 # dirty way of detecting whether a node is a ModelRef
 UUID_REGEX = re.compile(r"[0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z]-[0-9a-z][0-9a-z][0-9a-z][0-9a-z]-[0-9a-z][0-9a-z][0-9a-z][0-9a-z]-[0-9a-z][0-9a-z][0-9a-z][0-9a-z]-[0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z]")
 
-# Converts an object/class diagram in MVS state to the pattern matcher graph type
+# Converts an object diagram in MVS state to the pattern matcher graph type
 # ModelRefs are flattened
-def model_to_graph(state: State, model: UUID, metamodel: UUID):
+def model_to_graph(state: State, model: UUID, metamodel: UUID, prefix=""):
     with Timer("model_to_graph"):
         od = OD(model, metamodel, state)
         scd = SCD(model, state)
@@ -106,13 +106,12 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID):
             if isinstance(value, str):
                 if UUID_REGEX.match(value) != None:
                     # side-effect
-                    modelrefs[el] = UUID(value)
+                    modelrefs[el] = (UUID(value),name)
                     return MVSNode(IS_MODELREF, el, name)
             return MVSNode(value, el, name)
 
         # MVS-Nodes become vertices
-        uuid_to_vtx = { node: to_vtx(node, key) for key in bottom.read_keys(model) for node in bottom.read_outgoing_elements(model, key) }
-        uuid_to_vtx = { key: val for key,val in uuid_to_vtx.items() if val != None }
+        uuid_to_vtx = { node: to_vtx(node, prefix+key) for key in bottom.read_keys(model) for node in bottom.read_outgoing_elements(model, key) }
         graph.vtxs = [ vtx for vtx in uuid_to_vtx.values() ]
 
         # For every MSV-Edge, two edges are created (for src and tgt)
@@ -131,13 +130,13 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID):
                     label="tgt"))
 
 
-        for node, ref in modelrefs.items():
+        for node, (ref, name) in modelrefs.items():
             # Get MM of ref'ed model
             type_node, = bottom.read_outgoing_elements(node, "Morphism")
             print("modelref type node:", type_node)
 
             # Recursively convert ref'ed model to graph
-            ref_model = model_to_graph(state, ref, type_node)
+            ref_model = model_to_graph(state, ref, type_node, prefix=name+'/')
 
             # Flatten and create link to ref'ed model
             graph.vtxs += ref_model.vtxs
@@ -214,7 +213,9 @@ class RAMCompare:
 
         return False
 
-    def has_subtype(self, g_vtx_type, h_vtx_type):
+    def match_types(self, g_vtx_type, h_vtx_type):
+        # types only match with their supertypes
+        # we assume that 'RAMifies'-traceability links have been created between guest and host types
         g_vtx_original_types = self.bottom.read_outgoing_elements(g_vtx_type, "RAMifies")
         for typ in g_vtx_original_types:
             # print(g_vtx, "is ramified")
@@ -233,8 +234,9 @@ class RAMCompare:
         # First check if the types match (if we have type-information)
         if hasattr(g_vtx, 'typ'):
             if not hasattr(h_vtx, 'typ'):
+                # if guest has a type, host must have a type
                 return False
-            return self.has_subtype(g_vtx.typ, h_vtx.typ)
+            return self.match_types(g_vtx.typ, h_vtx.typ)
 
         # Then, match by value
 
@@ -253,17 +255,6 @@ class RAMCompare:
 
         if h_vtx.value == IS_MODELREF:
             return False
-
-        # # types only match with their supertypes
-        # # we assume that 'RAMifies'-traceability links have been created between guest and host types
-        # # we need these links, because the guest types are different types (RAMified)
-        # if isinstance(g_vtx.value, IS_TYPE):
-        #     if not isinstance(h_vtx.value, IS_TYPE):
-        #         return False
-        #     return self.has_subtype(g_vtx.value.type, h_vtx.value.type)
-
-        # if isinstance(h_vtx.value, IS_TYPE):
-        #     return False
 
         # print(g_vtx.value, h_vtx.value)
         def get_slot(h_vtx, slot_name: str):
