@@ -3,6 +3,7 @@ from state.base import State
 from services.bottom.V0 import Bottom
 from services.primitives.integer_type import Integer
 from services.primitives.string_type import String
+from typing import Optional
 
 def get_attr_link_name(class_name: str, attr_name: str):
     return f"{class_name}_{attr_name}"
@@ -37,8 +38,6 @@ class OD:
             # 'abstract' is optional attribute, default is False
             is_abstract = False
 
-        print("class", name, "is abstract?", is_abstract)
-
         if is_abstract:
             raise Exception("Cannot instantiate abstract class!")
 
@@ -63,7 +62,7 @@ class OD:
         class_name = self.get_class_of_object(object_name)
         attr_link_name = get_attr_link_name(class_name, attr_name)
         # An attribute-link is indistinguishable from an ordinary link:
-        return self.create_link(attr_link_name, object_name, target_name)
+        return self.create_link(None, attr_link_name, object_name, target_name)
 
     def get_slot(self, object_node: UUID, attr_name: str):
         # I really don't like how complex and inefficient it is to read an attribute of an object...
@@ -106,19 +105,20 @@ class OD:
         self.bottom.create_edge(element_node, type_node, "Morphism")  # create morphism link
 
 
-    def create_link(self, assoc_name: str, src_obj_name: str, tgt_obj_name: str):
+    def create_link(self, link_name: Optional[str], assoc_name: str, src_obj_name: str, tgt_obj_name: str):
         src_obj_node, = self.bottom.read_outgoing_elements(self.model, src_obj_name)
         tgt_obj_node, = self.bottom.read_outgoing_elements(self.model, tgt_obj_name)
 
         link_edge = self.bottom.create_edge(src_obj_node, tgt_obj_node)
 
         # generate a unique name for the link
-        i = 0;
-        while True:
-            link_name = f"{assoc_name}{i}"
-            if len(self.bottom.read_outgoing_elements(self.model, link_name)) == 0:
-                break
-            i += 1
+        if link_name == None:
+            i = 0;
+            while True:
+                link_name = f"{assoc_name}{i}"
+                if len(self.bottom.read_outgoing_elements(self.model, link_name)) == 0:
+                    break
+                i += 1
 
         self.bottom.create_edge(self.model, link_edge, link_name)
 

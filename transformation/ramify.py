@@ -4,8 +4,9 @@ from services.bottom.V0 import Bottom
 from services.scd import SCD
 from framework.conformance import Conformance
 
+RAMIFIES_LABEL = "RAMifies"
 
-def ramify(state: State, model: UUID, prefix = "LHS_") -> UUID:
+def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
 
     # def print_tree(root, max_depth, depth=0):
     #     print("  "*depth, "root=", root, "value=", state.read_value(root))
@@ -119,7 +120,7 @@ def ramify(state: State, model: UUID, prefix = "LHS_") -> UUID:
         print('creating class', class_name, "with card 0 ..", upper_card)
         ramified_class = ramified_scd.create_class(prefix+class_name, abstract=None, max_c=upper_card)
         # traceability link
-        bottom.create_edge(ramified_class, class_node, "RAMifies")
+        bottom.create_edge(ramified_class, class_node, RAMIFIES_LABEL)
 
         # We don't add a 'label' attribute (as described in literature on RAMification)
         # Instead, the names of the objects (which only exist in the scope of the object diagram 'model', and are not visible to the matcher) are used as labels
@@ -133,7 +134,7 @@ def ramify(state: State, model: UUID, prefix = "LHS_") -> UUID:
             # The string will be a Python expression
             ramified_attr_link = ramified_scd._create_attribute_link(prefix+class_name, string_modelref, prefix+attr_name, optional=True)
             # traceability link
-            bottom.create_edge(ramified_attr_link, attr_edge, "RAMifies")
+            bottom.create_edge(ramified_attr_link, attr_edge, RAMIFIES_LABEL)
 
     associations = scd.get_associations()
     for assoc_name, assoc_node in associations.items():
@@ -152,7 +153,7 @@ def ramify(state: State, model: UUID, prefix = "LHS_") -> UUID:
             src_max_c=src_upper_card,
             tgt_max_c=tgt_upper_card)
         # traceability link
-        bottom.create_edge(ramified_assoc, assoc_node, "RAMifies")
+        bottom.create_edge(ramified_assoc, assoc_node, RAMIFIES_LABEL)
 
     for inh_name, inh_node in scd.get_inheritances().items():
         # Re-create inheritance links like in our original model:
@@ -169,3 +170,11 @@ def ramify(state: State, model: UUID, prefix = "LHS_") -> UUID:
         print("RAMification successful.")
 
     return ramified
+
+# Every RAMified type has a link to its original type
+def get_original_type(bottom, typ: UUID):
+    original_types = bottom.read_outgoing_elements(typ, RAMIFIES_LABEL)
+    if len(original_types) != 1:
+        raise Exception("Expected 1 original type, got " + str(len(original_types)))
+    else:
+        return original_types[0]

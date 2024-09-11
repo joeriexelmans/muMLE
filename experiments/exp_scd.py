@@ -7,6 +7,7 @@ from services.scd import SCD
 from framework.conformance import Conformance
 from services.od import OD
 from transformation.ramify import ramify
+from transformation import rewriter
 from services.bottom.V0 import Bottom
 from services.primitives.integer_type import Integer
 from pattern_matching import mvs_adapter
@@ -23,119 +24,108 @@ def create_integer_node(state, i: int):
 def main():
     state = DevState()
     root = state.read_root() # id: 0
-    scd_node = bootstrap_scd(state)
-    scd_node2 = state.read_dict(root, "SCD")
-    # print(root, scd_node, scd_node2)
 
-    def print_tree(root, max_depth, depth=0):
-        print("  "*depth, "root=", root, "value=", state.read_value(root))
-        src,tgt = state.read_edge(root)
-        if src != None:
-            print("  "*depth, "src...")
-            print_tree(src, max_depth, depth+1)
-        if tgt != None:
-            print("  "*depth, "tgt...")
-            print_tree(tgt, max_depth, depth+1)
-        for edge in state.read_outgoing(root):
-            for edge_label in state.read_outgoing(edge):
-                [_,tgt] = state.read_edge(edge_label)
-                label = state.read_value(tgt)
-                print("  "*depth, " key:", label)
-            [_, tgt] = state.read_edge(edge)
-            value = state.read_value(tgt)
-            if value != None:
-                print("  "*depth, " ->", tgt, " (value:", value, ")")
-            else:
-                print("  "*depth, " ->", tgt)
-            if depth < max_depth:
-                if isinstance(value, str) and len(value) == 36:
-                    i = None
-                    try:
-                        i = UUID(value)
-                    except ValueError as e:
-                        # print("invalid UUID:", value)
-                        pass
-                    if i != None:
-                        print_tree(i, max_depth, depth+1)
-                print_tree(tgt, max_depth, depth+1)
+    scd_mm_id = bootstrap_scd(state)
+    int_mm_id = UUID(state.read_value(state.read_dict(state.read_root(), "Integer")))
+    string_mm_id = UUID(state.read_value(state.read_dict(state.read_root(), "String")))
 
-    print("explore...")
-    # print_tree(root, 2)
+    # def print_tree(root, max_depth, depth=0):
+    #     print("  "*depth, "root=", root, "value=", state.read_value(root))
+    #     src,tgt = state.read_edge(root)
+    #     if src != None:
+    #         print("  "*depth, "src...")
+    #         print_tree(src, max_depth, depth+1)
+    #     if tgt != None:
+    #         print("  "*depth, "tgt...")
+    #         print_tree(tgt, max_depth, depth+1)
+    #     for edge in state.read_outgoing(root):
+    #         for edge_label in state.read_outgoing(edge):
+    #             [_,tgt] = state.read_edge(edge_label)
+    #             label = state.read_value(tgt)
+    #             print("  "*depth, " key:", label)
+    #         [_, tgt] = state.read_edge(edge)
+    #         value = state.read_value(tgt)
+    #         if value != None:
+    #             print("  "*depth, " ->", tgt, " (value:", value, ")")
+    #         else:
+    #             print("  "*depth, " ->", tgt)
+    #         if depth < max_depth:
+    #             if isinstance(value, str) and len(value) == 36:
+    #                 i = None
+    #                 try:
+    #                     i = UUID(value)
+    #                 except ValueError as e:
+    #                     # print("invalid UUID:", value)
+    #                     pass
+    #                 if i != None:
+    #                     print_tree(i, max_depth, depth+1)
+    #             print_tree(tgt, max_depth, depth+1)
 
-    int_type_id = state.read_dict(state.read_root(), "Integer")
-    int_type = UUID(state.read_value(int_type_id))
-
-    string_type_id = state.read_dict(state.read_root(), "String")
-    string_type = UUID(state.read_value(string_type_id))
-
-    # scd2 = SCD(scd_node, state)
-    # for el in scd2.list_elements():
-    #     print(el)
-
-
-    model_id = state.create_node()
-    scd = SCD(model_id, state)
-    scd.create_class("Abstract", abstract=True)
-    scd.create_class("A", min_c=1, max_c=2)
-    scd.create_inheritance("A", "Abstract")
-    scd.create_model_ref("Integer", int_type)
-    scd.create_attribute_link("A", "Integer", "size", False)
-    scd.create_class("B")
-    scd.create_association("A2B", "A", "B",
-        src_min_c=1,
-        src_max_c=1,
+    # Meta-model for our DSL
+    dsl_mm_id = state.create_node()
+    dsl_mm_scd = SCD(dsl_mm_id, state)
+    dsl_mm_scd.create_class("Animal", abstract=True)
+    dsl_mm_scd.create_class("Man", min_c=1, max_c=2)
+    dsl_mm_scd.create_inheritance("Man", "Animal")
+    dsl_mm_scd.create_model_ref("Integer", int_mm_id)
+    dsl_mm_scd.create_attribute_link("Man", "Integer", "weight", optional=False)
+    dsl_mm_scd.create_class("Bear")
+    dsl_mm_scd.create_inheritance("Bear", "Animal")
+    dsl_mm_scd.create_association("afraidOf", "Man", "Animal",
+        # Every Man afraid of at least one Animal:
+        src_min_c=0,
+        src_max_c=None,
         tgt_min_c=1,
-        tgt_max_c=2,
+        tgt_max_c=None,
     )
 
-    # print_tree(model_id, 3)
+    conf = Conformance(state, dsl_mm_id, scd_mm_id)
+    print("conforms?", conf.check_nominal(log=True))
 
+    # Model in our DSL
+    dsl_m_id = state.create_node()
+    dsl_m_od = OD(dsl_mm_id, dsl_m_id, state)
 
-    conf = Conformance(state, model_id, scd_node)
-    print("Check nominal conformance...")
-    print(conf.check_nominal(log=True))
-    # print("Check structural conformance...")
-    # print(conf.check_structural(log=True))
-    # print("Check nominal conformance (again)...")
-    # print(conf.check_nominal(log=True))
+    dsl_m_od.create_object("george", "Man")
+    dsl_m_od.create_object("bear1", "Bear")
+    dsl_m_od.create_object("bear2", "Bear")
+    dsl_m_od.create_link("georgeAfraidOfBear1", "afraidOf", "george", "bear1")
+    dsl_m_od.create_link("georgeAfraidOfBear2", "afraidOf", "george", "bear2")
 
-    inst_id = state.create_node()
-    od = OD(model_id, inst_id, state)
+    dsl_m_od.create_slot("weight", "george",
+        dsl_m_od.create_integer_value("george.weight", 80))
 
-    od.create_object("a", "A")
-    od.create_object("a2", "A")
-    od.create_object("b", "B")
-    od.create_link("A2B", "a", "b")
-    od.create_link("A2B", "a2", "b")
+    conf2 = Conformance(state, dsl_m_id, dsl_mm_id)
+    print("Model conforms?", conf2.check_nominal(log=True))
 
-    od.create_slot("size", "a", od.create_integer_value("a.size", 42))
-    od.create_slot("size", "a2", od.create_integer_value("a2.size", 50))
+    # RAMify MM
+    ramified_mm_id = ramify(state, dsl_mm_id)
 
-    print("checking conformance....")
-    conf2 = Conformance(state, inst_id, model_id)
-    print("conforms?", conf2.check_nominal(log=True))
+    # LHS of our rule
+    lhs_id = state.create_node()
+    lhs_od = OD(ramified_mm_id, lhs_id, state)
 
-    ramified_MM_id = ramify(state, model_id)
+    lhs_od.create_object("man", "RAM_Man")
+    lhs_od.create_slot("RAM_weight", "man", lhs_od.create_string_value("man.RAM_weight", 'v < 99'))
+    lhs_od.create_object("scaryAnimal", "RAM_Animal")
+    lhs_od.create_link("manAfraidOfAnimal", "RAM_afraidOf", "man", "scaryAnimal")
 
-    pattern_id = state.create_node()
-    pattern = OD(ramified_MM_id, pattern_id, state)
+    conf3 = Conformance(state, lhs_id, ramified_mm_id)
+    print("LHS conforms?", conf3.check_nominal(log=True))
 
-    pattern.create_object("pattern_a", "LHS_A")
-    # pattern.create_slot("constraint", "a1", pattern.create_string_value("a1.constraint", 'read_int(get_slot("LHS_size")) > 50'))
-    pattern.create_slot("LHS_size", "pattern_a", pattern.create_string_value("pattern_a.LHS_size", 'v < 99'))
-    # pattern.create_object("a2", "A")
-    # pattern.create_slot("size", "a2", pattern.create_string_value("a2.size", '99'))
+    # RHS of our rule
+    rhs_id = state.create_node()
+    rhs_od = OD(ramified_mm_id, rhs_id, state)
 
-    pattern.create_object("pattern_b", "LHS_B")
+    rhs_od.create_object("man", "RAM_Man")
+    rhs_od.create_slot("RAM_weight", "man", rhs_od.create_string_value("man.RAM_weight", 'v + 5'))
 
-    pattern.create_link("LHS_A2B", "pattern_a", "pattern_b")
+    conf4 = Conformance(state, rhs_id, ramified_mm_id)
+    print("RHS conforms?", conf4.check_nominal(log=True))
 
-
-    conf3 = Conformance(state, pattern_id, ramified_MM_id)
-    print("conforms?", conf3.check_nominal(log=True))
-
-    host = mvs_adapter.model_to_graph(state, inst_id, model_id)
-    guest = mvs_adapter.model_to_graph(state, pattern_id, ramified_MM_id)
+    # Convert to format understood by matching algorithm
+    host = mvs_adapter.model_to_graph(state, dsl_m_id, dsl_mm_id)
+    guest = mvs_adapter.model_to_graph(state, lhs_id, ramified_mm_id)
 
     print("HOST:")
     print(host.vtxs)
@@ -146,7 +136,7 @@ def main():
     print(guest.edges)
 
     print("matching...")
-    matcher = MatcherVF2(host, guest, mvs_adapter.RAMCompare(Bottom(state), od))
+    matcher = MatcherVF2(host, guest, mvs_adapter.RAMCompare(Bottom(state), dsl_m_od))
     prev = None
     for m in matcher.match():
         print("\nMATCH:\n", m)
@@ -155,8 +145,12 @@ def main():
             if isinstance(guest_vtx, mvs_adapter.NamedNode) and isinstance(host_vtx, mvs_adapter.NamedNode):
                 name_to_matched[guest_vtx.name] = host_vtx.name
         print(name_to_matched)
-        input()
+        rewriter.rewrite(state, lhs_id, rhs_id, name_to_matched, dsl_m_id)
+        break
     print("DONE")
+
+    conf5 = Conformance(state, dsl_m_id, dsl_mm_id)
+    print("Updated model conforms?", conf5.check_nominal(log=True))
 
 if __name__ == "__main__":
     main()

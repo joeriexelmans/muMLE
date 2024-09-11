@@ -4,6 +4,7 @@ from services.bottom.V0 import Bottom
 from services.scd import SCD
 from services.od import OD
 from pattern_matching.matcher import Graph, Edge, Vertex
+from transformation import ramify
 import itertools
 import re
 import functools
@@ -216,15 +217,12 @@ class RAMCompare:
     def match_types(self, g_vtx_type, h_vtx_type):
         # types only match with their supertypes
         # we assume that 'RAMifies'-traceability links have been created between guest and host types
-        g_vtx_original_types = self.bottom.read_outgoing_elements(g_vtx_type, "RAMifies")
-        for typ in g_vtx_original_types:
-            # print(g_vtx, "is ramified")
-            result = self.is_subtype_of(h_vtx_type, g_vtx_original_types[0])
-            if result:
-                return True
-        else:
-            # print(g_vtx, "is not ramified")
+        try:
+            g_vtx_original_type = ramify.get_original_type(self.bottom, g_vtx_type)
+        except:
             return False
+
+        return self.is_subtype_of(h_vtx_type, g_vtx_original_type)
 
 
     # Memoizing the result of comparison gives a huge performance boost!
