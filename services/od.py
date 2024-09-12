@@ -39,14 +39,7 @@ class OD:
             get_scd_mm(self.bottom), # the type model of our type model
             self.type_model,
             self.bottom.state)
-        # # Read the 'abstract' slot of the class
-        abstract_slot = mm_od.get_slot(class_node, "abstract")
-        print('abstract_slot:', abstract_slot)
-        if abstract_slot != None:
-            is_abstract = Boolean(abstract_slot, self.bottom.state).read()
-        else:
-            is_abstract = False
-
+        is_abstract = mm_od.read_slot_boolean(class_node, "abstract")
         if is_abstract:
             raise Exception("Cannot instantiate abstract class!")
 
@@ -55,6 +48,11 @@ class OD:
         self.bottom.create_edge(object_node, class_node, "Morphism") # typed-by link
 
         return object_node
+
+    def read_slot_boolean(self, obj_node: str, attr_name: str):
+        slot = self.get_slot(obj_node, attr_name)
+        if slot != None:
+            return Boolean(slot, self.bottom.state).read()
 
     def get_class_of_object(self, object_name: str):
         object_node, = self.bottom.read_outgoing_elements(self.model, object_name) # get the object
@@ -71,7 +69,6 @@ class OD:
     def create_slot(self, attr_name: str, object_name: str, target_name: str):
         class_name = self.get_class_of_object(object_name)
         attr_link_name = get_attr_link_name(class_name, attr_name)
-        print('attr_link_name:', attr_link_name)
         # An attribute-link is indistinguishable from an ordinary link:
         return self.create_link(
             get_attr_link_name(object_name, attr_name),
@@ -81,7 +78,6 @@ class OD:
         # I really don't like how complex and inefficient it is to read an attribute of an object...
         class_name = self._get_class_of_object(object_node)
         attr_link_name = get_attr_link_name(class_name, attr_name)
-        print(attr_link_name)
         type_edge, = self.bottom.read_outgoing_elements(self.type_model, attr_link_name)
         for outgoing_edge in self.bottom.read_outgoing_edges(object_node):
             if type_edge in self.bottom.read_outgoing_elements(outgoing_edge, "Morphism"):
@@ -130,7 +126,6 @@ class OD:
                 if len(self.bottom.read_outgoing_elements(self.model, link_name)) == 0:
                     break
                 i += 1
-        print('link_name:', link_name)
 
         type_edge, = self.bottom.read_outgoing_elements(self.type_model, assoc_name)
 
@@ -171,6 +166,9 @@ def get_scd_mm_class_node(bottom: Bottom):
 def get_scd_mm_attributelink_node(bottom: Bottom):
     return get_scd_mm_node(bottom, "AttributeLink")
 
+def get_scd_mm_attributelink_name_node(bottom: Bottom):
+    return get_scd_mm_node(bottom, "AttributeLink_name")
+
 def get_scd_mm_assoc_node(bottom: Bottom):
     return get_scd_mm_node(bottom, "Association")
 
@@ -182,8 +180,65 @@ def get_scd_mm_node(bottom: Bottom, node_name: str):
     node, = bottom.read_outgoing_elements(scd_metamodel, node_name)
     return node
 
+def get_scd_mm_class_uppercard_node(bottom: Bottom):
+    return get_scd_mm_node(bottom, "Class_upper_cardinality")
+def get_scd_mm_class_lowercard_node(bottom: Bottom):
+    return get_scd_mm_node(bottom, "Class_lower_cardinality")
+
+def get_scd_mm_assoc_src_uppercard_node(bottom: Bottom):
+    return get_scd_mm_node(bottom, "Association_source_upper_cardinality")
+def get_scd_mm_assoc_src_lowercard_node(bottom: Bottom):
+    return get_scd_mm_node(bottom, "Association_source_lower_cardinality")
+def get_scd_mm_assoc_tgt_uppercard_node(bottom: Bottom):
+    return get_scd_mm_node(bottom, "Association_target_upper_cardinality")
+def get_scd_mm_assoc_tgt_lowercard_node(bottom: Bottom):
+    return get_scd_mm_node(bottom, "Association_target_lower_cardinality")
+
+
 def get_object_name(bottom: Bottom, model: UUID, object_node: UUID):
     for key in bottom.read_keys(model):
         for el in bottom.read_outgoing_elements(model, key):
             if el == object_node:
                 return key
+
+def find_outgoing_typed_by(bottom, src: UUID, type_node: UUID):
+    edges = []
+    for outgoing_edge in bottom.read_outgoing_edges(src):
+        for typedBy in bottom.read_outgoing_elements(outgoing_edge, "Morphism"):
+            if typedBy == type_node:
+                edges.append(outgoing_edge)
+                break
+    return edges
+
+def navigate_modelref(bottom, node: UUID):
+    uuid = bottom.read_value(node)
+    return UUID(uuid)
+
+def find_cardinality(bottom, class_node: UUID, type_node: UUID):
+    upper_card_edges = find_outgoing_typed_by(bottom, class_node, type_node)
+    if len(upper_card_edges) == 1:
+        ref = bottom.read_edge_target(upper_card_edges[0])
+        integer, = bottom.read_outgoing_elements(
+            navigate_modelref(bottom, ref),
+            "integer")
+        # finally, the value we're looking for:
+        return bottom.read_value(integer)
+
+def get_attributes(bottom, class_node: UUID):
+    attr_link_node = get_scd_mm_attributelink_node(bottom)
+    attr_link_name_node = get_scd_mm_attributelink_name_node(bottom)
+    attr_edges = find_outgoing_typed_by(bottom, class_node, attr_link_node)
+    result = []
+    for attr_edge in attr_edges:
+        name_edge, = find_outgoing_typed_by(bottom, attr_edge, attr_link_name_node)
+        if name_edge == None:
+            raise Exception("Expected attribute to have a name...")
+        ref_name = bottom.read_edge_target(name_edge)
+        string, = bottom.read_outgoing_elements(
+            navigate_modelref(bottom, ref_name),
+            "string")
+        attr_name = bottom.read_value(string)
+        # ref_type = bottom.read_edge_target(attr_edge)
+        # typ = navigate_modelref(bottom, ref_type)
+        result.append((attr_name, attr_edge))
+    return result

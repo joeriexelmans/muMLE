@@ -175,6 +175,3 @@ def rewrite(state, lhs: UUID, rhs: UUID, rhs_mm: UUID, match_mapping: dict, m_to
                     Integer(UUID(old_value), state).create(result)
                 else:
                     raise Exception("Unimplemented type. Value:", result)
-
-
-        # type_name = od.get_object_name()

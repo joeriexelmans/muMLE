@@ -12,6 +12,7 @@ from services.bottom.V0 import Bottom
 from services.primitives.integer_type import Integer
 from pattern_matching import mvs_adapter
 from pattern_matching.matcher import MatcherVF2
+from renderer import plantuml
 
 import sys
 
@@ -106,16 +107,17 @@ def main():
     print(conf2.type_mapping)
 
     # RAMify MM
-    ramified_mm_id = ramify(state, dsl_mm_id)
+    prefix = "RAM_" # all ramified types can be prefixed to distinguish them a bit more
+    ramified_mm_id = ramify(state, dsl_mm_id, prefix)
 
     # LHS of our rule
     lhs_id = state.create_node()
     lhs_od = OD(ramified_mm_id, lhs_id, state)
 
-    lhs_od.create_object("man", "Man")
-    lhs_od.create_slot("weight", "man", lhs_od.create_string_value("man.weight", 'v < 99'))
-    lhs_od.create_object("scaryAnimal", "Animal")
-    lhs_od.create_link("manAfraidOfAnimal", "afraidOf", "man", "scaryAnimal")
+    lhs_od.create_object("man", prefix+"Man")
+    lhs_od.create_slot(prefix+"weight", "man", lhs_od.create_string_value(f"man.{prefix}weight", 'v < 99'))
+    lhs_od.create_object("scaryAnimal", prefix+"Animal")
+    lhs_od.create_link("manAfraidOfAnimal", prefix+"afraidOf", "man", "scaryAnimal")
 
     conf3 = Conformance(state, lhs_id, ramified_mm_id)
     print("LHS conforms?", conf3.check_nominal(log=True))
@@ -124,13 +126,13 @@ def main():
     rhs_id = state.create_node()
     rhs_od = OD(ramified_mm_id, rhs_id, state)
 
-    rhs_od.create_object("man", "Man")
-    rhs_od.create_slot("weight", "man", rhs_od.create_string_value("man.weight", 'v + 5'))
+    rhs_od.create_object("man", prefix+"Man")
+    rhs_od.create_slot(prefix+"weight", "man", rhs_od.create_string_value(f"man.{prefix}weight", 'v + 5'))
 
-    rhs_od.create_object("bill", "Man")
-    rhs_od.create_slot("weight", "bill", rhs_od.create_string_value("bill.weight", '100'))
+    rhs_od.create_object("bill", prefix+"Man")
+    rhs_od.create_slot(prefix+"weight", "bill", rhs_od.create_string_value(f"bill.{prefix}weight", '100'))
 
-    rhs_od.create_link("billAfraidOfMan", "afraidOf", "bill", "man")
+    rhs_od.create_link("billAfraidOfMan", prefix+"afraidOf", "bill", "man")
 
     conf4 = Conformance(state, rhs_id, ramified_mm_id)
     print("RHS conforms?", conf4.check_nominal(log=True))
@@ -162,6 +164,9 @@ def main():
 
     conf5 = Conformance(state, dsl_m_id, dsl_mm_id)
     print("Updated model conforms?", conf5.check_nominal(log=True))
+
+
+    print(plantuml.render_ramification(state, dsl_mm_id, ramified_mm_id))
 
 if __name__ == "__main__":
     main()

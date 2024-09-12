@@ -4,6 +4,7 @@ from services.bottom.V0 import Bottom
 from services.primitives.boolean_type import Boolean
 from services.primitives.integer_type import Integer
 from services.primitives.string_type import String
+from services import od
 
 import re
 
@@ -340,6 +341,14 @@ class SCD:
                 if attr_link_node in edge_types:
                     name_to_attr[name] = edge
         return name_to_attr
+
+    def get_assoc_cardinalities(self, assoc_edge):
+        src_lower_card = od.find_cardinality(self.bottom, assoc_edge, od.get_scd_mm_assoc_src_lowercard_node(self.bottom))
+        src_upper_card = od.find_cardinality(self.bottom, assoc_edge, od.get_scd_mm_assoc_src_uppercard_node(self.bottom))
+        tgt_lower_card = od.find_cardinality(self.bottom, assoc_edge, od.get_scd_mm_assoc_tgt_lowercard_node(self.bottom))
+        tgt_upper_card = od.find_cardinality(self.bottom, assoc_edge, od.get_scd_mm_assoc_tgt_uppercard_node(self.bottom))
+        return src_lower_card, src_upper_card, tgt_lower_card, tgt_upper_card
+
 
     def delete_element(self, name: str):
         """
