@@ -6,7 +6,7 @@ from framework.conformance import Conformance
 
 RAMIFIES_LABEL = "RAMifies"
 
-def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
+def ramify(state: State, model: UUID, prefix = "") -> UUID:
 
     # def print_tree(root, max_depth, depth=0):
     #     print("  "*depth, "root=", root, "value=", state.read_value(root))
@@ -174,7 +174,7 @@ def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
 # Every RAMified type has a link to its original type
 def get_original_type(bottom, typ: UUID):
     original_types = bottom.read_outgoing_elements(typ, RAMIFIES_LABEL)
-    if len(original_types) != 1:
-        raise Exception("Expected 1 original type, got " + str(len(original_types)))
-    else:
+    if len(original_types) > 1:
+        raise Exception("Expected at most 1 original type, got " + str(len(original_types)))
+    elif len(original_types) == 1:
         return original_types[0]

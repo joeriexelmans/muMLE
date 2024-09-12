@@ -18,3 +18,7 @@ class String:
         self.bottom.create_edge(self.model, _instance, "string")
         _type, = self.bottom.read_outgoing_elements(self.type_model, "String")
         self.bottom.create_edge(_instance, _type, "Morphism")
+
+    def read(self):
+        instance, = self.bottom.read_outgoing_elements(self.model, "string")
+        return self.bottom.read_value(instance)

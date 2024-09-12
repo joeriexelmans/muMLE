@@ -227,6 +227,7 @@ class RAMCompare:
 
     # Memoizing the result of comparison gives a huge performance boost!
     # Especially `is_subtype_of` is very slow, and will be performed many times over on the same pair of nodes during the matching process.
+    # Assuming the model is not altered *during* matching, this is safe.
     @functools.cache
     def __call__(self, g_vtx, h_vtx):
         # First check if the types match (if we have type-information)

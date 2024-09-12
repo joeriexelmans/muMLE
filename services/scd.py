@@ -327,8 +327,11 @@ class SCD:
 
 
     def get_attributes(self, class_name: str):
-        attr_link_node, = self.bottom.read_outgoing_elements(self.scd_model, "AttributeLink")
         class_node, = self.bottom.read_outgoing_elements(self.model, class_name)
+        return self._get_attributes(class_node)
+
+    def _get_attributes(self, class_node: UUID):
+        attr_link_node, = self.bottom.read_outgoing_elements(self.scd_model, "AttributeLink")
         name_to_attr = {}
         for name in self.bottom.read_keys(class_node):
             edges = self.bottom.read_outgoing_edges(class_node, name)

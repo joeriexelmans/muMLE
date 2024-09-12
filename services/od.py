@@ -3,6 +3,7 @@ from state.base import State
 from services.bottom.V0 import Bottom
 from services.primitives.integer_type import Integer
 from services.primitives.string_type import String
+from services.primitives.boolean_type import Boolean
 from typing import Optional
 
 def get_attr_link_name(class_name: str, attr_name: str):
@@ -29,13 +30,21 @@ class OD:
 
     def create_object(self, name: str, class_name: str):
         class_node, = self.bottom.read_outgoing_elements(self.type_model, class_name)
-
-
         abstract_nodes = self.bottom.read_outgoing_elements(self.type_model, f"{class_name}.abstract")
-        if len(abstract_nodes) == 1:
-            is_abstract = self.bottom.read_value(abstract_node)
+        return self._create_object(name, class_node)
+
+    def _create_object(self, name: str, class_node: UUID):
+        # Look at our `type_model` as if it's an object diagram:
+        mm_od = OD(
+            get_scd_mm(self.bottom), # the type model of our type model
+            self.type_model,
+            self.bottom.state)
+        # # Read the 'abstract' slot of the class
+        abstract_slot = mm_od.get_slot(class_node, "abstract")
+        print('abstract_slot:', abstract_slot)
+        if abstract_slot != None:
+            is_abstract = Boolean(abstract_slot, self.bottom.state).read()
         else:
-            # 'abstract' is optional attribute, default is False
             is_abstract = False
 
         if is_abstract:
@@ -51,6 +60,7 @@ class OD:
         object_node, = self.bottom.read_outgoing_elements(self.model, object_name) # get the object
         return self._get_class_of_object(object_node)
 
+
     def _get_class_of_object(self, object_node: UUID):
         type_el, = self.bottom.read_outgoing_elements(object_node, "Morphism")
         for key in self.bottom.read_keys(self.type_model):
@@ -61,8 +71,11 @@ class OD:
     def create_slot(self, attr_name: str, object_name: str, target_name: str):
         class_name = self.get_class_of_object(object_name)
         attr_link_name = get_attr_link_name(class_name, attr_name)
+        print('attr_link_name:', attr_link_name)
         # An attribute-link is indistinguishable from an ordinary link:
-        return self.create_link(None, attr_link_name, object_name, target_name)
+        return self.create_link(
+            get_attr_link_name(object_name, attr_name),
+            attr_link_name, object_name, target_name)
 
     def get_slot(self, object_node: UUID, attr_name: str):
         # I really don't like how complex and inefficient it is to read an attribute of an object...
@@ -109,8 +122,6 @@ class OD:
         src_obj_node, = self.bottom.read_outgoing_elements(self.model, src_obj_name)
         tgt_obj_node, = self.bottom.read_outgoing_elements(self.model, tgt_obj_name)
 
-        link_edge = self.bottom.create_edge(src_obj_node, tgt_obj_node)
-
         # generate a unique name for the link
         if link_name == None:
             i = 0;
@@ -119,9 +130,60 @@ class OD:
                 if len(self.bottom.read_outgoing_elements(self.model, link_name)) == 0:
                     break
                 i += 1
-
-        self.bottom.create_edge(self.model, link_edge, link_name)
+        print('link_name:', link_name)
 
         type_edge, = self.bottom.read_outgoing_elements(self.type_model, assoc_name)
-        self.bottom.create_edge(link_edge, type_edge, "Morphism")
 
+        return self._create_link(link_name, type_edge, src_obj_node, tgt_obj_node)
+
+    def _create_link(self, link_name: str, type_edge: str, src_obj_node: UUID, tgt_obj_node: UUID):
+        # the link itself is unlabeled:
+        link_edge = self.bottom.create_edge(src_obj_node, tgt_obj_node)
+        # it is only in the context of the model, that the link has a name:
+        self.bottom.create_edge(self.model, link_edge, link_name) # add to model
+        self.bottom.create_edge(link_edge, type_edge, "Morphism")
+        return link_edge
+
+def get_types(bottom: Bottom, obj: UUID):
+    return bottom.read_outgoing_elements(obj, "Morphism")
+
+def get_type(bottom: Bottom, obj: UUID):
+    types = get_types(bottom, obj)
+    if len(types) == 1:
+        return types[0]
+    elif len(types) > 1:
+        raise Exception(f"Expected at most one type. Instead got {len(types)}.")
+
+def is_typed_by(bottom, el: UUID, typ: UUID):
+    for typed_by in get_types(bottom, el):
+        if typed_by == typ:
+            return True
+    return False
+
+def get_scd_mm(bottom):
+    scd_metamodel_id = bottom.state.read_dict(bottom.state.read_root(), "SCD")
+    scd_metamodel = UUID(bottom.state.read_value(scd_metamodel_id))
+    return scd_metamodel    
+
+def get_scd_mm_class_node(bottom: Bottom):
+    return get_scd_mm_node(bottom, "Class")
+
+def get_scd_mm_attributelink_node(bottom: Bottom):
+    return get_scd_mm_node(bottom, "AttributeLink")
+
+def get_scd_mm_assoc_node(bottom: Bottom):
+    return get_scd_mm_node(bottom, "Association")
+
+def get_scd_mm_modelref_node(bottom: Bottom):
+    return get_scd_mm_node(bottom, "ModelRef")
+
+def get_scd_mm_node(bottom: Bottom, node_name: str):
+    scd_metamodel = get_scd_mm(bottom)
+    node, = bottom.read_outgoing_elements(scd_metamodel, node_name)
+    return node
+
+def get_object_name(bottom: Bottom, model: UUID, object_node: UUID):
+    for key in bottom.read_keys(model):
+        for el in bottom.read_outgoing_elements(model, key):
+            if el == object_node:
+                return key

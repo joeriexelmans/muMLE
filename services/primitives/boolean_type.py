@@ -18,3 +18,7 @@ class Boolean:
         self.bottom.create_edge(self.model, _instance, "boolean")
         _type, = self.bottom.read_outgoing_elements(self.type_model, "Boolean")
         self.bottom.create_edge(_instance, _type, "Morphism")
+
+    def read(self):
+        instance, = self.bottom.read_outgoing_elements(self.model, "boolean")
+        return self.bottom.read_value(instance)

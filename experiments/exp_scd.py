@@ -79,6 +79,8 @@ def main():
         tgt_max_c=None,
     )
 
+    print(dsl_mm_scd.list_elements())
+
     conf = Conformance(state, dsl_mm_id, scd_mm_id)
     print("conforms?", conf.check_nominal(log=True))
 
@@ -86,17 +88,22 @@ def main():
     dsl_m_id = state.create_node()
     dsl_m_od = OD(dsl_mm_id, dsl_m_id, state)
 
+    # dsl_m_od.create_object("animal", "Animal")
     dsl_m_od.create_object("george", "Man")
+    dsl_m_od.create_slot("weight", "george",
+        dsl_m_od.create_integer_value("george.weight", 80))
+
+    # "george_weight"
+
     dsl_m_od.create_object("bear1", "Bear")
     dsl_m_od.create_object("bear2", "Bear")
     dsl_m_od.create_link("georgeAfraidOfBear1", "afraidOf", "george", "bear1")
     dsl_m_od.create_link("georgeAfraidOfBear2", "afraidOf", "george", "bear2")
 
-    dsl_m_od.create_slot("weight", "george",
-        dsl_m_od.create_integer_value("george.weight", 80))
 
     conf2 = Conformance(state, dsl_m_id, dsl_mm_id)
-    print("Model conforms?", conf2.check_nominal(log=True))
+    print("DSL instance conforms?", conf2.check_nominal(log=True))
+    print(conf2.type_mapping)
 
     # RAMify MM
     ramified_mm_id = ramify(state, dsl_mm_id)
@@ -105,10 +112,10 @@ def main():
     lhs_id = state.create_node()
     lhs_od = OD(ramified_mm_id, lhs_id, state)
 
-    lhs_od.create_object("man", "RAM_Man")
-    lhs_od.create_slot("RAM_weight", "man", lhs_od.create_string_value("man.RAM_weight", 'v < 99'))
-    lhs_od.create_object("scaryAnimal", "RAM_Animal")
-    lhs_od.create_link("manAfraidOfAnimal", "RAM_afraidOf", "man", "scaryAnimal")
+    lhs_od.create_object("man", "Man")
+    lhs_od.create_slot("weight", "man", lhs_od.create_string_value("man.weight", 'v < 99'))
+    lhs_od.create_object("scaryAnimal", "Animal")
+    lhs_od.create_link("manAfraidOfAnimal", "afraidOf", "man", "scaryAnimal")
 
     conf3 = Conformance(state, lhs_id, ramified_mm_id)
     print("LHS conforms?", conf3.check_nominal(log=True))
@@ -117,8 +124,13 @@ def main():
     rhs_id = state.create_node()
     rhs_od = OD(ramified_mm_id, rhs_id, state)
 
-    rhs_od.create_object("man", "RAM_Man")
-    rhs_od.create_slot("RAM_weight", "man", rhs_od.create_string_value("man.RAM_weight", 'v + 5'))
+    rhs_od.create_object("man", "Man")
+    rhs_od.create_slot("weight", "man", rhs_od.create_string_value("man.weight", 'v + 5'))
+
+    rhs_od.create_object("bill", "Man")
+    rhs_od.create_slot("weight", "bill", rhs_od.create_string_value("bill.weight", '100'))
+
+    rhs_od.create_link("billAfraidOfMan", "afraidOf", "bill", "man")
 
     conf4 = Conformance(state, rhs_id, ramified_mm_id)
     print("RHS conforms?", conf4.check_nominal(log=True))
@@ -137,7 +149,6 @@ def main():
 
     print("matching...")
     matcher = MatcherVF2(host, guest, mvs_adapter.RAMCompare(Bottom(state), dsl_m_od))
-    prev = None
     for m in matcher.match():
         print("\nMATCH:\n", m)
         name_to_matched = {}
@@ -145,7 +156,7 @@ def main():
             if isinstance(guest_vtx, mvs_adapter.NamedNode) and isinstance(host_vtx, mvs_adapter.NamedNode):
                 name_to_matched[guest_vtx.name] = host_vtx.name
         print(name_to_matched)
-        rewriter.rewrite(state, lhs_id, rhs_id, name_to_matched, dsl_m_id)
+        rewriter.rewrite(state, lhs_id, rhs_id, ramified_mm_id, name_to_matched, dsl_m_id, dsl_mm_id)
         break
     print("DONE")
 
