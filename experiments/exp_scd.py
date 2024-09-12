@@ -153,12 +153,14 @@ def main():
     matcher = MatcherVF2(host, guest, mvs_adapter.RAMCompare(Bottom(state), dsl_m_od))
     for m in matcher.match():
         print("\nMATCH:\n", m)
-        name_to_matched = {}
+        name_mapping = {}
+        id_mapping = {}
         for guest_vtx, host_vtx in m.mapping_vtxs.items():
             if isinstance(guest_vtx, mvs_adapter.NamedNode) and isinstance(host_vtx, mvs_adapter.NamedNode):
-                name_to_matched[guest_vtx.name] = host_vtx.name
-        print(name_to_matched)
-        rewriter.rewrite(state, lhs_id, rhs_id, ramified_mm_id, name_to_matched, dsl_m_id, dsl_mm_id)
+                id_mapping[guest_vtx.node_id] = host_vtx.node_id
+                name_mapping[guest_vtx.name] = host_vtx.name
+        print(name_mapping)
+        #rewriter.rewrite(state, lhs_id, rhs_id, ramified_mm_id, name_mapping, dsl_m_id, dsl_mm_id)
         break
     print("DONE")
 
@@ -166,7 +168,28 @@ def main():
     print("Updated model conforms?", conf5.check_nominal(log=True))
 
 
-    print(plantuml.render_ramification(state, dsl_mm_id, ramified_mm_id))
+
+
+    # Render original and RAMified meta-models
+    print(plantuml.render_package("Meta-Model", plantuml.render_class_diagram(state, dsl_mm_id)))
+    print(plantuml.render_package("RAMified Meta-Model", plantuml.render_class_diagram(state, ramified_mm_id)))
+    
+    # Render ramification traceability links
+    print(plantuml.render_trace_ramifies(state, dsl_mm_id, ramified_mm_id))
+
+    # Render host graph
+    print(plantuml.render_package("Model", plantuml.render_object_diagram(state, dsl_m_id, dsl_mm_id)))
+
+    # Render conformance host -> MM
+    print(plantuml.render_trace_conformance(state, dsl_m_id, dsl_mm_id))
+
+    # Render pattern
+    print(plantuml.render_package("LHS", plantuml.render_object_diagram(state, lhs_id, ramified_mm_id)))
+
+    # Render pattern -> RAM-MM
+    print(plantuml.render_trace_conformance(state, lhs_id, ramified_mm_id))
+
+    print(plantuml.render_trace_match(state, id_mapping))
 
 if __name__ == "__main__":
     main()

@@ -139,6 +139,15 @@ class OD:
         self.bottom.create_edge(link_edge, type_edge, "Morphism")
         return link_edge
 
+    def get_objects(self, class_node):
+        return get_typed_by(self.bottom, self.model, class_node)
+
+    def get_object_name(self, obj: UUID):
+        for key in self.bottom.read_keys(self.model):
+            for el in self.bottom.read_outgoing_elements(self.model, key):
+                if el == obj:
+                    return key
+
 def get_types(bottom: Bottom, obj: UUID):
     return bottom.read_outgoing_elements(obj, "Morphism")
 
@@ -154,6 +163,16 @@ def is_typed_by(bottom, el: UUID, typ: UUID):
         if typed_by == typ:
             return True
     return False
+
+def get_typed_by(bottom, model, type_node: UUID):
+    name_to_instance = {}
+    for key in bottom.read_keys(model):
+        element, = bottom.read_outgoing_elements(model, key)
+        element_types = bottom.read_outgoing_elements(element, "Morphism")
+        if type_node in element_types:
+            name_to_instance[key] = element
+    # mapping from instance name to UUID
+    return name_to_instance
 
 def get_scd_mm(bottom):
     scd_metamodel_id = bottom.state.read_dict(bottom.state.read_root(), "SCD")
