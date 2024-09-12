@@ -136,8 +136,6 @@ def rewrite(state, lhs: UUID, rhs: UUID, rhs_mm: UUID, match_mapping: dict, m_to
         model_element_name = match_mapping[pattern_element_name]
         print('updating', model_element_name)
         model_element, = bottom.read_outgoing_elements(m_to_transform, model_element_name)
-        # old_value = bottom.read_value(model_element)
-        # print('old value:', old_value)
         host_type = od.get_type(bottom, model_element)
         if od.is_typed_by(bottom, host_type, class_type):
             print(' -> is classs')
@@ -145,21 +143,14 @@ def rewrite(state, lhs: UUID, rhs: UUID, rhs_mm: UUID, match_mapping: dict, m_to
             print(' -> is attr link')
         elif od.is_typed_by(bottom, host_type, modelref_type):
             print(' -> is modelref')
-            referred_model_id = UUID(bottom.read_value(model_element))
-            # referred_model_type = od.get_type(bottom, referred_model_id) # None
-            # print('referred_model_type:', referred_model_type)
-
-            v = od.read_primitive_value(bottom, model_element, mm)
-
-            # the referred model itself doesn't have a type, so we have to look at the type of the ModelRef element in the RHS-MM:
+            old_value = od.read_primitive_value(bottom, model_element, mm)
             rhs_element, = bottom.read_outgoing_elements(rhs, pattern_element_name)
-
             expr = od.read_primitive_value(bottom, rhs_element, rhs_mm)
-
-            result = eval(expr, {}, {'v': v})
+            result = eval(expr, {}, {'v': old_value})
             # print('eval result=', result)
             if isinstance(result, int):
                 # overwrite the old value
+                referred_model_id = UUID(bottom.read_value(model_element))
                 Integer(referred_model_id, state).create(result)
             else:
                 raise Exception("Unimplemented type. Value:", result)

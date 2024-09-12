@@ -39,9 +39,12 @@ class OD:
             get_scd_mm(self.bottom), # the type model of our type model
             self.type_model,
             self.bottom.state)
-        is_abstract = mm_od.read_slot_boolean(class_node, "abstract")
-        if is_abstract:
-            raise Exception("Cannot instantiate abstract class!")
+
+        slot = mm_od.get_slot(class_node, "abstract")
+        if slot != None:
+            is_abstract = read_primitive_value(self.bottom, slot, self.type_model)
+            if is_abstract:
+                raise Exception("Cannot instantiate abstract class!")
 
         object_node = self.bottom.create_node()
         self.bottom.create_edge(self.model, object_node, name) # attach to model
@@ -49,10 +52,10 @@ class OD:
 
         return object_node
 
-    def read_slot_boolean(self, obj_node: str, attr_name: str):
-        slot = self.get_slot(obj_node, attr_name)
-        if slot != None:
-            return Boolean(slot, self.bottom.state).read()
+    # def read_slot_boolean(self, obj_node: str, attr_name: str):
+    #     slot = self.get_slot(obj_node, attr_name)
+    #     if slot != None:
+    #         return Boolean(slot, self.bottom.state).read()
 
     def get_class_of_object(self, object_name: str):
         object_node, = self.bottom.read_outgoing_elements(self.model, object_name) # get the object
@@ -82,8 +85,9 @@ class OD:
         for outgoing_edge in self.bottom.read_outgoing_edges(object_node):
             if type_edge in self.bottom.read_outgoing_elements(outgoing_edge, "Morphism"):
                 slot_ref = self.bottom.read_edge_target(outgoing_edge)
-                slot_node = UUID(self.bottom.read_value(slot_ref))
-                return slot_node
+                return slot_ref
+                # slot_node = UUID(self.bottom.read_value(slot_ref))
+                # return slot_node
 
     def create_integer_value(self, name: str, value: int):
         from services.primitives.integer_type import Integer
@@ -245,22 +249,23 @@ def find_cardinality(bottom, class_node: UUID, type_node: UUID):
 
 def get_attributes(bottom, class_node: UUID):
     attr_link_node = get_scd_mm_attributelink_node(bottom)
-    attr_link_name_node = get_scd_mm_attributelink_name_node(bottom)
     attr_edges = find_outgoing_typed_by(bottom, class_node, attr_link_node)
     result = []
     for attr_edge in attr_edges:
-        name_edge, = find_outgoing_typed_by(bottom, attr_edge, attr_link_name_node)
-        if name_edge == None:
-            raise Exception("Expected attribute to have a name...")
-        ref_name = bottom.read_edge_target(name_edge)
-        string, = bottom.read_outgoing_elements(
-            navigate_modelref(bottom, ref_name),
-            "string")
-        attr_name = bottom.read_value(string)
-        # ref_type = bottom.read_edge_target(attr_edge)
-        # typ = navigate_modelref(bottom, ref_type)
+        attr_name = get_attr_name(bottom, attr_edge)
         result.append((attr_name, attr_edge))
     return result
+
+def get_attr_name(bottom, attr_edge: UUID):
+    attr_link_name_node = get_scd_mm_attributelink_name_node(bottom)
+    name_edge, = find_outgoing_typed_by(bottom, attr_edge, attr_link_name_node)
+    if name_edge == None:
+        raise Exception("Expected attribute to have a name...")
+    ref_name = bottom.read_edge_target(name_edge)
+    string, = bottom.read_outgoing_elements(
+        navigate_modelref(bottom, ref_name),
+        "string")
+    return bottom.read_value(string)
 
 # We need the meta-model (`mm`) to find out how to read the `modelref`
 def read_primitive_value(bottom, modelref: UUID, mm: UUID):
@@ -273,6 +278,8 @@ def read_primitive_value(bottom, modelref: UUID, mm: UUID):
         return Integer(referred_model, bottom.state).read()
     elif typ_name == "String":
         return String(referred_model, bottom.state).read()
+    elif typ_name == "Boolean":
+        return Boolean(referred_model, bottom.state).read()
     else:
         raise Exception("Unimplemented type:", host_type_name)
 

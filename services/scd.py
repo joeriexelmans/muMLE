@@ -326,7 +326,6 @@ class SCD:
         # mapping from instance name to UUID
         return name_to_instance
 
-
     def get_attributes(self, class_name: str):
         class_node, = self.bottom.read_outgoing_elements(self.model, class_name)
         return self._get_attributes(class_node)
