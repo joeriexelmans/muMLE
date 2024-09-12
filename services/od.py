@@ -261,3 +261,18 @@ def get_attributes(bottom, class_node: UUID):
         # typ = navigate_modelref(bottom, ref_type)
         result.append((attr_name, attr_edge))
     return result
+
+# We need the meta-model (`mm`) to find out how to read the `modelref`
+def read_primitive_value(bottom, modelref: UUID, mm: UUID):
+    typ = get_type(bottom, modelref)
+    if not is_typed_by(bottom, typ, get_scd_mm_modelref_node(bottom)):
+        raise Exception("Assertion failed: argument must be typed by ModelRef")
+    referred_model = UUID(bottom.read_value(modelref))
+    typ_name = get_object_name(bottom, mm, typ)
+    if typ_name == "Integer":
+        return Integer(referred_model, bottom.state).read()
+    elif typ_name == "String":
+        return String(referred_model, bottom.state).read()
+    else:
+        raise Exception("Unimplemented type:", host_type_name)
+

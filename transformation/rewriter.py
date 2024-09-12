@@ -136,8 +136,8 @@ def rewrite(state, lhs: UUID, rhs: UUID, rhs_mm: UUID, match_mapping: dict, m_to
         model_element_name = match_mapping[pattern_element_name]
         print('updating', model_element_name)
         model_element, = bottom.read_outgoing_elements(m_to_transform, model_element_name)
-        old_value = bottom.read_value(model_element)
-        print('old value:', old_value)
+        # old_value = bottom.read_value(model_element)
+        # print('old value:', old_value)
         host_type = od.get_type(bottom, model_element)
         if od.is_typed_by(bottom, host_type, class_type):
             print(' -> is classs')
@@ -149,29 +149,17 @@ def rewrite(state, lhs: UUID, rhs: UUID, rhs_mm: UUID, match_mapping: dict, m_to
             # referred_model_type = od.get_type(bottom, referred_model_id) # None
             # print('referred_model_type:', referred_model_type)
 
-            host_type_name = od.get_object_name(bottom, mm, host_type)
-            print('host_type_name:', host_type_name)
-            if host_type_name == "Integer":
-                v = Integer(UUID(old_value), state).read()
-            elif host_type_name == "String":
-                v = String(UUID(old_value), state).read()
-            else:
-                raise Exception("Unimplemented type:", host_type_name)
+            v = od.read_primitive_value(bottom, model_element, mm)
 
             # the referred model itself doesn't have a type, so we have to look at the type of the ModelRef element in the RHS-MM:
             rhs_element, = bottom.read_outgoing_elements(rhs, pattern_element_name)
-            rhs_type = od.get_type(bottom, rhs_element)
-            rhs_type_name = od.get_object_name(bottom, rhs_mm, rhs_type)
-            print("rhs_type_name:", rhs_type_name)
 
-            print(od.get_object_name(bottom, mm, model_element))
+            expr = od.read_primitive_value(bottom, rhs_element, rhs_mm)
 
-            if rhs_type_name == "String":
-                python_expr = String(UUID(bottom.read_value(rhs_element)), state).read()
-                result = eval(python_expr, {}, {'v': v})
-                print('eval result=', result)
-                if isinstance(result, int):
-                    # overwrite the old value
-                    Integer(UUID(old_value), state).create(result)
-                else:
-                    raise Exception("Unimplemented type. Value:", result)
+            result = eval(expr, {}, {'v': v})
+            # print('eval result=', result)
+            if isinstance(result, int):
+                # overwrite the old value
+                Integer(referred_model_id, state).create(result)
+            else:
+                raise Exception("Unimplemented type. Value:", result)
