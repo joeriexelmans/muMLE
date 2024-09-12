@@ -174,7 +174,7 @@ def main():
     print(plantuml.render_package("Meta-Model", plantuml.render_class_diagram(state, dsl_mm_id)))
     print(plantuml.render_package("RAMified Meta-Model", plantuml.render_class_diagram(state, ramified_mm_id)))
     
-    # Render ramification traceability links
+    # Render RAMification traceability links
     print(plantuml.render_trace_ramifies(state, dsl_mm_id, ramified_mm_id))
 
     # Render host graph

@@ -106,20 +106,21 @@ def render_trace_ramifies(state, mm, ramified_mm):
     mm_scd = scd.SCD(mm, state)
     ramified_mm_scd = scd.SCD(ramified_mm, state)
 
-    # output = (
-    #       render_package("original", render_class_diagram(state, mm))
-    #     + '\n'
-    #     + render_package("RAMified", render_class_diagram(state, ramified_mm))
-    # )
-
     output = ""
 
-    # output += "\n"
-
+    # Render RAMifies-edges between classes
     for ram_name, ram_class_node in ramified_mm_scd.get_classes().items():
         original_class, = bottom.read_outgoing_elements(ram_class_node, ramify.RAMIFIES_LABEL)
         original_name = mm_scd.get_class_name(original_class)
-        output += f"\n{make_id(ram_class_node)} ..> {make_id(original_class)} #line:green;text:green : RAMifies "
+        output += f"\n{make_id(ram_class_node)} ..> {make_id(original_class)} #line:green;text:green : RAMifies"
+
+        # and between attributes
+        for (ram_attr_name, ram_attr_edge) in od.get_attributes(bottom, ram_class_node):
+            orig_attr_edge, = bottom.read_outgoing_elements(ram_attr_edge, ramify.RAMIFIES_LABEL)
+            orig_class_node = bottom.read_edge_source(orig_attr_edge)
+            # dirty AF:
+            orig_attr_name = mm_scd.get_class_name(orig_attr_edge)[len(original_name)+1:]
+            output += f"\n{make_id(ram_class_node)}::{ram_attr_name} ..> {make_id(orig_class_node)}::{orig_attr_name} #line:green;text:green : RAMifies"
 
     return output
 
@@ -142,12 +143,13 @@ def render_trace_conformance(state, m, mm):
 
 def render_trace_match(state, mapping):
     bottom = Bottom(state)
+    class_type = od.get_scd_mm_class_node(bottom)
 
     output = ""
 
     for pattern_el, host_el in mapping.items():
         # only render 'match'-edges between objects (= those elements where the type of the type is 'Class'):
-        if od.get_type(bottom, od.get_type(bottom, pattern_el)) == od.get_scd_mm_class_node(bottom):
+        if od.get_type(bottom, od.get_type(bottom, pattern_el)) == class_type:
             output += f"\n{make_id(pattern_el)} ..> {make_id(host_el)} #line:grey;text:grey : matchedWith"
 
     return output
