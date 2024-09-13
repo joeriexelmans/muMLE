@@ -149,47 +149,91 @@ def main():
     print(guest.vtxs)
     print(guest.edges)
 
-    print("matching...")
-    matcher = MatcherVF2(host, guest, mvs_adapter.RAMCompare(Bottom(state), dsl_m_od))
-    for m in matcher.match():
-        print("\nMATCH:\n", m)
-        name_mapping = {}
-        id_mapping = {}
-        for guest_vtx, host_vtx in m.mapping_vtxs.items():
-            if isinstance(guest_vtx, mvs_adapter.NamedNode) and isinstance(host_vtx, mvs_adapter.NamedNode):
-                id_mapping[guest_vtx.node_id] = host_vtx.node_id
-                name_mapping[guest_vtx.name] = host_vtx.name
-        print(name_mapping)
-        #rewriter.rewrite(state, lhs_id, rhs_id, ramified_mm_id, name_mapping, dsl_m_id, dsl_mm_id)
-        break
-    print("DONE")
+    def render_ramification():
+        uml = (""
+            # Render original and RAMified meta-models
+            + plantuml.render_package("Meta-Model", plantuml.render_class_diagram(state, dsl_mm_id))
+            + plantuml.render_package("RAMified Meta-Model", plantuml.render_class_diagram(state, ramified_mm_id))
+
+            # Render RAMification traceability links
+            + plantuml.render_trace_ramifies(state, dsl_mm_id, ramified_mm_id)
+        )
+
+        # Render pattern
+        uml += plantuml.render_package("LHS", plantuml.render_object_diagram(state, lhs_id, ramified_mm_id))
+        uml += plantuml.render_trace_conformance(state, lhs_id, ramified_mm_id)
+
+        # Render pattern
+        uml += plantuml.render_package("RHS", plantuml.render_object_diagram(state, rhs_id, ramified_mm_id))
+        uml += plantuml.render_trace_conformance(state, rhs_id, ramified_mm_id)
+
+        return uml
+
+    def render_all_matches():
+        uml = render_ramification()
+        # Render host graph (before rewriting)
+        uml += plantuml.render_package("Model (before rewrite)", plantuml.render_object_diagram(state, dsl_m_id, dsl_mm_id))
+        # Render conformance
+        uml += plantuml.render_trace_conformance(state, dsl_m_id, dsl_mm_id)
+
+        print("matching...")
+        matcher = MatcherVF2(host, guest, mvs_adapter.RAMCompare(Bottom(state), dsl_m_od))
+        for m, color in zip(matcher.match(), ["red", "orange"]):
+            print("\nMATCH:\n", m)
+            name_mapping = {}
+            # id_mapping = {}
+            for guest_vtx, host_vtx in m.mapping_vtxs.items():
+                if isinstance(guest_vtx, mvs_adapter.NamedNode) and isinstance(host_vtx, mvs_adapter.NamedNode):
+                    # id_mapping[guest_vtx.node_id] = host_vtx.node_id
+                    name_mapping[guest_vtx.name] = host_vtx.name
+            print(name_mapping)
+
+            # Render every match
+            uml += plantuml.render_trace_match(state, name_mapping, lhs_id, dsl_m_id, color)
+
+        print("DONE")
+        return uml
+
+    def render_rewrite():
+        uml = render_ramification()
+
+        matcher = MatcherVF2(host, guest, mvs_adapter.RAMCompare(Bottom(state), dsl_m_od))
+        for m in matcher.match():
+            name_mapping = {}
+            # id_mapping = {}
+            for guest_vtx, host_vtx in m.mapping_vtxs.items():
+                if isinstance(guest_vtx, mvs_adapter.NamedNode) and isinstance(host_vtx, mvs_adapter.NamedNode):
+                    # id_mapping[guest_vtx.node_id] = host_vtx.node_id
+                    name_mapping[guest_vtx.name] = host_vtx.name
+            print(name_mapping)
+
+
+            rewriter.rewrite(state, lhs_id, rhs_id, ramified_mm_id, name_mapping, dsl_m_id, dsl_mm_id)
+
+            # Render match
+            uml_match = plantuml.render_trace_match(state, name_mapping, rhs_id, dsl_m_id)
+
+            # Stop matching after rewrite
+            break
+
+        # Render host graph (after rewriting)
+        uml += plantuml.render_package("Model (after rewrite)", plantuml.render_object_diagram(state, dsl_m_id, dsl_mm_id))
+        # Render conformance
+        uml += plantuml.render_trace_conformance(state, dsl_m_id, dsl_mm_id)
+
+        uml += uml_match
+
+        return uml
 
     conf5 = Conformance(state, dsl_m_id, dsl_mm_id)
     print("Updated model conforms?", conf5.check_nominal(log=True))
 
+    print()
+    print("==============================================")
 
+    print(render_all_matches())
+    # print(render_rewrite())
 
-
-    # Render original and RAMified meta-models
-    print(plantuml.render_package("Meta-Model", plantuml.render_class_diagram(state, dsl_mm_id)))
-    print(plantuml.render_package("RAMified Meta-Model", plantuml.render_class_diagram(state, ramified_mm_id)))
-    
-    # Render RAMification traceability links
-    print(plantuml.render_trace_ramifies(state, dsl_mm_id, ramified_mm_id))
-
-    # Render host graph
-    print(plantuml.render_package("Model", plantuml.render_object_diagram(state, dsl_m_id, dsl_mm_id)))
-
-    # Render conformance host -> MM
-    print(plantuml.render_trace_conformance(state, dsl_m_id, dsl_mm_id))
-
-    # Render pattern
-    print(plantuml.render_package("LHS", plantuml.render_object_diagram(state, lhs_id, ramified_mm_id)))
-
-    # Render pattern -> RAM-MM
-    print(plantuml.render_trace_conformance(state, lhs_id, ramified_mm_id))
-
-    print(plantuml.render_trace_match(state, id_mapping))
 
 if __name__ == "__main__":
     main()

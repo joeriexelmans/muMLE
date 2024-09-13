@@ -23,7 +23,9 @@ def process_rule(state, lhs: UUID, rhs: UUID):
 
     return to_delete, to_create, common
 
-def rewrite(state, lhs: UUID, rhs: UUID, rhs_mm: UUID, match_mapping: dict, m_to_transform: UUID, mm: UUID) -> UUID:
+# Rewrite is performed in-place
+# Also updates the mapping in-place, to become RHS -> host
+def rewrite(state, lhs: UUID, rhs: UUID, rhs_mm: UUID, match_mapping: dict, m_to_transform: UUID, mm: UUID) -> dict:
     bottom = Bottom(state)
 
     scd_metamodel_id = state.read_dict(state.read_root(), "SCD")
@@ -50,8 +52,10 @@ def rewrite(state, lhs: UUID, rhs: UUID, rhs_mm: UUID, match_mapping: dict, m_to
         element_to_delete, = bottom.read_outgoing_elements(m_to_transform, model_element_name_to_delete)
         # Delete
         bottom.delete_element(element_to_delete)
+        # Remove from mapping
+        del match_mapping[pattern_name_to_delete]
 
-    extended_mapping = dict(match_mapping) # will be extended with created elements
+    # extended_mapping = dict(match_mapping) # will be extended with created elements
     edges_to_create = [] # postpone creation of edges after creation of nodes
 
     # Perform creations
@@ -74,7 +78,7 @@ def rewrite(state, lhs: UUID, rhs: UUID, rhs_mm: UUID, match_mapping: dict, m_to
                 # It's type is typed by Class -> it's an object
                 print(' -> creating object')
                 o = m_od._create_object(model_element_name_to_create, original_type)
-                extended_mapping[pattern_name_to_create] = model_element_name_to_create
+                match_mapping[pattern_name_to_create] = model_element_name_to_create
             elif od.is_typed_by(bottom, original_type, attr_link_type):
                 print(' -> postpone (is attribute link)')
                 edges_to_create.append((pattern_name_to_create, rhs_element_to_create, original_type, 'attribute link', rhs_type, model_element_name_to_create))
@@ -98,10 +102,10 @@ def rewrite(state, lhs: UUID, rhs: UUID, rhs_mm: UUID, match_mapping: dict, m_to
                     m_od.create_integer_value(model_element_name_to_create, result)
                 elif isinstance(result, str):
                     m_od.create_string_value(model_element_name_to_create, result)
-                extended_mapping[pattern_name_to_create] = model_element_name_to_create
+                match_mapping[pattern_name_to_create] = model_element_name_to_create
 
 
-    print('extended_mapping:', extended_mapping)
+    print('match_mapping:', match_mapping)
 
     print("create edges....")
     for pattern_name_to_create, rhs_element_to_create, original_type, original_type_name, rhs_type, model_element_name_to_create in edges_to_create:
@@ -112,24 +116,24 @@ def rewrite(state, lhs: UUID, rhs: UUID, rhs_mm: UUID, match_mapping: dict, m_to
             src_name = od.get_object_name(bottom, rhs, src)
             tgt = bottom.read_edge_target(rhs_element_to_create)
             tgt_name = od.get_object_name(bottom, rhs, tgt)
-            obj_name = extended_mapping[src_name] # name of object in host graph to create slot for
+            obj_name = match_mapping[src_name] # name of object in host graph to create slot for
             attr_name = od.get_object_name(bottom, mm, original_type)
             class_name = m_od.get_class_of_object(obj_name)
             # Just when you thought the code couldn't get any dirtier:
             attribute_name = attr_name[len(class_name)+1:]
-            # print(attribute_name, obj_name, extended_mapping[tgt_name])
-            m_od.create_slot(attribute_name, obj_name, extended_mapping[tgt_name])
+            # print(attribute_name, obj_name, match_mapping[tgt_name])
+            m_od.create_slot(attribute_name, obj_name, match_mapping[tgt_name])
         elif original_type_name == 'link':
             print(' -> creating link')
             src = bottom.read_edge_source(rhs_element_to_create)
             src_name = od.get_object_name(bottom, rhs, src)
             tgt = bottom.read_edge_target(rhs_element_to_create)
             tgt_name = od.get_object_name(bottom, rhs, tgt)
-            obj_name = extended_mapping[src_name] # name of object in host graph to create slot for
+            obj_name = match_mapping[src_name] # name of object in host graph to create slot for
             attr_name = od.get_object_name(bottom, mm, original_type)
             class_name = m_od.get_class_of_object(obj_name)
-            # print(attr_name, obj_name, extended_mapping[tgt_name])
-            m_od.create_link(model_element_name_to_create, attr_name, obj_name, extended_mapping[tgt_name])
+            # print(attr_name, obj_name, match_mapping[tgt_name])
+            m_od.create_link(model_element_name_to_create, attr_name, obj_name, match_mapping[tgt_name])
 
     # Perform updates
     for pattern_element_name in common:
@@ -149,7 +153,7 @@ def rewrite(state, lhs: UUID, rhs: UUID, rhs_mm: UUID, match_mapping: dict, m_to
             result = eval(expr, {}, {'v': old_value})
             # print('eval result=', result)
             if isinstance(result, int):
-                # overwrite the old value
+                # overwrite the old value, in-place
                 referred_model_id = UUID(bottom.read_value(model_element))
                 Integer(referred_model_id, state).create(result)
             else:
