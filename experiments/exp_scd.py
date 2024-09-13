@@ -137,18 +137,6 @@ def main():
     conf4 = Conformance(state, rhs_id, ramified_mm_id)
     print("RHS conforms?", conf4.check_nominal(log=True))
 
-    # Convert to format understood by matching algorithm
-    host = mvs_adapter.model_to_graph(state, dsl_m_id, dsl_mm_id)
-    guest = mvs_adapter.model_to_graph(state, lhs_id, ramified_mm_id)
-
-    print("HOST:")
-    print(host.vtxs)
-    print(host.edges)
-
-    print("GUEST:")
-    print(guest.vtxs)
-    print(guest.edges)
-
     def render_ramification():
         uml = (""
             # Render original and RAMified meta-models
@@ -177,16 +165,9 @@ def main():
         uml += plantuml.render_trace_conformance(state, dsl_m_id, dsl_mm_id)
 
         print("matching...")
-        matcher = MatcherVF2(host, guest, mvs_adapter.RAMCompare(Bottom(state), dsl_m_od))
-        for m, color in zip(matcher.match(), ["red", "orange"]):
-            print("\nMATCH:\n", m)
-            name_mapping = {}
-            # id_mapping = {}
-            for guest_vtx, host_vtx in m.mapping_vtxs.items():
-                if isinstance(guest_vtx, mvs_adapter.NamedNode) and isinstance(host_vtx, mvs_adapter.NamedNode):
-                    # id_mapping[guest_vtx.node_id] = host_vtx.node_id
-                    name_mapping[guest_vtx.name] = host_vtx.name
-            print(name_mapping)
+        generator = mvs_adapter.match_od(state, dsl_m_id, dsl_mm_id, lhs_id, ramified_mm_id)
+        for name_mapping, color in zip(generator, ["red", "orange"]):
+            print("\nMATCH:\n", name_mapping)
 
             # Render every match
             uml += plantuml.render_trace_match(state, name_mapping, lhs_id, dsl_m_id, color)
@@ -197,17 +178,8 @@ def main():
     def render_rewrite():
         uml = render_ramification()
 
-        matcher = MatcherVF2(host, guest, mvs_adapter.RAMCompare(Bottom(state), dsl_m_od))
-        for m in matcher.match():
-            name_mapping = {}
-            # id_mapping = {}
-            for guest_vtx, host_vtx in m.mapping_vtxs.items():
-                if isinstance(guest_vtx, mvs_adapter.NamedNode) and isinstance(host_vtx, mvs_adapter.NamedNode):
-                    # id_mapping[guest_vtx.node_id] = host_vtx.node_id
-                    name_mapping[guest_vtx.name] = host_vtx.name
-            print(name_mapping)
-
-
+        generator = mvs_adapter.match_od(state, dsl_m_id, dsl_mm_id, lhs_id, ramified_mm_id)
+        for name_mapping in generator:
             rewriter.rewrite(state, lhs_id, rhs_id, ramified_mm_id, name_mapping, dsl_m_id, dsl_mm_id)
 
             # Render match

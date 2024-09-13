@@ -3,7 +3,7 @@ from uuid import UUID
 from services.bottom.V0 import Bottom
 from services.scd import SCD
 from services.od import OD
-from pattern_matching.matcher import Graph, Edge, Vertex
+from pattern_matching.matcher import Graph, Edge, Vertex, MatcherVF2
 from transformation import ramify
 import itertools
 import re
@@ -188,87 +188,103 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID, prefix=""):
 
         return graph
 
-# Function object for pattern matching. Decides whether to match host and guest vertices, where guest is a RAMified instance (e.g., the attributes are all strings with Python expressions), and the host is an instance (=object diagram) of the original model (=class diagram)
-class RAMCompare:
-    def __init__(self, bottom, host_od):
-        self.bottom = bottom
-        self.host_od = host_od
 
-        type_model_id = bottom.state.read_dict(bottom.state.read_root(), "SCD")
-        self.scd_model = UUID(bottom.state.read_value(type_model_id))
+def match_od(state, host_m, host_mm, pattern_m, pattern_mm):
+    # Function object for pattern matching. Decides whether to match host and guest vertices, where guest is a RAMified instance (e.g., the attributes are all strings with Python expressions), and the host is an instance (=object diagram) of the original model (=class diagram)
+    class RAMCompare:
+        def __init__(self, bottom, host_od):
+            self.bottom = bottom
+            self.host_od = host_od
 
-    def is_subtype_of(self, supposed_subtype: UUID, supposed_supertype: UUID):
-        if supposed_subtype == supposed_supertype:
-            # reflexive:
-            return True
+            type_model_id = bottom.state.read_dict(bottom.state.read_root(), "SCD")
+            self.scd_model = UUID(bottom.state.read_value(type_model_id))
 
-        inheritance_node, = self.bottom.read_outgoing_elements(self.scd_model, "Inheritance")
+        def is_subtype_of(self, supposed_subtype: UUID, supposed_supertype: UUID):
+            if supposed_subtype == supposed_supertype:
+                # reflexive:
+                return True
 
-        for outgoing in self.bottom.read_outgoing_edges(supposed_subtype):
-            if inheritance_node in self.bottom.read_outgoing_elements(outgoing, "Morphism"):
-                # 'outgoing' is an inheritance link
-                supertype = self.bottom.read_edge_target(outgoing)
-                if supertype != supposed_subtype:
-                    if self.is_subtype_of(supertype, supposed_supertype):
-                        return True
+            inheritance_node, = self.bottom.read_outgoing_elements(self.scd_model, "Inheritance")
 
-        return False
+            for outgoing in self.bottom.read_outgoing_edges(supposed_subtype):
+                if inheritance_node in self.bottom.read_outgoing_elements(outgoing, "Morphism"):
+                    # 'outgoing' is an inheritance link
+                    supertype = self.bottom.read_edge_target(outgoing)
+                    if supertype != supposed_subtype:
+                        if self.is_subtype_of(supertype, supposed_supertype):
+                            return True
 
-    def match_types(self, g_vtx_type, h_vtx_type):
-        # types only match with their supertypes
-        # we assume that 'RAMifies'-traceability links have been created between guest and host types
-        try:
-            g_vtx_original_type = ramify.get_original_type(self.bottom, g_vtx_type)
-        except:
             return False
 
-        return self.is_subtype_of(h_vtx_type, g_vtx_original_type)
-
-
-    # Memoizing the result of comparison gives a huge performance boost!
-    # Especially `is_subtype_of` is very slow, and will be performed many times over on the same pair of nodes during the matching process.
-    # Assuming the model is not altered *during* matching, this is safe.
-    @functools.cache
-    def __call__(self, g_vtx, h_vtx):
-        # First check if the types match (if we have type-information)
-        if hasattr(g_vtx, 'typ'):
-            if not hasattr(h_vtx, 'typ'):
-                # if guest has a type, host must have a type
+        def match_types(self, g_vtx_type, h_vtx_type):
+            # types only match with their supertypes
+            # we assume that 'RAMifies'-traceability links have been created between guest and host types
+            try:
+                g_vtx_original_type = ramify.get_original_type(self.bottom, g_vtx_type)
+            except:
                 return False
-            return self.match_types(g_vtx.typ, h_vtx.typ)
 
-        # Then, match by value
+            return self.is_subtype_of(h_vtx_type, g_vtx_original_type)
 
-        if g_vtx.value == None:
-            return h_vtx.value == None
 
-        # mvs-edges (which are converted to vertices) only match with mvs-edges
-        if g_vtx.value == IS_EDGE:
-            return h_vtx.value == IS_EDGE
+        # Memoizing the result of comparison gives a huge performance boost!
+        # Especially `is_subtype_of` is very slow, and will be performed many times over on the same pair of nodes during the matching process.
+        # Assuming the model is not altered *during* matching, this is safe.
+        @functools.cache
+        def __call__(self, g_vtx, h_vtx):
+            # First check if the types match (if we have type-information)
+            if hasattr(g_vtx, 'typ'):
+                if not hasattr(h_vtx, 'typ'):
+                    # if guest has a type, host must have a type
+                    return False
+                return self.match_types(g_vtx.typ, h_vtx.typ)
 
-        if h_vtx.value == IS_EDGE:
-            return False
+            # Then, match by value
 
-        if g_vtx.value == IS_MODELREF:
-            return h_vtx.value == IS_MODELREF
+            if g_vtx.value == None:
+                return h_vtx.value == None
 
-        if h_vtx.value == IS_MODELREF:
-            return False
+            # mvs-edges (which are converted to vertices) only match with mvs-edges
+            if g_vtx.value == IS_EDGE:
+                return h_vtx.value == IS_EDGE
 
-        # print(g_vtx.value, h_vtx.value)
-        def get_slot(h_vtx, slot_name: str):
-            slot_node = self.host_od.get_slot(h_vtx.node_id, slot_name)
-            return slot_node
+            if h_vtx.value == IS_EDGE:
+                return False
 
-        def read_int(slot: UUID):
-            i = Integer(slot, self.bottom.state)
-            return i.read()
+            if g_vtx.value == IS_MODELREF:
+                return h_vtx.value == IS_MODELREF
 
-        try:
-            return eval(g_vtx.value, {}, {
-                'v': h_vtx.value,
-                'get_slot': functools.partial(get_slot, h_vtx),
-                'read_int': read_int,
-            })
-        except Exception as e:
-            return False
+            if h_vtx.value == IS_MODELREF:
+                return False
+
+            # print(g_vtx.value, h_vtx.value)
+            def get_slot(h_vtx, slot_name: str):
+                slot_node = self.host_od.get_slot(h_vtx.node_id, slot_name)
+                return slot_node
+
+            def read_int(slot: UUID):
+                i = Integer(slot, self.bottom.state)
+                return i.read()
+
+            try:
+                return eval(g_vtx.value, {}, {
+                    'v': h_vtx.value,
+                    'get_slot': functools.partial(get_slot, h_vtx),
+                    'read_int': read_int,
+                })
+            except Exception as e:
+                return False
+
+    # Convert to format understood by matching algorithm
+    host = model_to_graph(state, host_m, host_mm)
+    guest = model_to_graph(state, pattern_m, pattern_mm)
+
+    matcher = MatcherVF2(host, guest, RAMCompare(Bottom(state), OD(host_mm, host_m, state)))
+    for m in matcher.match():
+        # print("\nMATCH:\n", m)
+        # Convert mapping
+        name_mapping = {}
+        for guest_vtx, host_vtx in m.mapping_vtxs.items():
+            if isinstance(guest_vtx, NamedNode) and isinstance(host_vtx, NamedNode):
+                name_mapping[guest_vtx.name] = host_vtx.name
+        yield name_mapping

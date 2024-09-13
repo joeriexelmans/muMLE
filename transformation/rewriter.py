@@ -25,7 +25,7 @@ def process_rule(state, lhs: UUID, rhs: UUID):
 
 # Rewrite is performed in-place
 # Also updates the mapping in-place, to become RHS -> host
-def rewrite(state, lhs: UUID, rhs: UUID, rhs_mm: UUID, match_mapping: dict, m_to_transform: UUID, mm: UUID) -> dict:
+def rewrite(state, lhs: UUID, rhs: UUID, rhs_mm: UUID, match_mapping: dict, m_to_transform: UUID, mm: UUID):
     bottom = Bottom(state)
 
     scd_metamodel_id = state.read_dict(state.read_root(), "SCD")
