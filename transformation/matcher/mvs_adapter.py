@@ -3,7 +3,7 @@ from uuid import UUID
 from services.bottom.V0 import Bottom
 from services.scd import SCD
 from services.od import OD
-from pattern_matching.matcher import Graph, Edge, Vertex, MatcherVF2
+from transformation.matcher.matcher import Graph, Edge, Vertex, MatcherVF2
 from transformation import ramify
 import itertools
 import re

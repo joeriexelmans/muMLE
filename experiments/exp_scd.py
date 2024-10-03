@@ -6,12 +6,11 @@ from uuid import UUID
 from services.scd import SCD
 from framework.conformance import Conformance
 from services.od import OD
+from transformation.matcher import mvs_adapter
 from transformation.ramify import ramify
 from transformation import rewriter
 from services.bottom.V0 import Bottom
 from services.primitives.integer_type import Integer
-from pattern_matching import mvs_adapter
-from pattern_matching.matcher import MatcherVF2
 from concrete_syntax import plantuml
 from concrete_syntax.textual_od import parser, renderer
 
@@ -91,10 +90,8 @@ Bear_inh_Animal:Inheritance (Bear -> Animal)
         dsl_m_cs = """
 george :Man 
     weight = 80
-
-bear1 :Bear
-bear2 :Bear
-
+bear1:Bear
+bear2:Bear
 :afraidOf (george -> bear1)
 :afraidOf (george -> bear2)
 """
