@@ -196,7 +196,7 @@ def render_trace_match(state, name_mapping: dict, pattern_m: UUID, host_m: UUID,
     render_suffix = f"#line:{color};line.dotted;text:{color} : matchedWith"
 
     for pattern_el_name, host_el_name in name_mapping.items():
-        print(pattern_el_name, host_el_name)
+        # print(pattern_el_name, host_el_name)
         try:
             pattern_el, = bottom.read_outgoing_elements(pattern_m, pattern_el_name)
             host_el, = bottom.read_outgoing_elements(host_m, host_el_name)

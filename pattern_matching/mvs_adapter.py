@@ -28,12 +28,12 @@ class _is_modelref:
         return "REF"
 IS_MODELREF = _is_modelref()
 
-class IS_TYPE:
-    def __init__(self, type):
-        # mvs-node of the type
-        self.type = type
-    def __repr__(self):
-        return f"TYPE({str(self.type)[-4:]})"
+# class IS_TYPE:
+#     def __init__(self, type):
+#         # mvs-node of the type
+#         self.type = type
+#     def __repr__(self):
+#         return f"TYPE({str(self.type)[-4:]})"
 
 class NamedNode(Vertex):
     def __init__(self, value, name):
@@ -74,7 +74,7 @@ UUID_REGEX = re.compile(r"[0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-
 # Converts an object diagram in MVS state to the pattern matcher graph type
 # ModelRefs are flattened
 def model_to_graph(state: State, model: UUID, metamodel: UUID, prefix=""):
-    with Timer("model_to_graph"):
+    # with Timer("model_to_graph"):
         od = OD(model, metamodel, state)
         scd = SCD(model, state)
         scd_mm = SCD(metamodel, state)
@@ -107,7 +107,7 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID, prefix=""):
             if isinstance(value, str):
                 if UUID_REGEX.match(value) != None:
                     # side-effect
-                    modelrefs[el] = (UUID(value),name)
+                    modelrefs[el] = (UUID(value), name)
                     return MVSNode(IS_MODELREF, el, name)
             return MVSNode(value, el, name)
 
@@ -131,29 +131,37 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID, prefix=""):
                     label="tgt"))
 
 
-        for node, (ref, name) in modelrefs.items():
+        for node, (ref_m, name) in modelrefs.items():
+            vtx = uuid_to_vtx[node]
+
             # Get MM of ref'ed model
-            type_node, = bottom.read_outgoing_elements(node, "Morphism")
-            print("modelref type node:", type_node)
+            ref_mm, = bottom.read_outgoing_elements(node, "Morphism")
+            # print("modelref type node:", type_node)
 
             # Recursively convert ref'ed model to graph
-            ref_model = model_to_graph(state, ref, type_node, prefix=name+'/')
+            # ref_graph = model_to_graph(state, ref_m, ref_mm, prefix=name+'/')
 
-            # Flatten and create link to ref'ed model
-            graph.vtxs += ref_model.vtxs
-            graph.edges += ref_model.edges
-            graph.edges.append(Edge(
-                src=uuid_to_vtx[node],
-                tgt=ref_model.vtxs[0], # which node to link to?? dirty
-                label="modelref"))
+            vtx.modelref = (ref_m, ref_mm)
+
+            # We no longer flatten:
+
+            # # Flatten and create link to ref'ed model
+            # graph.vtxs += ref_model.vtxs
+            # graph.edges += ref_model.edges
+            # graph.edges.append(Edge(
+            #     src=uuid_to_vtx[node],
+            #     tgt=ref_model.vtxs[0], # which node to link to?? dirty
+            #     label="modelref"))
 
         def add_types(node):
+            vtx = uuid_to_vtx[node]
             type_node, = bottom.read_outgoing_elements(node, "Morphism")
 
-            # Put the type straigt into the Vertex-object
-            uuid_to_vtx[node].typ = type_node
+            # Put the type straight into the Vertex-object
+            # The benefit is that our Vertex-matching callback can then be coded cleverly, look at the types first, resulting in better performance
+            vtx.typ = type_node
 
-            # We used to put the types in separate nodes, but we no longer do this:
+            # The old approach (creating special vertices containing the types), commented out:
 
             # print('node', node, 'has type', type_node)
             # We create a Vertex storing the type
@@ -190,6 +198,7 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID, prefix=""):
 
 
 def match_od(state, host_m, host_mm, pattern_m, pattern_mm):
+
     # Function object for pattern matching. Decides whether to match host and guest vertices, where guest is a RAMified instance (e.g., the attributes are all strings with Python expressions), and the host is an instance (=object diagram) of the original model (=class diagram)
     class RAMCompare:
         def __init__(self, bottom, host_od):
@@ -239,6 +248,20 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm):
                     return False
                 return self.match_types(g_vtx.typ, h_vtx.typ)
 
+            if hasattr(g_vtx, 'modelref'):
+                if not hasattr(h_vtx, 'modelref'):
+                    return False
+                g_ref_m, g_ref_mm = g_vtx.modelref
+                h_ref_m, h_ref_mm = h_vtx.modelref
+                nested_matches = [m for m in match_od(state, h_ref_m, h_ref_mm, g_ref_m, g_ref_mm)]
+                # print('nested_matches:', nested_matches)
+                if len(nested_matches) == 0:
+                    return False
+                elif len(nested_matches) == 1:
+                    return True
+                else:
+                    raise Exception("We have a problem: there is more than 1 match in the nested models.")
+
             # Then, match by value
 
             if g_vtx.value == None:
@@ -257,20 +280,20 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm):
             if h_vtx.value == IS_MODELREF:
                 return False
 
-            # print(g_vtx.value, h_vtx.value)
-            def get_slot(h_vtx, slot_name: str):
-                slot_node = self.host_od.get_slot(h_vtx.node_id, slot_name)
-                return slot_node
+            # # print(g_vtx.value, h_vtx.value)
+            # def get_slot(h_vtx, slot_name: str):
+            #     slot_node = self.host_od.get_slot(h_vtx.node_id, slot_name)
+            #     return slot_node
 
-            def read_int(slot: UUID):
-                i = Integer(slot, self.bottom.state)
-                return i.read()
+            # def read_int(slot: UUID):
+            #     i = Integer(slot, self.bottom.state)
+            #     return i.read()
 
             try:
                 return eval(g_vtx.value, {}, {
                     'v': h_vtx.value,
-                    'get_slot': functools.partial(get_slot, h_vtx),
-                    'read_int': read_int,
+                    # 'get_slot': functools.partial(get_slot, h_vtx),
+                    # 'read_int': read_int,
                 })
             except Exception as e:
                 return False

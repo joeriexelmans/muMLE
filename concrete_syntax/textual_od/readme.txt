@@ -1,0 +1,1 @@
+This directory contains the parser and renderer for the textual concrete syntax for Object Diagrams.

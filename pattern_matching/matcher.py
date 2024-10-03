@@ -133,10 +133,10 @@ class MatcherVF2:
         self.guest = guest
         self.compare_fn = compare_fn
 
-        with Timer("find_connected_components - guest"):
-            self.guest_vtx_to_component, self.guest_component_to_vtxs = find_connected_components(guest)
+        # with Timer("find_connected_components - guest"):
+        self.guest_vtx_to_component, self.guest_component_to_vtxs = find_connected_components(guest)
 
-        print("number of guest connected components:", len(self.guest_component_to_vtxs))
+        # print("number of guest connected components:", len(self.guest_component_to_vtxs))
 
     def match(self):
         yield from self._match(

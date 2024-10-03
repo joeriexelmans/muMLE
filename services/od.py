@@ -52,11 +52,6 @@ class OD:
 
         return object_node
 
-    # def read_slot_boolean(self, obj_node: str, attr_name: str):
-    #     slot = self.get_slot(obj_node, attr_name)
-    #     if slot != None:
-    #         return Boolean(slot, self.bottom.state).read()
-
     def get_class_of_object(self, object_name: str):
         object_node, = self.bottom.read_outgoing_elements(self.model, object_name) # get the object
         return self._get_class_of_object(object_node)
@@ -73,9 +68,10 @@ class OD:
         class_name = self.get_class_of_object(object_name)
         attr_link_name = get_attr_link_name(class_name, attr_name)
         # An attribute-link is indistinguishable from an ordinary link:
-        return self.create_link(
+        slot_id = self.create_link(
             get_attr_link_name(object_name, attr_name),
             attr_link_name, object_name, target_name)
+        return slot_id
 
     def get_slot(self, object_node: UUID, attr_name: str):
         # I really don't like how complex and inefficient it is to read an attribute of an object...
@@ -86,8 +82,23 @@ class OD:
             if type_edge in self.bottom.read_outgoing_elements(outgoing_edge, "Morphism"):
                 slot_ref = self.bottom.read_edge_target(outgoing_edge)
                 return slot_ref
-                # slot_node = UUID(self.bottom.read_value(slot_ref))
-                # return slot_node
+
+    def get_slots(self, object_node):
+        attrlink_node = get_scd_mm_attributelink_node(self.bottom)
+        slots = []
+        outgoing_links = self.bottom.read_outgoing_edges(object_node)
+        for l in outgoing_links:
+            for type_of_link in self.bottom.read_outgoing_elements(l, "Morphism"):
+                for type_of_type_of_link in self.bottom.read_outgoing_elements(type_of_link, "Morphism"):
+                    if type_of_type_of_link == attrlink_node:
+                        # hooray, we have a slot
+                        attr_name = get_attr_name(self.bottom, type_of_link)
+                        slots.append((attr_name, l))
+        return slots
+
+    def read_slot(self, slot_id):
+        tgt = self.bottom.read_edge_target(slot_id)
+        return read_primitive_value(self.bottom, tgt, self.type_model)
 
     def create_integer_value(self, name: str, value: int):
         from services.primitives.integer_type import Integer
@@ -97,6 +108,16 @@ class OD:
         # name = 'int'+str(value) # name of the ref to the created integer
         # By convention, the type model must have a ModelRef named "Integer"
         self.create_model_ref(name, "Integer", int_node)
+        return name
+
+    def create_boolean_value(self, name: str, value: bool):
+        from services.primitives.boolean_type import Boolean
+        bool_node = self.bottom.create_node()
+        bool_service = Boolean(bool_node, self.bottom.state)
+        bool_service.create(value)
+        # name = 'int'+str(value) # name of the ref to the created integer
+        # By convention, the type model must have a ModelRef named "Integer"
+        self.create_model_ref(name, "Boolean", bool_node)
         return name
 
     def create_string_value(self, name: str, value: str):
@@ -132,10 +153,10 @@ class OD:
                 i += 1
 
         type_edge, = self.bottom.read_outgoing_elements(self.type_model, assoc_name)
+        link_id = self._create_link(link_name, type_edge, src_obj_node, tgt_obj_node)
+        return link_id
 
-        return self._create_link(link_name, type_edge, src_obj_node, tgt_obj_node)
-
-    def _create_link(self, link_name: str, type_edge: str, src_obj_node: UUID, tgt_obj_node: UUID):
+    def _create_link(self, link_name: str, type_edge: UUID, src_obj_node: UUID, tgt_obj_node: UUID):
         # the link itself is unlabeled:
         link_edge = self.bottom.create_edge(src_obj_node, tgt_obj_node)
         # it is only in the context of the model, that the link has a name:
@@ -145,6 +166,33 @@ class OD:
 
     def get_objects(self, class_node):
         return get_typed_by(self.bottom, self.model, class_node)
+
+    def get_all_objects(self):
+        scd_mm = get_scd_mm(self.bottom)
+        class_node = get_scd_mm_class_node(self.bottom)
+        all_classes = OD(scd_mm, self.type_model, self.bottom.state).get_objects(class_node)
+        result = {}
+        for class_name, class_node in all_classes.items():
+            objects = self.get_objects(class_node)
+            result[class_name] = objects
+        return result
+
+    def get_all_links(self):
+        scd_mm = get_scd_mm(self.bottom)
+        assoc_node = get_scd_mm_assoc_node(self.bottom)
+        all_classes = OD(scd_mm, self.type_model, self.bottom.state).get_objects(assoc_node)
+        result = {}
+        for assoc_name, assoc_node in all_classes.items():
+            links = self.get_objects(assoc_node)
+            m = {}
+            for link_name, link_edge in links.items():
+                src_node = self.bottom.read_edge_source(link_edge)
+                tgt_node = self.bottom.read_edge_target(link_edge)
+                src_name = get_object_name(self.bottom, self.model, src_node)
+                tgt_name = get_object_name(self.bottom, self.model, tgt_node)
+                m[link_name] = (link_edge, src_name, tgt_name)
+            result[assoc_name] = m
+        return result
 
     def get_object_name(self, obj: UUID):
         for key in self.bottom.read_keys(self.model):
@@ -223,6 +271,10 @@ def get_object_name(bottom: Bottom, model: UUID, object_node: UUID):
         for el in bottom.read_outgoing_elements(model, key):
             if el == object_node:
                 return key
+
+def get_type2(bottom: Bottom, mm: UUID, object_node: UUID):
+    type_node, = bottom.read_outgoing_elements(object_node, "Morphism")
+    return type_node, get_object_name(bottom, mm, type_node)
 
 def find_outgoing_typed_by(bottom, src: UUID, type_node: UUID):
     edges = []

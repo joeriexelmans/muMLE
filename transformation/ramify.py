@@ -29,7 +29,7 @@ def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
         #   - min-card: 0
         #   - max-card: same as original
         upper_card = od.find_cardinality(bottom, class_node, od.get_scd_mm_class_uppercard_node(bottom))
-        print('creating class', class_name, "with card 0 ..", upper_card)
+        # print('creating class', class_name, "with card 0 ..", upper_card)
         ramified_class = ramified_scd.create_class(prefix+class_name, abstract=None, max_c=upper_card)
         # traceability link
         bottom.create_edge(ramified_class, class_node, RAMIFIES_LABEL)
@@ -41,7 +41,7 @@ def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
         # ramified_scd._create_attribute_link(prefix+class_name, string_modelref, "constraint", optional=True)
 
         for (attr_name, attr_edge) in od.get_attributes(bottom, class_node):
-            print('  creating attribute', attr_name, "with type String")
+            # print('  creating attribute', attr_name, "with type String")
             # Every attribute becomes 'string' type
             # The string will be a Python expression
             ramified_attr_link = ramified_scd._create_attribute_link(prefix+class_name, string_modelref, prefix+attr_name, optional=True)
@@ -58,7 +58,7 @@ def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
         _, src_upper_card, _, tgt_upper_card = m_scd.get_assoc_cardinalities(assoc_node)
         src = m_scd.get_class_name(bottom.read_edge_source(assoc_node))
         tgt = m_scd.get_class_name(bottom.read_edge_target(assoc_node))
-        print('creating assoc', src, "->", tgt, ", name =", assoc_name, ", src card = 0 ..", src_upper_card, "and tgt card = 0 ..", tgt_upper_card)
+        # print('creating assoc', src, "->", tgt, ", name =", assoc_name, ", src card = 0 ..", src_upper_card, "and tgt card = 0 ..", tgt_upper_card)
         ramified_assoc = ramified_scd.create_association(
             prefix+assoc_name, prefix+src, prefix+tgt,
             src_max_c=src_upper_card,
@@ -70,15 +70,13 @@ def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
         # Re-create inheritance links like in our original model:
         src = m_scd.get_class_name(bottom.read_edge_source(inh_node))
         tgt = m_scd.get_class_name(bottom.read_edge_target(inh_node))
-        print('creating inheritance link', prefix+src, '->', prefix+tgt)
+        # print('creating inheritance link', prefix+src, '->', prefix+tgt)
         ramified_inh_link = ramified_scd.create_inheritance(prefix+src, prefix+tgt)
 
     # Double-check: The RAMified meta-model should also conform to 'SCD':
     conf = Conformance(state, ramified, scd_metamodel)
     if not conf.check_nominal(log=True):
         raise Exception("Unexpected error: RAMified MM does not conform to SCD MM")
-    else:
-        print("RAMification successful.")
 
     return ramified
 

@@ -43,7 +43,7 @@ class SCD:
             _c_node = self.bottom.create_node(str(_c_model))  # store UUID of primitive value model
             self.bottom.create_edge(self.model, _c_node, f"{name}.{bound}_cardinality")  # link to model root
             _c_link = self.bottom.create_edge(class_node, _c_node)  # link class to attribute
-            self.bottom.create_edge(self.model, _c_link, f"{name}.{bound}_cardinality_link")  # link attr link to model root
+            self.bottom.create_edge(self.model, _c_link, f"{name}_{bound}_cardinality")  # link attr link to model root
             # retrieve types from metamodel
             _scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "Integer")
             _scd_link, = self.bottom.read_outgoing_elements(self.scd_model, f"Class_{bound}_cardinality")
@@ -63,7 +63,7 @@ class SCD:
             abstract_node = self.bottom.create_node(str(abstract_model))
             self.bottom.create_edge(self.model, abstract_node, f"{name}.abstract")
             abstract_link = self.bottom.create_edge(class_node, abstract_node)
-            self.bottom.create_edge(self.model, abstract_link, f"{name}.abstract_link")
+            self.bottom.create_edge(self.model, abstract_link, f"{name}_abstract")
             scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "Boolean")
             scd_link, = self.bottom.read_outgoing_elements(self.scd_model, "Class_abstract")
             self.bottom.create_edge(abstract_node, scd_node, "Morphism")
@@ -110,7 +110,7 @@ class SCD:
             _c_node = self.bottom.create_node(str(_c_model))
             self.bottom.create_edge(self.model, _c_node, f"{name}.{bound}_cardinality")
             _c_link = self.bottom.create_edge(assoc_edge, _c_node)
-            self.bottom.create_edge(self.model, _c_link, f"{name}.{bound}_cardinality_link")
+            self.bottom.create_edge(self.model, _c_link, f"{name}_{bound}_cardinality")
             _scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "Integer")
             _scd_link, = self.bottom.read_outgoing_elements(self.scd_model, f"Association_{bound}_cardinality")
             self.bottom.create_edge(_c_node, _scd_node, "Morphism")
@@ -193,7 +193,7 @@ class SCD:
         name_node = self.bottom.create_node(str(name_model))
         self.bottom.create_edge(self.model, name_node, f"{source}_{name}.name")
         name_link = self.bottom.create_edge(assoc_edge, name_node)
-        self.bottom.create_edge(self.model, name_link, f"{source}_{name}.name_link")
+        self.bottom.create_edge(self.model, name_link, f"{source}_{name}_name")
         scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "String")
         scd_link, = self.bottom.read_outgoing_elements(self.scd_model, "AttributeLink_name")
         self.bottom.create_edge(name_node, scd_node, "Morphism")
@@ -205,7 +205,7 @@ class SCD:
         optional_node = self.bottom.create_node(str(optional_model))
         self.bottom.create_edge(self.model, optional_node, f"{source}_{name}.optional")
         optional_link = self.bottom.create_edge(assoc_edge, optional_node)
-        self.bottom.create_edge(self.model, optional_link, f"{source}_{name}.optional_link")
+        self.bottom.create_edge(self.model, optional_link, f"{source}_{name}_optional")
         scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "Boolean")
         scd_link, = self.bottom.read_outgoing_elements(self.scd_model, "AttributeLink_optional")
         self.bottom.create_edge(optional_node, scd_node, "Morphism")
@@ -278,7 +278,7 @@ class SCD:
         code_node = self.bottom.create_node(code)
         self.bottom.create_edge(self.model, code_node, f"{element}.constraint")
         code_link = self.bottom.create_edge(element_node, code_node)
-        self.bottom.create_edge(self.model, code_link, f"{element}.constraint_link")
+        self.bottom.create_edge(self.model, code_link, f"{element}_constraint")
         scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "ActionCode")
         scd_link, = self.bottom.read_outgoing_elements(self.scd_model, "Element_constraint")
         self.bottom.create_edge(code_node, scd_node, "Morphism")

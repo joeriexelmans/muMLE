@@ -47,10 +47,10 @@ def bootstrap_scd(state: State) -> UUID:
     def add_attribute_attributes(attribute_element_name, attribute_element):
         _name_model = bottom.create_node()
         _name_node = add_node_element(f"{attribute_element_name}.name", str(_name_model))
-        _name_edge = add_edge_element(f"{attribute_element_name}.name_link", attribute_element, _name_node)
+        _name_edge = add_edge_element(f"{attribute_element_name}_name", attribute_element, _name_node)
         _optional_model = bottom.create_node()
         _optional_node = add_node_element(f"{attribute_element_name}.optional", str(_optional_model))
-        _optional_edge = add_edge_element(f"{attribute_element_name}.optional_link", attribute_element, _optional_node)
+        _optional_edge = add_edge_element(f"{attribute_element_name}_optional", attribute_element, _optional_node)
         return _name_model, _optional_model
 
     ##### SCD META-MODEL #####
@@ -171,7 +171,7 @@ def bootstrap_scd(state: State) -> UUID:
     # # Make Element abstract
     abs_model = bottom.create_node()
     abs_node = add_node_element(f"Element.abstract", str(abs_model))
-    abs_edge = add_edge_element(f"Element.abstract_link", element_node, abs_node)
+    abs_edge = add_edge_element(f"Element_abstract", element_node, abs_node)
     Boolean(abs_model, state).create(True)
 
     # create phi(SCD,SCD) to type MCL with itself
@@ -220,27 +220,27 @@ def bootstrap_scd(state: State) -> UUID:
     add_mcl_morphism("Association_target_lower_cardinality", "AttributeLink")
     add_mcl_morphism("Association_target_upper_cardinality", "AttributeLink")
     # AttributeLink_name
-    add_mcl_morphism("AttributeLink_name.name_link", "AttributeLink_name")
-    add_mcl_morphism("AttributeLink_optional.name_link", "AttributeLink_name")
-    add_mcl_morphism("Element_constraint.name_link", "AttributeLink_name")
-    add_mcl_morphism("Class_abstract.name_link", "AttributeLink_name")
-    add_mcl_morphism("Class_lower_cardinality.name_link", "AttributeLink_name")
-    add_mcl_morphism("Class_upper_cardinality.name_link", "AttributeLink_name")
-    add_mcl_morphism("Association_source_lower_cardinality.name_link", "AttributeLink_name")
-    add_mcl_morphism("Association_source_upper_cardinality.name_link", "AttributeLink_name")
-    add_mcl_morphism("Association_target_lower_cardinality.name_link", "AttributeLink_name")
-    add_mcl_morphism("Association_target_upper_cardinality.name_link", "AttributeLink_name")
+    add_mcl_morphism("AttributeLink_name_name", "AttributeLink_name")
+    add_mcl_morphism("AttributeLink_optional_name", "AttributeLink_name")
+    add_mcl_morphism("Element_constraint_name", "AttributeLink_name")
+    add_mcl_morphism("Class_abstract_name", "AttributeLink_name")
+    add_mcl_morphism("Class_lower_cardinality_name", "AttributeLink_name")
+    add_mcl_morphism("Class_upper_cardinality_name", "AttributeLink_name")
+    add_mcl_morphism("Association_source_lower_cardinality_name", "AttributeLink_name")
+    add_mcl_morphism("Association_source_upper_cardinality_name", "AttributeLink_name")
+    add_mcl_morphism("Association_target_lower_cardinality_name", "AttributeLink_name")
+    add_mcl_morphism("Association_target_upper_cardinality_name", "AttributeLink_name")
     # AttributeLink_optional
-    add_mcl_morphism("AttributeLink_name.optional_link", "AttributeLink_optional")
-    add_mcl_morphism("AttributeLink_optional.optional_link", "AttributeLink_optional")
-    add_mcl_morphism("Element_constraint.optional_link", "AttributeLink_optional")
-    add_mcl_morphism("Class_abstract.optional_link", "AttributeLink_optional")
-    add_mcl_morphism("Class_lower_cardinality.optional_link", "AttributeLink_optional")
-    add_mcl_morphism("Class_upper_cardinality.optional_link", "AttributeLink_optional")
-    add_mcl_morphism("Association_source_lower_cardinality.optional_link", "AttributeLink_optional")
-    add_mcl_morphism("Association_source_upper_cardinality.optional_link", "AttributeLink_optional")
-    add_mcl_morphism("Association_target_lower_cardinality.optional_link", "AttributeLink_optional")
-    add_mcl_morphism("Association_target_upper_cardinality.optional_link", "AttributeLink_optional")
+    add_mcl_morphism("AttributeLink_name_optional", "AttributeLink_optional")
+    add_mcl_morphism("AttributeLink_optional_optional", "AttributeLink_optional")
+    add_mcl_morphism("Element_constraint_optional", "AttributeLink_optional")
+    add_mcl_morphism("Class_abstract_optional", "AttributeLink_optional")
+    add_mcl_morphism("Class_lower_cardinality_optional", "AttributeLink_optional")
+    add_mcl_morphism("Class_upper_cardinality_optional", "AttributeLink_optional")
+    add_mcl_morphism("Association_source_lower_cardinality_optional", "AttributeLink_optional")
+    add_mcl_morphism("Association_source_upper_cardinality_optional", "AttributeLink_optional")
+    add_mcl_morphism("Association_target_lower_cardinality_optional", "AttributeLink_optional")
+    add_mcl_morphism("Association_target_upper_cardinality_optional", "AttributeLink_optional")
     # String
     add_mcl_morphism("AttributeLink_name.name", "String")
     add_mcl_morphism("AttributeLink_optional.name", "String")
@@ -265,7 +265,7 @@ def bootstrap_scd(state: State) -> UUID:
     add_mcl_morphism("Association_target_upper_cardinality.optional", "Boolean")
     add_mcl_morphism("Element.abstract", "Boolean")
     # Class_abstract
-    add_mcl_morphism("Element.abstract_link", "Class_abstract")
+    add_mcl_morphism("Element_abstract", "Class_abstract")
 
     return mcl_root
 

@@ -12,7 +12,8 @@ from services.bottom.V0 import Bottom
 from services.primitives.integer_type import Integer
 from pattern_matching import mvs_adapter
 from pattern_matching.matcher import MatcherVF2
-from renderer import plantuml
+from concrete_syntax import plantuml
+from concrete_syntax.textual_od import parser, renderer
 
 import sys
 
@@ -30,121 +31,138 @@ def main():
     int_mm_id = UUID(state.read_value(state.read_dict(state.read_root(), "Integer")))
     string_mm_id = UUID(state.read_value(state.read_dict(state.read_root(), "String")))
 
-    # def print_tree(root, max_depth, depth=0):
-    #     print("  "*depth, "root=", root, "value=", state.read_value(root))
-    #     src,tgt = state.read_edge(root)
-    #     if src != None:
-    #         print("  "*depth, "src...")
-    #         print_tree(src, max_depth, depth+1)
-    #     if tgt != None:
-    #         print("  "*depth, "tgt...")
-    #         print_tree(tgt, max_depth, depth+1)
-    #     for edge in state.read_outgoing(root):
-    #         for edge_label in state.read_outgoing(edge):
-    #             [_,tgt] = state.read_edge(edge_label)
-    #             label = state.read_value(tgt)
-    #             print("  "*depth, " key:", label)
-    #         [_, tgt] = state.read_edge(edge)
-    #         value = state.read_value(tgt)
-    #         if value != None:
-    #             print("  "*depth, " ->", tgt, " (value:", value, ")")
-    #         else:
-    #             print("  "*depth, " ->", tgt)
-    #         if depth < max_depth:
-    #             if isinstance(value, str) and len(value) == 36:
-    #                 i = None
-    #                 try:
-    #                     i = UUID(value)
-    #                 except ValueError as e:
-    #                     # print("invalid UUID:", value)
-    #                     pass
-    #                 if i != None:
-    #                     print_tree(i, max_depth, depth+1)
-    #             print_tree(tgt, max_depth, depth+1)
+    def create_dsl_mm_api():
+        # Create DSL MM with SCD API
+        dsl_mm_id = state.create_node()
+        dsl_mm_scd = SCD(dsl_mm_id, state)
+        dsl_mm_scd.create_class("Animal", abstract=True)
+        dsl_mm_scd.create_class("Man", min_c=1, max_c=2)
+        dsl_mm_scd.create_inheritance("Man", "Animal")
+        dsl_mm_scd.create_model_ref("Integer", int_mm_id)
+        dsl_mm_scd.create_attribute_link("Man", "Integer", "weight", optional=False)
+        dsl_mm_scd.create_class("Bear")
+        dsl_mm_scd.create_inheritance("Bear", "Animal")
+        dsl_mm_scd.create_association("afraidOf", "Man", "Animal",
+            # Every Man afraid of at least one Animal:
+            src_min_c=0,
+            src_max_c=None,
+            tgt_min_c=1,
+            tgt_max_c=None,
+        )
+        return dsl_mm_id
 
-    # Meta-model for our DSL
-    dsl_mm_id = state.create_node()
-    dsl_mm_scd = SCD(dsl_mm_id, state)
-    dsl_mm_scd.create_class("Animal", abstract=True)
-    dsl_mm_scd.create_class("Man", min_c=1, max_c=2)
-    dsl_mm_scd.create_inheritance("Man", "Animal")
-    dsl_mm_scd.create_model_ref("Integer", int_mm_id)
-    dsl_mm_scd.create_attribute_link("Man", "Integer", "weight", optional=False)
-    dsl_mm_scd.create_class("Bear")
-    dsl_mm_scd.create_inheritance("Bear", "Animal")
-    dsl_mm_scd.create_association("afraidOf", "Man", "Animal",
-        # Every Man afraid of at least one Animal:
-        src_min_c=0,
-        src_max_c=None,
-        tgt_min_c=1,
-        tgt_max_c=None,
-    )
+    def create_dsl_mm_parser():
+        # Create DSL MM with parser
+        dsl_mm_cs = """
+# Integer:ModelRef
+Bear:Class
+Animal:Class
+    abstract = True
+Man:Class
+    lower_cardinality = 1
+    upper_cardinality = 2
+Man_weight:AttributeLink (Man -> Integer)
+    name = "weight"
+    optional = False
+afraidOf:Association (Man -> Animal)
+    source_lower_cardinality = 0
+    target_lower_cardinality = 1
+Man_inh_Animal:Inheritance (Man -> Animal)
+Bear_inh_Animal:Inheritance (Bear -> Animal)
+"""
+        dsl_mm_id = parser.parse_od(state, dsl_mm_cs, mm=scd_mm_id)
+        return dsl_mm_id
+    
+    def create_dsl_m_api():
+        # Create DSL M with OD API
+        dsl_m_id = state.create_node()
+        dsl_m_od = OD(dsl_mm_id, dsl_m_id, state)
+        dsl_m_od.create_object("george", "Man")
+        dsl_m_od.create_slot("weight", "george",
+            dsl_m_od.create_integer_value("george.weight", 80))
+        dsl_m_od.create_object("bear1", "Bear")
+        dsl_m_od.create_object("bear2", "Bear")
+        dsl_m_od.create_link("georgeAfraidOfBear1", "afraidOf", "george", "bear1")
+        dsl_m_od.create_link("georgeAfraidOfBear2", "afraidOf", "george", "bear2")
+        return dsl_m_id
 
-    print(dsl_mm_scd.list_elements())
+    def create_dsl_m_parser():
+        # Create DSL M with parser
+        dsl_m_cs = """
+george :Man 
+    weight = 80
+
+bear1 :Bear
+bear2 :Bear
+
+:afraidOf (george -> bear1)
+:afraidOf (george -> bear2)
+"""
+        dsl_m_id = parser.parse_od(state, dsl_m_cs, mm=dsl_mm_id)
+        return dsl_m_id
+
+
+    # dsl_mm_id = create_dsl_mm_api()
+    dsl_mm_id = create_dsl_mm_parser()
+
+    print("DSL MM:")
+    print("--------------------------------------")
+    print(renderer.render_od(state, dsl_mm_id, scd_mm_id, hide_names=False))
+    print("--------------------------------------")
 
     conf = Conformance(state, dsl_mm_id, scd_mm_id)
-    print("conforms?", conf.check_nominal(log=True))
+    print("Conformance DSL_MM -> SCD_MM?", conf.check_nominal(log=True))
 
-    # Model in our DSL
-    dsl_m_id = state.create_node()
-    dsl_m_od = OD(dsl_mm_id, dsl_m_id, state)
+    # dsl_m_id = create_dsl_m_api()
+    dsl_m_id = create_dsl_m_parser()
+    print("DSL M:")
+    print("--------------------------------------")
+    print(renderer.render_od(state, dsl_m_id, dsl_mm_id, hide_names=False))
+    print("--------------------------------------")
 
-    # dsl_m_od.create_object("animal", "Animal")
-    dsl_m_od.create_object("george", "Man")
-    dsl_m_od.create_slot("weight", "george",
-        dsl_m_od.create_integer_value("george.weight", 80))
-
-    # "george_weight"
-
-    dsl_m_od.create_object("bear1", "Bear")
-    dsl_m_od.create_object("bear2", "Bear")
-    dsl_m_od.create_link("georgeAfraidOfBear1", "afraidOf", "george", "bear1")
-    dsl_m_od.create_link("georgeAfraidOfBear2", "afraidOf", "george", "bear2")
-
-
-    conf2 = Conformance(state, dsl_m_id, dsl_mm_id)
-    print("DSL instance conforms?", conf2.check_nominal(log=True))
-    print(conf2.type_mapping)
+    conf = Conformance(state, dsl_m_id, dsl_mm_id)
+    print("Conformance DSL_M -> DSL_MM?", conf.check_nominal(log=True))
 
     # RAMify MM
     prefix = "RAM_" # all ramified types can be prefixed to distinguish them a bit more
     ramified_mm_id = ramify(state, dsl_mm_id, prefix)
+    ramified_int_mm_id = ramify(state, int_mm_id, prefix)
 
     # LHS of our rule
     lhs_id = state.create_node()
     lhs_od = OD(ramified_mm_id, lhs_id, state)
-
     lhs_od.create_object("man", prefix+"Man")
     lhs_od.create_slot(prefix+"weight", "man", lhs_od.create_string_value(f"man.{prefix}weight", 'v < 99'))
     lhs_od.create_object("scaryAnimal", prefix+"Animal")
     lhs_od.create_link("manAfraidOfAnimal", prefix+"afraidOf", "man", "scaryAnimal")
 
-    conf3 = Conformance(state, lhs_id, ramified_mm_id)
-    print("LHS conforms?", conf3.check_nominal(log=True))
+    conf = Conformance(state, lhs_id, ramified_mm_id)
+    print("Conformance LHS_M -> RAM_DSL_MM?", conf.check_nominal(log=True))
 
     # RHS of our rule
     rhs_id = state.create_node()
     rhs_od = OD(ramified_mm_id, rhs_id, state)
-
     rhs_od.create_object("man", prefix+"Man")
     rhs_od.create_slot(prefix+"weight", "man", rhs_od.create_string_value(f"man.{prefix}weight", 'v + 5'))
-
     rhs_od.create_object("bill", prefix+"Man")
     rhs_od.create_slot(prefix+"weight", "bill", rhs_od.create_string_value(f"bill.{prefix}weight", '100'))
 
     rhs_od.create_link("billAfraidOfMan", prefix+"afraidOf", "bill", "man")
 
-    conf4 = Conformance(state, rhs_id, ramified_mm_id)
-    print("RHS conforms?", conf4.check_nominal(log=True))
+    conf = Conformance(state, rhs_id, ramified_mm_id)
+    print("Conformance RHS_M -> RAM_DSL_MM?", conf.check_nominal(log=True))
 
     def render_ramification():
         uml = (""
             # Render original and RAMified meta-models
-            + plantuml.render_package("Meta-Model", plantuml.render_class_diagram(state, dsl_mm_id))
-            + plantuml.render_package("RAMified Meta-Model", plantuml.render_class_diagram(state, ramified_mm_id))
+            + plantuml.render_package("DSL Meta-Model", plantuml.render_class_diagram(state, dsl_mm_id))
+            + plantuml.render_package("Int Meta-Model", plantuml.render_class_diagram(state, int_mm_id))
+            + plantuml.render_package("RAMified DSL Meta-Model", plantuml.render_class_diagram(state, ramified_mm_id))
+            + plantuml.render_package("RAMified Int Meta-Model", plantuml.render_class_diagram(state, ramified_int_mm_id))
 
             # Render RAMification traceability links
             + plantuml.render_trace_ramifies(state, dsl_mm_id, ramified_mm_id)
+            + plantuml.render_trace_ramifies(state, int_mm_id, ramified_int_mm_id)
         )
 
         # Render pattern
@@ -182,8 +200,11 @@ def main():
         for name_mapping in generator:
             rewriter.rewrite(state, lhs_id, rhs_id, ramified_mm_id, name_mapping, dsl_m_id, dsl_mm_id)
 
+            conf = Conformance(state, dsl_m_id, dsl_mm_id)
+            print("Conformance DSL_M (after rewrite) -> DSL_MM?", conf.check_nominal(log=True))
+
             # Render match
-            uml_match = plantuml.render_trace_match(state, name_mapping, rhs_id, dsl_m_id)
+            uml_match = plantuml.render_trace_match(state, name_mapping, rhs_id, dsl_m_id, 'orange')
 
             # Stop matching after rewrite
             break
@@ -197,14 +218,13 @@ def main():
 
         return uml
 
-    conf5 = Conformance(state, dsl_m_id, dsl_mm_id)
-    print("Updated model conforms?", conf5.check_nominal(log=True))
+    # plantuml_str = render_all_matches()
+    # plantuml_str = render_rewrite()
 
-    print()
-    print("==============================================")
+    # print()
+    # print("==============================================")
 
-    print(render_all_matches())
-    # print(render_rewrite())
+    # print(plantuml_str)
 
 
 if __name__ == "__main__":

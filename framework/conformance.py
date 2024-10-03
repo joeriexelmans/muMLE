@@ -556,7 +556,7 @@ class Conformance:
                     attr_type_element, = self.bottom.read_outgoing_elements(self.type_model, attr_type)
                     self.bottom.create_edge(attr_element, attr_type_element, "Morphism")
                     # attribute link
-                    attr_link_element, = self.bottom.read_outgoing_elements(self.model, f"{m_name}.{attr_name}_link")
+                    attr_link_element, = self.bottom.read_outgoing_elements(self.model, f"{m_name}_{attr_name}")
                     attr_link_type_element, = self.bottom.read_outgoing_elements(self.type_model, f"{tm_name}_{attr_name}")
                     self.bottom.create_edge(attr_link_element, attr_link_type_element, "Morphism")
                 except ValueError:
