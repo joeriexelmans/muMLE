@@ -11,7 +11,7 @@ from transformation.ramify import ramify
 from transformation import rewriter
 from services.bottom.V0 import Bottom
 from services.primitives.integer_type import Integer
-from concrete_syntax import plantuml
+from concrete_syntax.plantuml import renderer as plantuml
 from concrete_syntax.textual_od import parser, renderer
 
 import sys
@@ -29,6 +29,12 @@ def main():
     scd_mm_id = bootstrap_scd(state)
     int_mm_id = UUID(state.read_value(state.read_dict(state.read_root(), "Integer")))
     string_mm_id = UUID(state.read_value(state.read_dict(state.read_root(), "String")))
+
+    conf = Conformance(state, scd_mm_id, scd_mm_id)
+    print("Conformance SCD_MM -> SCD_MM?", conf.check_nominal(log=True))
+    # print("--------------------------------------")
+    # print(renderer.render_od(state, scd_mm_id, scd_mm_id, hide_names=False))
+    # print("--------------------------------------")
 
     def create_dsl_mm_api():
         # Create DSL MM with SCD API
@@ -64,7 +70,6 @@ Man_weight:AttributeLink (Man -> Integer)
     name = "weight"
     optional = False
 afraidOf:Association (Man -> Animal)
-    source_lower_cardinality = 0
     target_lower_cardinality = 1
 Man_inh_Animal:Inheritance (Man -> Animal)
 Bear_inh_Animal:Inheritance (Bear -> Animal)

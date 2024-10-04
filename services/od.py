@@ -333,5 +333,5 @@ def read_primitive_value(bottom, modelref: UUID, mm: UUID):
     elif typ_name == "Boolean":
         return Boolean(referred_model, bottom.state).read()
     else:
-        raise Exception("Unimplemented type:", host_type_name)
+        raise Exception("Unimplemented type:", typ_name)
 

@@ -30,8 +30,8 @@ STR: /"[^"]*"/
    | /'[^']*'/
 BOOL: "True" | "False"
 
-object: [IDENTIFIER] ":" IDENTIFIER [link] _NL [_INDENT slot+ _DEDENT]
-link: "(" IDENTIFIER "->" IDENTIFIER ")"
+object: [IDENTIFIER] ":" IDENTIFIER [link_spec] _NL [_INDENT slot+ _DEDENT]
+link_spec: "(" IDENTIFIER "->" IDENTIFIER ")"
 slot: IDENTIFIER "=" literal _NL
 """
 
@@ -75,7 +75,7 @@ def parse_od(state, cs_text, mm):
         def literal(self, el):
             return el[0]
 
-        def link(self, el):
+        def link_spec(self, el):
             [src, tgt] = el
             return (src, tgt)
         
