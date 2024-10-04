@@ -75,7 +75,7 @@ def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
 
     # Double-check: The RAMified meta-model should also conform to 'SCD':
     conf = Conformance(state, ramified, scd_metamodel)
-    if not conf.check_nominal(log=True):
+    if len(conf.check_nominal(log=True)) > 0:
         raise Exception("Unexpected error: RAMified MM does not conform to SCD MM")
 
     return ramified

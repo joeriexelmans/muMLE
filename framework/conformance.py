@@ -48,39 +48,35 @@ class Conformance:
         Returns:
             Boolean indicating whether the check has passed
         """
-        try:
-            self.check_typing()
-            self.check_link_typing()
-            self.check_multiplicities()
-            self.check_constraints()
-            return True
-        except RuntimeError as e:
-            if log:
-                print(e)
-            return False
+        errors = []
+        errors += self.check_typing()
+        errors += self.check_link_typing()
+        errors += self.check_multiplicities()
+        errors += self.check_constraints()
+        return errors
 
-    def check_structural(self, *, build_morphisms=True, log=False):
-        """
-        Perform a structural conformance check
+    # def check_structural(self, *, build_morphisms=True, log=False):
+    #     """
+    #     Perform a structural conformance check
 
-        Args:
-            build_morphisms: boolean indicating whether to create morpishm links
-            log: boolean indicating whether to log errors
+    #     Args:
+    #         build_morphisms: boolean indicating whether to create morpishm links
+    #         log: boolean indicating whether to log errors
 
-        Returns:
-            Boolean indicating whether the check has passed
-        """
-        try:
-            self.precompute_structures()
-            self.match_structures()
-            if build_morphisms:
-                self.build_morphisms()
-                self.check_nominal(log=log)
-            return True
-        except RuntimeError as e:
-            if log:
-                print(e)
-            return False
+    #     Returns:
+    #         Boolean indicating whether the check has passed
+    #     """
+    #     try:
+    #         self.precompute_structures()
+    #         self.match_structures()
+    #         if build_morphisms:
+    #             self.build_morphisms()
+    #             self.check_nominal(log=log)
+    #         return True
+    #     except RuntimeError as e:
+    #         if log:
+    #             print(e)
+    #         return False
 
     def read_attribute(self, element: UUID, attr_name: str):
         """
@@ -218,8 +214,8 @@ class Conformance:
             # optional for attribute links
             opt = self.read_attribute(tm_element, "optional")
             if opt != None:
-                self.source_multiplicities[tm_name] = (0 if opt else 1, 1)
-                self.target_multiplicities[tm_name] = (0, 1)
+                self.source_multiplicities[tm_name] = (0, float('inf'))
+                self.target_multiplicities[tm_name] = (0 if opt else 1, 1)
 
     def get_type(self, element: UUID):
         """
@@ -234,6 +230,7 @@ class Conformance:
         for each element of model check whether a morphism
         link exists to some element of type_model
         """
+        errors = []
         ref_element, = self.bottom.read_outgoing_elements(self.scd_model, "ModelRef")
         model_names = self.bottom.read_keys(self.model)
         for m_name in model_names:
@@ -245,19 +242,20 @@ class Conformance:
                 if ref_element in self.bottom.read_outgoing_elements(tm_element, "Morphism"):
                     sub_m = UUID(self.bottom.read_value(m_element))
                     sub_tm = UUID(self.bottom.read_value(tm_element))
-                    if not Conformance(self.state, sub_m, sub_tm).check_nominal():
-                        raise RuntimeError(f"Incorrectly model reference: {m_name}")
+                    nested_errors = Conformance(self.state, sub_m, sub_tm).check_nominal()
+                    errors += [f"In ModelRef ({m_name}):" + err for err in nested_errors]
             except ValueError as e:
                 import traceback
                 traceback.format_exc(e)
                 # no or too many morphism links found
-                raise RuntimeError(f"Incorrectly typed element: {m_name}")
-        return True
+                errors.append(f"Incorrectly typed element: {m_name}")
+        return errors
 
     def check_link_typing(self):
         """
         for each link, check whether its source and target are of a valid type
         """
+        errors = []
         self.precompute_sub_types()
         for m_name, tm_name in self.type_mapping.items():
             m_element, = self.bottom.read_outgoing_elements(self.model, m_name)
@@ -275,15 +273,15 @@ class Conformance:
             source_type_expected = self.type_model_names[tm_source]
             if source_type_actual != source_type_expected:
                 if source_type_actual not in self.sub_types[source_type_expected]:
-                    raise RuntimeError(f"Invalid source type {source_type_actual} for element {m_name}")
+                    errors.append(f"Invalid source type {source_type_actual} for element {m_name}")
             # check if target is typed correctly
             target_name = self.model_names[m_target]
             target_type_actual = self.type_mapping[target_name]
             target_type_expected = self.type_model_names[tm_target]
             if target_type_actual != target_type_expected:
                 if target_type_actual not in self.sub_types[target_type_expected]:
-                    raise RuntimeError(f"Invalid target type {target_type_actual} for element {m_name}")
-        return True
+                    errors.append(f"Invalid target type {target_type_actual} for element {m_name}")
+        return errors
 
     def check_multiplicities(self):
         """
@@ -291,12 +289,13 @@ class Conformance:
         """
         self.deref_primitive_values()
         self.precompute_multiplicities()
+        errors = []
         for tm_name in self.type_model_names.values():
             # abstract classes
             if tm_name in self.abstract_types:
                 type_count = list(self.type_mapping.values()).count(tm_name)
                 if type_count > 0:
-                    raise RuntimeError(f"Invalid instantiation of abstract class: {tm_name}")
+                    errors.append(f"Invalid instantiation of abstract class: {tm_name}")
             # class multiplicities
             if tm_name in self.multiplicities:
                 lc, uc = self.multiplicities[tm_name]
@@ -304,48 +303,55 @@ class Conformance:
                 for sub_type in self.sub_types[tm_name]:
                     type_count += list(self.type_mapping.values()).count(sub_type)
                 if type_count < lc or type_count > uc:
-                    raise RuntimeError(f"Cardinality of type exceeds valid multiplicity range: {tm_name} ({type_count})")
+                    errors.append(f"Cardinality of type exceeds valid multiplicity range: {tm_name} ({type_count})")
             # association source multiplicities
             if tm_name in self.source_multiplicities:
                 tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
-                tm_source_element = self.bottom.read_edge_source(tm_element)
-                tm_source_name = self.type_model_names[tm_source_element]
+                tm_tgt_element = self.bottom.read_edge_target(tm_element)
+                tm_tgt_name = self.type_model_names[tm_tgt_element]
                 lc, uc = self.source_multiplicities[tm_name]
-                for i, t in self.type_mapping.items():
-                    if t == tm_source_name or t in self.sub_types[tm_source_name]:
+                for tgt_obj_name, t in self.type_mapping.items():
+                    if t == tm_tgt_name or t in self.sub_types[tm_tgt_name]:
                         count = 0
-                        i_element, = self.bottom.read_outgoing_elements(self.model, i)
-                        outgoing = self.bottom.read_outgoing_edges(i_element)
-                        for o in outgoing:
+                        tgt_obj_node, = self.bottom.read_outgoing_elements(self.model, tgt_obj_name)
+                        incoming = self.bottom.read_incoming_edges(tgt_obj_node)
+                        for i in incoming:
                             try:
-                                if self.type_mapping[self.model_names[o]] == tm_name:
+                                if self.type_mapping[self.model_names[i]] == tm_name:
                                     count += 1
                             except KeyError:
                                 pass  # for elements not part of model, e.g. morphism links
                         if count < lc or count > uc:
-                            raise RuntimeError(f"Source cardinality of type {tm_name} exceeds valid multiplicity range in {i}.")
+                            errors.append(f"Source cardinality of type {tm_name} ({count}) out of bounds ({lc}..{uc}) in {tgt_obj_name}.")
 
             # association target multiplicities
             if tm_name in self.target_multiplicities:
                 tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
-                tm_target_element = self.bottom.read_edge_target(tm_element)
-                tm_target_name = self.type_model_names[tm_target_element]
+                # tm_target_element = self.bottom.read_edge_target(tm_element)
+                tm_src_element = self.bottom.read_edge_source(tm_element)
+                tm_src_name = self.type_model_names[tm_src_element]
                 lc, uc = self.target_multiplicities[tm_name]
-                for i, t in self.type_mapping.items():
-                    if t == tm_target_name or t in self.sub_types[tm_target_name]:
+                # print("checking assoc", tm_name, "source", tm_src_name)
+                # print("subtypes of", tm_src_name, self.sub_types[tm_src_name])
+                for src_obj_name, t in self.type_mapping.items():
+                    if t == tm_src_name or t in self.sub_types[tm_src_name]:
+                        # print("got obj", src_obj_name, "of type", t)
                         count = 0
-                        i_element, = self.bottom.read_outgoing_elements(self.model, i)
-                        outgoing = self.bottom.read_incoming_edges(i_element)
+                        src_obj_node, = self.bottom.read_outgoing_elements(self.model, src_obj_name)
+                        # outgoing = self.bottom.read_incoming_edges(src_obj_node)
+                        outgoing = self.bottom.read_outgoing_edges(src_obj_node)
                         for o in outgoing:
                             try:
                                 if self.type_mapping[self.model_names[o]] == tm_name:
+                                    # print("have an outgoing edge", self.model_names[o], self.type_mapping[self.model_names[o]], "---> increase counter")
                                     count += 1
                             except KeyError:
                                 pass  # for elements not part of model, e.g. morphism links
                         if count < lc or count > uc:
-                            print(f"Target cardinality of type {tm_name} exceeds valid multiplicity range in {i}.")
-                            return False
-        return True
+                            errors.append(f"Target cardinality of type {tm_name} ({count}) out of bounds ({lc}..{uc}) in {src_obj_name}.")
+                        # else:
+                            # print(f"OK: Target cardinality of type {tm_name} ({count}) within bounds ({lc}..{uc}) in {src_obj_name}.")
+        return errors
 
     def evaluate_constraint(self, code, **kwargs):
         """
@@ -367,6 +373,7 @@ class Conformance:
         Check whether all constraints defined for a model are respected
         """
         # local constraints
+        errors = []
         for m_name, tm_name in self.type_mapping.items():
             if tm_name != "GlobalConstraint":
                 tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
@@ -376,7 +383,7 @@ class Conformance:
                     morphisms = [m for m in morphisms if m in self.model_names]
                     for m_element in morphisms:
                         if not self.evaluate_constraint(code, element=m_element):
-                            raise RuntimeError(f"Local constraint of {tm_name} not satisfied in {m_name}.")
+                            errors.append(f"Local constraint of {tm_name} not satisfied in {m_name}.")
 
         # global constraints
         for m_name, tm_name in self.type_mapping.items():
@@ -385,8 +392,8 @@ class Conformance:
                 code = self.read_attribute(tm_element, "constraint")
                 if code != None:
                     if not self.evaluate_constraint(code, model=self.model):
-                        raise RuntimeError(f"Global constraint {tm_name} not satisfied.")
-        return True
+                        errors.append(f"Global constraint {tm_name} not satisfied.")
+        return errors
 
     def precompute_structures(self):
         """
