@@ -7,46 +7,34 @@ from services.scd import SCD
 from uuid import UUID
 
 grammar = r"""
-%import common.WS_INLINE
-%ignore WS_INLINE
+%import common.WS
+%ignore WS
 %ignore COMMENT
 
-%declare _INDENT _DEDENT
-
-?start: (_NL | object )*
+?start: object*
 
 IDENTIFIER: /[A-Za-z_][A-Za-z_0-9]*/
-COMMENT: /#.*/
-
-# newline
-_NL: /(\r?\n[\t ]*)+/
+COMMENT: /#[^\n]*\n/
 
 literal: INT
        | STR
        | BOOL
        | CODE
+       | INDENTED_CODE
 
 INT: /[0-9]+/
 STR: /"[^"]*"/
    | /'[^']*'/
 BOOL: "True" | "False"
 CODE: /`[^`]*`/
+INDENTED_CODE: /```[^`]*```/
 
-object: [IDENTIFIER] ":" IDENTIFIER [link_spec] _NL [_INDENT slot+ _DEDENT]
+object: [IDENTIFIER] ":" IDENTIFIER [link_spec] ["{" slot* "}"]
 link_spec: "(" IDENTIFIER "->" IDENTIFIER ")"
-slot: IDENTIFIER "=" literal _NL
+slot: IDENTIFIER "=" literal ";"
 """
 
-
-class TreeIndenter(Indenter):
-    NL_type = '_NL'
-    OPEN_PAREN_types = []
-    CLOSE_PAREN_types = []
-    INDENT_type = '_INDENT'
-    DEDENT_type = '_DEDENT'
-    tab_len = 4
-
-parser = Lark(grammar, parser='lalr', postlex=TreeIndenter())
+parser = Lark(grammar, parser='lalr')
 
 # internal use only
 # just a dumb wrapper to distinguish between code and string
@@ -82,6 +70,18 @@ def parse_od(state, cs_text, mm):
 
         def CODE(self, token):
             return _Code(str(token[1:-1])) # strip the ``
+
+        def INDENTED_CODE(self, token):
+            skip = 4 # strip the ``` and the following newline character
+            space_count = 0
+            while token[skip+space_count] == " ":
+                space_count += 1
+            lines = token.split('\n')[1:-1]
+            for line in lines:
+                if line[0:space_count] != ' '*space_count:
+                    raise Exception("wrong indentation of INDENTED_CODE")
+            unindented_lines = [l[space_count:] for l in lines]
+            return _Code('\n'.join(unindented_lines))
 
         def literal(self, el):
             return el[0]

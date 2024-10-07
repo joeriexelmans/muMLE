@@ -3,7 +3,7 @@
 from services import scd, od
 from services.bottom.V0 import Bottom
 from transformation import ramify
-import json
+from concrete_syntax.common import display_value
 from uuid import UUID
 
 def render_class_diagram(state, model, prefix_ids=""):
@@ -97,7 +97,8 @@ def render_object_diagram(state, m, mm, render_attributes=True, prefix_ids=""):
                 for attr_name, attr_edge in attributes:
                     slot = m_od.get_slot(obj_node, attr_name)
                     if slot != None:
-                        output += f"\n{attr_name} => {json.dumps(od.read_primitive_value(bottom, slot, mm)[0])}"
+                        val, type_name = od.read_primitive_value(bottom, slot, mm)
+                        output += f"\n{attr_name} => {display_value(val, type_name)}"
             output += '\n}'
 
     output += '\n'

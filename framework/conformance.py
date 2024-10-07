@@ -9,6 +9,17 @@ from pprint import pprint
 import functools
 
 
+# based on https://stackoverflow.com/a/39381428
+# Parses and executes a block of Python code, and returns the eval result of the last statement
+import ast
+def exec_then_eval(code, _globals, _locals):
+    block = ast.parse(code, mode='exec')
+    # assumes last node is an expression
+    last = ast.Expression(block.body.pop().value)
+    exec(compile(block, '<string>', mode='exec'), _globals, _locals)
+    return eval(compile(last, '<string>', mode='eval'), _globals, _locals)
+
+
 class Conformance:
     def __init__(self, state: State, model: UUID, type_model: UUID):
         self.state = state
@@ -368,12 +379,13 @@ class Conformance:
             'get_all_instances': self.get_all_instances
         }
         # print("evaluating constraint ...", code)
-        result = eval(
+        loc = {**kwargs, **funcs}
+        result = exec_then_eval(
             code,
             {'__builtins__': {'isinstance': isinstance, 'print': print,
                               'int': int, 'float': float, 'bool': bool, 'str': str, 'tuple': tuple, 'len': len}
              },  # globals
-            {**kwargs, **funcs}  # locals
+             loc # locals
         )
         # print('result =', result)
         return result
@@ -384,7 +396,8 @@ class Conformance:
             for subtype_name in self.sub_types[type_name]:
                 # print(subtype_name, 'is subtype of ')
                 result += [e_name for e_name, t_name in self.type_mapping.items() if t_name == subtype_name]
-        return result
+        result_with_ids = [ (e_name, self.bottom.read_outgoing_elements(self.model, e_name)[0]) for e_name in result]
+        return result_with_ids
 
     def check_constraints(self):
         """
@@ -399,12 +412,11 @@ class Conformance:
                 code = ActionCode(UUID(self.bottom.read_value(constraint)), self.bottom.state).read()
                 return code
 
-        def check_result(result, local_or_global, tm_name, el_name=None):
-            suffix = f"in '{el_name}'" if local_or_global == "Local" else ""
+        def check_result(result, description):
             if not isinstance(result, bool):
-                errors.append(f"{local_or_global} constraint `{code}` of '{tm_name}'{suffix} did not return boolean, instead got {type(result)} (value = {str(result)}).")
-            elif not result:
-                errors.append(f"{local_or_global} constraint `{code}` of '{tm_name}'{suffix} not satisfied.")
+                raise Exception(f"{description} evaluation result is not boolean! Instead got {result}")
+            if not result:
+                errors.append(f"{description} not satisfied.")
 
         # local constraints
         for m_name, tm_name in self.type_mapping.items():
@@ -415,7 +427,8 @@ class Conformance:
                 morphisms = [m for m in morphisms if m in self.model_names]
                 for m_element in morphisms:
                     result = self.evaluate_constraint(code, element=m_element, type_name=tm_name)
-                    check_result(result, "Local", tm_name, m_name)
+                    description = f"Local constraint of \"{tm_name}\" in \"{m_name}\""
+                    check_result(result, description)
 
         # global constraints
         glob_constraints = []
@@ -432,9 +445,9 @@ class Conformance:
         for tm_name in glob_constraints:
             code = get_code(tm_name)
             if code != None:
-                # print('glob constr:', code)
                 result = self.evaluate_constraint(code, model=self.model)
-                check_result(result, "Global", tm_name)
+                description = f"Global constraint \"{tm_name}\""
+                check_result(result, description)
         return errors
 
     def precompute_structures(self):

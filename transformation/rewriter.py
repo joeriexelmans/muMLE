@@ -8,6 +8,7 @@ from services.bottom.V0 import Bottom
 from transformation import ramify
 from services import od
 from services.primitives.string_type import String
+from services.primitives.actioncode_type import ActionCode
 from services.primitives.integer_type import Integer
 
 def process_rule(state, lhs: UUID, rhs: UUID):
@@ -90,9 +91,9 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
             # assume the type of the object is already the original type
             # this is because primitive types (e.g., Integer) are not RAMified
             type_name = od.get_object_name(bottom, pattern_mm, rhs_type)
-            if type_name == "String":
+            if type_name == "ActionCode":
                 # Assume the string is a Python expression to evaluate
-                python_expr = String(UUID(bottom.read_value(rhs_el_to_create)), bottom.state).read()
+                python_expr = ActionCode(UUID(bottom.read_value(rhs_el_to_create)), bottom.state).read()
                 result = eval(python_expr, {}, {})
                 # Write the result into the host model.
                 # This will be the *value* of an attribute. The attribute-link (connecting an object to the attribute) will be created as an edge later.
@@ -102,7 +103,7 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
                     m_od.create_string_value(model_el_name_to_create, result)
                 name_mapping[pattern_name_to_create] = model_el_name_to_create
             else:
-                raise Exception(f"RHS element '{pattern_name_to_create}' needs to be created in host, but has no un-RAMified type, and I don't know what to do with it. It's type is", type_name)
+                raise Exception(f"RHS element '{pattern_name_to_create}' needs to be created in host, but has no un-RAMified type, and I don't know what to do with it. It's type is '{type_name}'")
 
     # print("create edges....")
     for pattern_name_to_create, rhs_el_to_create, original_type, original_type_name, model_el_name_to_create in edges_to_create:

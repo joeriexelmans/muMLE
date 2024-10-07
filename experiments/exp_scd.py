@@ -62,22 +62,37 @@ def main():
         dsl_mm_cs = """
 # Integer:ModelRef
 Bear:Class
-Animal:Class
-    abstract = True
-Man:Class
-    lower_cardinality = 1
-    upper_cardinality = 2
-#    constraint = `get_value(get_slot(element, "weight")) < 100`
-Man_weight:AttributeLink (Man -> Integer)
-    name = "weight"
-    optional = False
-    constraint = `get_value(get_target(element)) < 100`
-afraidOf:Association (Man -> Animal)
-    target_lower_cardinality = 1
+Animal:Class {
+    abstract = True;
+}
+Man:Class {
+    lower_cardinality = 1;
+    upper_cardinality = 2;
+    constraint = `get_value(get_slot(element, "weight")) < 20`;
+}
+Man_weight:AttributeLink (Man -> Integer) {
+    name = "weight";
+    optional = False;
+    constraint = ```
+        node = get_target(element)
+        get_value(node) < 20
+    ```;
+}
+afraidOf:Association (Man -> Animal) {
+    target_lower_cardinality = 1;
+}
 Man_inh_Animal:Inheritance (Man -> Animal)
 Bear_inh_Animal:Inheritance (Bear -> Animal)
-sum_of_weights:GlobalConstraint
-    constraint = `len(get_all_instances("afraidOf")) <= 1`
+
+not_too_fat:GlobalConstraint {
+    constraint = ```
+        # total weight of all men low enough
+        total_weight = 0
+        for man_name, man_id in get_all_instances("Man"):
+            total_weight += get_value(get_slot(man_id, "weight"))
+        total_weight < 50
+    ```;
+}
 """
         dsl_mm_id = parser.parse_od(state, dsl_mm_cs, mm=scd_mm_id)
         return dsl_mm_id
@@ -98,8 +113,9 @@ sum_of_weights:GlobalConstraint
     def create_dsl_m_parser():
         # Create DSL M with parser
         dsl_m_cs = """
-george :Man 
-    weight = 80
+george :Man {
+    weight = 80;
+}
 bear1:Bear
 bear2:Bear
 :afraidOf (george -> bear1)
@@ -139,7 +155,7 @@ bear2:Bear
     lhs_id = state.create_node()
     lhs_od = OD(ramified_mm_id, lhs_id, state)
     lhs_od.create_object("man", prefix+"Man")
-    lhs_od.create_slot(prefix+"weight", "man", lhs_od.create_string_value(f"man.{prefix}weight", 'v < 99'))
+    lhs_od.create_slot(prefix+"weight", "man", lhs_od.create_actioncode_value(f"man.{prefix}weight", 'v < 99'))
     lhs_od.create_object("scaryAnimal", prefix+"Animal")
     lhs_od.create_link("manAfraidOfAnimal", prefix+"afraidOf", "man", "scaryAnimal")
 
@@ -150,9 +166,9 @@ bear2:Bear
     rhs_id = state.create_node()
     rhs_od = OD(ramified_mm_id, rhs_id, state)
     rhs_od.create_object("man", prefix+"Man")
-    rhs_od.create_slot(prefix+"weight", "man", rhs_od.create_string_value(f"man.{prefix}weight", 'v + 5'))
+    rhs_od.create_slot(prefix+"weight", "man", rhs_od.create_actioncode_value(f"man.{prefix}weight", 'v + 5'))
     rhs_od.create_object("bill", prefix+"Man")
-    rhs_od.create_slot(prefix+"weight", "bill", rhs_od.create_string_value(f"bill.{prefix}weight", '100'))
+    rhs_od.create_slot(prefix+"weight", "bill", rhs_od.create_actioncode_value(f"bill.{prefix}weight", '100'))
 
     rhs_od.create_link("billAfraidOfMan", prefix+"afraidOf", "bill", "man")
 
@@ -229,7 +245,7 @@ bear2:Bear
     # plantuml_str = render_rewrite()
 
     # print()
-    # print("==============================================")
+    print("==============================================")
 
     # print(plantuml_str)
 
