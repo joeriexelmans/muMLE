@@ -4,13 +4,15 @@ from services import od
 from services.bottom.V0 import Bottom
 import json
 
-def display_value(val: any):
-    if isinstance(val, str):
+def display_value(val: any, type_name: str):
+    if type_name == "ActionCode":
+        return '`'+val+'`'
+    elif type_name == "String":
         return '"'+val+'"'
-    elif isinstance(val, int) or isinstance(val, bool):
+    elif type_name == "Integer" or type_name == "Boolean":
         return str(val)
     else:
-        raise Exception("don't know how to display value" + str(val))
+        raise Exception("don't know how to display value" + type_name)
 
 def render_od(state, m_id, mm_id, hide_names=True):
     bottom = Bottom(state)
@@ -25,8 +27,8 @@ def render_od(state, m_id, mm_id, hide_names=True):
     def write_attributes(object_node):
         o = ""
         for attr_name, slot_node in m_od.get_slots(object_node):
-            value = m_od.read_slot(slot_node)
-            o += f"    {attr_name} = {display_value(value)}\n"
+            value, type_name = m_od.read_slot(slot_node)
+            o += f"    {attr_name} = {display_value(value, type_name)}\n"
         return o
 
     for class_name, objects in m_od.get_all_objects().items():

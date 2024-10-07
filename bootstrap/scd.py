@@ -3,11 +3,13 @@ from services.bottom.V0 import Bottom
 from services.primitives.boolean_type import Boolean
 from services.primitives.string_type import String
 from bootstrap.primitive import (
-    bootstrap_boolean_type,
-    bootstrap_float_type,
-    bootstrap_integer_type,
-    bootstrap_string_type,
-    bootstrap_type_type
+    bootstrap_primitive_types
+    # bootstrap_boolean_type,
+    # bootstrap_float_type,
+    # bootstrap_integer_type,
+    # bootstrap_string_type,
+    # bootstrap_type_type,
+    # bootstrap_actioncode_type
 )
 
 
@@ -29,6 +31,7 @@ def bootstrap_scd(state: State) -> UUID:
     string_type_root = create_model_root(bottom, "String")
     float_type_root = create_model_root(bottom, "Float")
     type_type_root = create_model_root(bottom, "Type")
+    actioncode_type_root = create_model_root(bottom, "ActionCode")
 
     # create MCL, without morphism links
 
@@ -91,7 +94,7 @@ def bootstrap_scd(state: State) -> UUID:
 
     # # ATTRIBUTES, i.e. elements typed by Attribute
     # # Action Code # TODO: Update to ModelRef when action code is explicitly modelled
-    action_code_node = add_node_element("ActionCode")
+    # action_code_node = add_node_element("ActionCode")
 
     # # MODELREFS, i.e. elements typed by ModelRef
     # # Integer
@@ -100,6 +103,8 @@ def bootstrap_scd(state: State) -> UUID:
     string_node = add_node_element("String", str(string_type_root))
     # # Boolean
     boolean_node = add_node_element("Boolean", str(boolean_type_root))
+    # # ActionCode
+    actioncode_node = add_node_element("ActionCode", str(actioncode_type_root))
 
     # # ATTRIBUTE LINKS, i.e. elements typed by AttributeLink
     # # name attribute of AttributeLink
@@ -107,7 +112,7 @@ def bootstrap_scd(state: State) -> UUID:
     # # optional attribute of AttributeLink
     attr_opt_edge = add_edge_element("AttributeLink_optional", attr_link_edge, boolean_node)
     # # constraint attribute of Element
-    elem_constr_edge = add_edge_element("Element_constraint", element_node, action_code_node)
+    elem_constr_edge = add_edge_element("Element_constraint", element_node, actioncode_node)
     # # abstract attribute of Class
     class_abs_edge = add_edge_element("Class_abstract", class_node, boolean_node)
     # # multiplicity attributes of Class
@@ -120,12 +125,19 @@ def bootstrap_scd(state: State) -> UUID:
     assoc_t_u_c_edge = add_edge_element("Association_target_upper_cardinality", assoc_edge, integer_node)
 
     # # bootstrap primitive types
-    # # order is important, integer must be first
-    bootstrap_integer_type(mcl_root, integer_type_root, state)
-    bootstrap_boolean_type(mcl_root, boolean_type_root, state)
-    bootstrap_float_type(mcl_root, float_type_root, state)
-    bootstrap_string_type(mcl_root, string_type_root, state)
-    bootstrap_type_type(mcl_root, type_type_root, state)
+    bootstrap_primitive_types(mcl_root, state,
+        integer_type_root,
+        boolean_type_root,
+        float_type_root,
+        string_type_root,
+        type_type_root,
+        actioncode_type_root)
+    # bootstrap_integer_type(mcl_root, integer_type_root, integer_type_root, actioncode_type_root, state)
+    # bootstrap_boolean_type(mcl_root, boolean_type_root, integer_type_root, actioncode_type_root, state)
+    # bootstrap_float_type(mcl_root, float_type_root, integer_type_root, actioncode_type_root, state)
+    # bootstrap_string_type(mcl_root, string_type_root, integer_type_root, actioncode_type_root, state)
+    # bootstrap_type_type(mcl_root, type_type_root, integer_type_root, actioncode_type_root, state)
+    # bootstrap_actioncode_type(mcl_root, actioncode_type_root, integer_type_root, actioncode_type_root, state)
 
     # # ATTRIBUTE ATTRIBUTES, assign 'name' and 'optional' attributes to all AttributeLinks
     # # AttributeLink_name
@@ -203,11 +215,12 @@ def bootstrap_scd(state: State) -> UUID:
     add_mcl_morphism("attr_link_inh_element", "Inheritance")
     add_mcl_morphism("model_ref_inh_attr", "Inheritance")
     # Attribute
-    add_mcl_morphism("ActionCode", "Attribute")
+    # add_mcl_morphism("ActionCode", "Attribute")
     # ModelRef
     add_mcl_morphism("Integer", "ModelRef")
     add_mcl_morphism("String", "ModelRef")
     add_mcl_morphism("Boolean", "ModelRef")
+    add_mcl_morphism("ActionCode", "ModelRef")
     # AttributeLink
     add_mcl_morphism("AttributeLink_name", "AttributeLink")
     add_mcl_morphism("AttributeLink_optional", "AttributeLink")

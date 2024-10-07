@@ -21,7 +21,7 @@ def render_class_diagram(state, model, prefix_ids=""):
         is_abstract = False
         slot = model_od.get_slot(class_node, "abstract")
         if slot != None:
-            is_abstract = od.read_primitive_value(bottom, slot, model_od.type_model)
+            is_abstract, _ = od.read_primitive_value(bottom, slot, model_od.type_model)
 
         if is_abstract:
             output += f"\nabstract class \"{name}\" as {make_id(class_node)}"
@@ -97,7 +97,7 @@ def render_object_diagram(state, m, mm, render_attributes=True, prefix_ids=""):
                 for attr_name, attr_edge in attributes:
                     slot = m_od.get_slot(obj_node, attr_name)
                     if slot != None:
-                        output += f"\n{attr_name} => {json.dumps(od.read_primitive_value(bottom, slot, mm))}"
+                        output += f"\n{attr_name} => {json.dumps(od.read_primitive_value(bottom, slot, mm)[0])}"
             output += '\n}'
 
     output += '\n'

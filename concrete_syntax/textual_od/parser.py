@@ -24,11 +24,13 @@ _NL: /(\r?\n[\t ]*)+/
 literal: INT
        | STR
        | BOOL
+       | CODE
 
 INT: /[0-9]+/
 STR: /"[^"]*"/
    | /'[^']*'/
 BOOL: "True" | "False"
+CODE: /`[^`]*`/
 
 object: [IDENTIFIER] ":" IDENTIFIER [link_spec] _NL [_INDENT slot+ _DEDENT]
 link_spec: "(" IDENTIFIER "->" IDENTIFIER ")"
@@ -45,6 +47,12 @@ class TreeIndenter(Indenter):
     tab_len = 4
 
 parser = Lark(grammar, parser='lalr', postlex=TreeIndenter())
+
+# internal use only
+# just a dumb wrapper to distinguish between code and string
+class _Code:
+    def __init__(self, code):
+        self.code = code
 
 # given a concrete syntax text string, and a meta-model, parses the CS
 def parse_od(state, cs_text, mm):
@@ -70,7 +78,10 @@ def parse_od(state, cs_text, mm):
             return token == "True"
 
         def STR(self, token):
-            return str(token[1:-1]) # strip the ""
+            return str(token[1:-1]) # strip the "" or ''
+
+        def CODE(self, token):
+            return _Code(str(token[1:-1])) # strip the ``
 
         def literal(self, el):
             return el[0]
@@ -111,9 +122,12 @@ def parse_od(state, cs_text, mm):
                     tgt = od.create_integer_value(value_name, value)
                 elif isinstance(value, str):
                     tgt = od.create_string_value(value_name, value)
+                elif isinstance(value, _Code):
+                    tgt = od.create_actioncode_value(value_name, value.code)
                 else:
                     raise Exception("Unimplemented type "+value)
                 od.create_slot(attr_name, obj_name, tgt)
+
             return obj_name
 
     t = T(visit_tokens=True).transform(tree)

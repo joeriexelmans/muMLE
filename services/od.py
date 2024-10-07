@@ -4,10 +4,12 @@ from services.bottom.V0 import Bottom
 from services.primitives.integer_type import Integer
 from services.primitives.string_type import String
 from services.primitives.boolean_type import Boolean
+from services.primitives.actioncode_type import ActionCode
+from framework.conformance import Conformance
 from typing import Optional
 
-def get_attr_link_name(class_name: str, attr_name: str):
-    return f"{class_name}_{attr_name}"
+def get_slot_link_name(obj_name: str, attr_name: str):
+    return f"{obj_name}_{attr_name}"
 
 # Object Diagrams service
 
@@ -42,7 +44,7 @@ class OD:
 
         slot = mm_od.get_slot(class_node, "abstract")
         if slot != None:
-            is_abstract = read_primitive_value(self.bottom, slot, self.type_model)
+            is_abstract, _ = read_primitive_value(self.bottom, slot, self.type_model)
             if is_abstract:
                 raise Exception("Cannot instantiate abstract class!")
 
@@ -66,17 +68,17 @@ class OD:
 
     def create_slot(self, attr_name: str, object_name: str, target_name: str):
         class_name = self.get_class_of_object(object_name)
-        attr_link_name = get_attr_link_name(class_name, attr_name)
+        attr_link_name = self.get_attr_link_name(class_name, attr_name)
         # An attribute-link is indistinguishable from an ordinary link:
         slot_id = self.create_link(
-            get_attr_link_name(object_name, attr_name),
+            get_slot_link_name(object_name, attr_name),
             attr_link_name, object_name, target_name)
         return slot_id
 
     def get_slot(self, object_node: UUID, attr_name: str):
         # I really don't like how complex and inefficient it is to read an attribute of an object...
         class_name = self._get_class_of_object(object_node)
-        attr_link_name = get_attr_link_name(class_name, attr_name)
+        attr_link_name = self.get_attr_link_name(class_name, attr_name)
         type_edge, = self.bottom.read_outgoing_elements(self.type_model, attr_link_name)
         for outgoing_edge in self.bottom.read_outgoing_edges(object_node):
             if type_edge in self.bottom.read_outgoing_elements(outgoing_edge, "Morphism"):
@@ -130,6 +132,16 @@ class OD:
         self.create_model_ref(name, "String", string_node)
         return name
 
+    def create_actioncode_value(self, name: str, value: str):
+        from services.primitives.actioncode_type import ActionCode
+        actioncode_node = self.bottom.create_node()
+        actioncode_t = ActionCode(actioncode_node, self.bottom.state)
+        actioncode_t.create(value)
+        # name = 'str-'+value # name of the ref to the created integer
+        # By convention, the type model must have a ModelRef named "Integer"
+        self.create_model_ref(name, "ActionCode", actioncode_node)
+        return name
+
     # Identical to the same SCD method:
     def create_model_ref(self, name: str, type_name: str, model: UUID):
         # create element + morphism links
@@ -137,7 +149,24 @@ class OD:
         self.bottom.create_edge(self.model, element_node, name)  # attach to model
         type_node, = self.bottom.read_outgoing_elements(self.type_model, type_name)  # retrieve type
         self.bottom.create_edge(element_node, type_node, "Morphism")  # create morphism link
+        # print('model ref:', name, type_name, element_node, model)
+        return element_node
 
+    # The edge connecting an object to the value of a slot must be named `{object_name}_{attr_name}`
+    def get_attr_link_name(self, class_name, attr_name):
+        assoc_name = f"{class_name}_{attr_name}"
+        type_edges = self.bottom.read_outgoing_elements(self.type_model, assoc_name)
+        if len(type_edges) == 1:
+            return assoc_name
+        else:
+            # look for attribute in the super-types
+            conf = Conformance(self.bottom.state, self.type_model, get_scd_mm(self.bottom))
+            conf.precompute_sub_types() # only need to know about subtypes
+            super_types = (s for s in conf.sub_types if class_name in conf.sub_types[s])
+            for s in super_types:
+                assoc_name = f"{s}_{attr_name}"
+                if len(self.bottom.read_outgoing_elements(self.type_model, assoc_name)) == 1:
+                    return assoc_name
 
     def create_link(self, link_name: Optional[str], assoc_name: str, src_obj_name: str, tgt_obj_name: str):
         src_obj_node, = self.bottom.read_outgoing_elements(self.model, src_obj_name)
@@ -246,6 +275,9 @@ def get_scd_mm_assoc_node(bottom: Bottom):
 def get_scd_mm_modelref_node(bottom: Bottom):
     return get_scd_mm_node(bottom, "ModelRef")
 
+def get_scd_mm_actioncode_node(bottom: Bottom):
+    return get_scd_mm_node(bottom, "ActionCode")
+
 def get_scd_mm_node(bottom: Bottom, node_name: str):
     scd_metamodel = get_scd_mm(bottom)
     node, = bottom.read_outgoing_elements(scd_metamodel, node_name)
@@ -323,15 +355,17 @@ def get_attr_name(bottom, attr_edge: UUID):
 def read_primitive_value(bottom, modelref: UUID, mm: UUID):
     typ = get_type(bottom, modelref)
     if not is_typed_by(bottom, typ, get_scd_mm_modelref_node(bottom)):
-        raise Exception("Assertion failed: argument must be typed by ModelRef")
+        raise Exception("Assertion failed: argument must be typed by ModelRef", typ)
     referred_model = UUID(bottom.read_value(modelref))
     typ_name = get_object_name(bottom, mm, typ)
     if typ_name == "Integer":
-        return Integer(referred_model, bottom.state).read()
+        return Integer(referred_model, bottom.state).read(), typ_name
     elif typ_name == "String":
-        return String(referred_model, bottom.state).read()
+        return String(referred_model, bottom.state).read(), typ_name
     elif typ_name == "Boolean":
-        return Boolean(referred_model, bottom.state).read()
+        return Boolean(referred_model, bottom.state).read(), typ_name
+    elif typ_name == "ActionCode":
+        return ActionCode(referred_model, bottom.state).read(), typ_name
     else:
         raise Exception("Unimplemented type:", typ_name)
 

@@ -1,9 +1,10 @@
 from state.base import State, UUID
 from services.bottom.V0 import Bottom
 from services.primitives.integer_type import Integer
+from services.primitives.actioncode_type import ActionCode
 
 
-def bootstrap_type(type_name: str, python_type: str, scd_root: UUID, model_root: UUID, state: State):
+def bootstrap_type(type_name: str, scd_root: UUID, model_root: UUID, integer_type: UUID, state: State):
     bottom = Bottom(state)
     # create class
     class_node = bottom.create_node()  # create class node
@@ -17,7 +18,7 @@ def bootstrap_type(type_name: str, python_type: str, scd_root: UUID, model_root:
     bottom.create_edge(model_root, min_c_node, f"{type_name}.lower_cardinality")
     min_c_link = bottom.create_edge(class_node, min_c_node)
     bottom.create_edge(model_root, min_c_link, f"{type_name}_lower_cardinality")
-    scd_node, = bottom.read_outgoing_elements(scd_root, "Integer")
+    scd_node = integer_type
     scd_link, = bottom.read_outgoing_elements(scd_root, "Class_lower_cardinality")
     bottom.create_edge(min_c_node, scd_node, "Morphism")
     bottom.create_edge(min_c_link, scd_link, "Morphism")
@@ -28,36 +29,61 @@ def bootstrap_type(type_name: str, python_type: str, scd_root: UUID, model_root:
     bottom.create_edge(model_root, max_c_node, f"{type_name}.upper_cardinality")
     max_c_link = bottom.create_edge(class_node, max_c_node)
     bottom.create_edge(model_root, max_c_link, f"{type_name}_upper_cardinality")
-    scd_node, = bottom.read_outgoing_elements(scd_root, "Integer")
+    scd_node = integer_type
     scd_link, = bottom.read_outgoing_elements(scd_root, "Class_upper_cardinality")
     bottom.create_edge(max_c_node, scd_node, "Morphism")
     bottom.create_edge(max_c_link, scd_link, "Morphism")
+    return class_node
+
+def bootstrap_constraint(class_node, type_name: str, python_type: str, scd_root: UUID, model_root: UUID, actioncode_type: UUID, state: State):
+
     # set constraint
-    constraint_node = bottom.create_node(f"isinstance(read_value(element),{python_type})")
+    # chicken-and-egg problem: we cannot create an action-code constraint because the action-code MM doesn't exist yet
+
+    bottom = Bottom(state)
+    constraint_model = bottom.create_node()
+    ActionCode(constraint_model, state).create(f"isinstance(read_value(element),{python_type})")
+    constraint_node = bottom.create_node(str(constraint_model))
     bottom.create_edge(model_root, constraint_node, f"{type_name}.constraint")
     constraint_link = bottom.create_edge(class_node, constraint_node)
     bottom.create_edge(model_root, constraint_link, f"{type_name}_constraint")
-    scd_node, = bottom.read_outgoing_elements(scd_root, "ActionCode")
+    scd_node = actioncode_type
     scd_link, = bottom.read_outgoing_elements(scd_root, "Element_constraint")
     bottom.create_edge(constraint_node, scd_node, "Morphism")
     bottom.create_edge(constraint_link, scd_link, "Morphism")
     
 
-def bootstrap_type_type(scd_root: UUID, model_root: UUID, state: State):
-    bootstrap_type("Type", "tuple", scd_root, model_root, state)
+# def bootstrap_type_type(scd_root: UUID, model_root: UUID, integer_type: UUID, actioncode_type: UUID, state: State):
 
 
-def bootstrap_boolean_type(scd_root: UUID, model_root: UUID, state: State):
-    bootstrap_type("Boolean", "bool", scd_root, model_root, state)
+# def bootstrap_boolean_type(scd_root: UUID, model_root: UUID, integer_type: UUID, actioncode_type: UUID, state: State):
 
 
-def bootstrap_integer_type(scd_root: UUID, model_root: UUID, state: State):
-    bootstrap_type("Integer", "int", scd_root, model_root, state)
+# def bootstrap_integer_type(scd_root: UUID, model_root: UUID, integer_type: UUID, actioncode_type: UUID, state: State):
 
 
-def bootstrap_float_type(scd_root: UUID, model_root: UUID, state: State):
-    bootstrap_type("Float", "float", scd_root, model_root, state)
+# def bootstrap_float_type(scd_root: UUID, model_root: UUID, integer_type: UUID, actioncode_type: UUID, state: State):
 
 
-def bootstrap_string_type(scd_root: UUID, model_root: UUID, state: State):
-    bootstrap_type("String", "str", scd_root, model_root, state)
+# def bootstrap_string_type(scd_root: UUID, model_root: UUID, integer_type: UUID, actioncode_type: UUID, state: State):
+
+# def bootstrap_actioncode_type(scd_root: UUID, model_root: UUID, integer_type: UUID, actioncode_type: UUID, state: State):
+#     # we store action code as Python string:
+
+def bootstrap_primitive_types(scd_root, state, integer_type, boolean_type, float_type, string_type, type_type, actioncode_type):
+    # Order is important: Integer must come first
+    class_integer    = bootstrap_type("Integer",    scd_root, integer_type,    integer_type, state)
+    class_type       = bootstrap_type("Type",       scd_root, type_type,       integer_type, state)
+    class_boolean    = bootstrap_type("Boolean",    scd_root, boolean_type,    integer_type, state)
+    class_float      = bootstrap_type("Float",      scd_root, float_type,      integer_type, state)
+    class_string     = bootstrap_type("String",     scd_root, string_type,     integer_type, state)
+    class_actioncode = bootstrap_type("ActionCode", scd_root, actioncode_type, integer_type, state)
+
+    # Can only create constraints after ActionCode type has been created:
+    bootstrap_constraint(class_integer,    "Integer",    "int",   scd_root, integer_type,    actioncode_type, state)
+    bootstrap_constraint(class_type,       "Type",       "tuple", scd_root, type_type,       actioncode_type, state)
+    bootstrap_constraint(class_boolean,    "Boolean",    "bool",  scd_root, boolean_type,    actioncode_type, state)
+    bootstrap_constraint(class_float,      "Float",      "float", scd_root, float_type,      actioncode_type, state)
+    bootstrap_constraint(class_string,     "String",     "str",   scd_root, string_type,     actioncode_type, state)
+    bootstrap_constraint(class_actioncode, "ActionCode", "str",   scd_root, actioncode_type, actioncode_type, state)
+

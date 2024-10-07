@@ -4,6 +4,7 @@ from services.bottom.V0 import Bottom
 from services.primitives.boolean_type import Boolean
 from services.primitives.integer_type import Integer
 from services.primitives.string_type import String
+from services.primitives.actioncode_type import ActionCode
 from services import od
 
 import re
@@ -274,15 +275,28 @@ class SCD:
             Nothing.
         """
         element_node, = self.bottom.read_outgoing_elements(self.model, element)  # retrieve element
-        # code attribute
-        code_node = self.bottom.create_node(code)
-        self.bottom.create_edge(self.model, code_node, f"{element}.constraint")
-        code_link = self.bottom.create_edge(element_node, code_node)
-        self.bottom.create_edge(self.model, code_link, f"{element}_constraint")
-        scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "ActionCode")
-        scd_link, = self.bottom.read_outgoing_elements(self.scd_model, "Element_constraint")
-        self.bottom.create_edge(code_node, scd_node, "Morphism")
-        self.bottom.create_edge(code_link, scd_link, "Morphism")
+        # # code attribute
+        # code_node = self.bottom.create_node(code)
+        # self.bottom.create_edge(self.model, code_node, f"{element}.constraint")
+        # code_link = self.bottom.create_edge(element_node, code_node)
+        # self.bottom.create_edge(self.model, code_link, f"{element}_constraint")
+        # scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "ActionCode")
+        # scd_link, = self.bottom.read_outgoing_elements(self.scd_model, "Element_constraint")
+        # self.bottom.create_edge(code_node, scd_node, "Morphism")
+        # self.bottom.create_edge(code_link, scd_link, "Morphism")
+
+
+        constraint_model = self.bottom.create_node()
+        ActionCode(constraint_model, self.bottom.state).create(code)
+        constraint_node = self.bottom.create_node(str(constraint_model))
+        self.bottom.create_edge(self.model, constraint_node, f"{element}.constraint")
+        constraint_link = self.bottom.create_edge(element_node, constraint_node)
+        self.bottom.create_edge(self.model, constraint_link, f"{element}_constraint")
+        type_node, = self.bottom.read_outgoing_elements(self.scd_model, "ActionCode")
+        type_link, = self.bottom.read_outgoing_elements(self.scd_model, "Element_constraint")
+        self.bottom.create_edge(constraint_node, type_node, "Morphism")
+        self.bottom.create_edge(constraint_link, type_link, "Morphism")
+
 
     def list_elements(self):
         """

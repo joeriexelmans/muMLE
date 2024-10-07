@@ -143,9 +143,9 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
             pass
         elif od.is_typed_by(bottom, host_type, modelref_type):
             # print(' -> is modelref')
-            old_value = od.read_primitive_value(bottom, model_el, mm)
+            old_value, _ = od.read_primitive_value(bottom, model_el, mm)
             rhs_el, = bottom.read_outgoing_elements(rhs_m, pattern_el_name)
-            expr = od.read_primitive_value(bottom, rhs_el, pattern_mm)
+            expr, _ = od.read_primitive_value(bottom, rhs_el, pattern_mm)
             result = eval(expr, {}, {'v': old_value})
             # print('eval result=', result)
             if isinstance(result, int):

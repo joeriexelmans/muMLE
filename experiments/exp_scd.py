@@ -32,9 +32,9 @@ def main():
 
     conf = Conformance(state, scd_mm_id, scd_mm_id)
     print("Conformance SCD_MM -> SCD_MM?", conf.check_nominal(log=True))
-    # print("--------------------------------------")
-    # print(renderer.render_od(state, scd_mm_id, scd_mm_id, hide_names=False))
-    # print("--------------------------------------")
+    print("--------------------------------------")
+    print(renderer.render_od(state, scd_mm_id, scd_mm_id, hide_names=False))
+    print("--------------------------------------")
 
     def create_dsl_mm_api():
         # Create DSL MM with SCD API
@@ -54,6 +54,7 @@ def main():
             tgt_min_c=1,
             tgt_max_c=None,
         )
+        dsl_mm_scd.add_constraint("Man", "read_value(element) < 100")
         return dsl_mm_id
 
     def create_dsl_mm_parser():
@@ -66,13 +67,17 @@ Animal:Class
 Man:Class
     lower_cardinality = 1
     upper_cardinality = 2
+#    constraint = `get_value(get_slot(element, "weight")) < 100`
 Man_weight:AttributeLink (Man -> Integer)
     name = "weight"
     optional = False
+    constraint = `get_value(get_target(element)) < 100`
 afraidOf:Association (Man -> Animal)
     target_lower_cardinality = 1
 Man_inh_Animal:Inheritance (Man -> Animal)
 Bear_inh_Animal:Inheritance (Bear -> Animal)
+sum_of_weights:GlobalConstraint
+    constraint = `len(get_all_instances("afraidOf")) <= 1`
 """
         dsl_mm_id = parser.parse_od(state, dsl_mm_cs, mm=scd_mm_id)
         return dsl_mm_id

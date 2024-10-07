@@ -1,4 +1,6 @@
 from services.bottom.V0 import Bottom
+from services import od
+from services.primitives.actioncode_type import ActionCode
 from uuid import UUID
 from state.base import State
 from typing import Dict, Tuple, Set, Any, List
@@ -99,7 +101,7 @@ class Conformance:
             model = self.model
         try:
             attr_elem, = self.bottom.read_outgoing_elements(model, f"{element_name}.{attr_name}")
-            return self.primitive_values.get(attr_elem, self.bottom.read_value(attr_elem))
+            return self.primitive_values.get(attr_elem, self.bottom.read_value(UUID(self.bottom.read_value(attr_elem))))
         except ValueError:
             return None
 
@@ -357,42 +359,82 @@ class Conformance:
         """
         Evaluate constraint code (Python code)
         """
+
         funcs = {
-            'read_value': self.state.read_value
+            'read_value': self.state.read_value,
+            'get_value': lambda el: od.read_primitive_value(self.bottom, el, self.type_model)[0],
+            'get_target': lambda el: self.bottom.read_edge_target(el),
+            'get_slot': od.OD(self.type_model, self.model, self.state).get_slot,
+            'get_all_instances': self.get_all_instances
         }
-        return eval(
+        # print("evaluating constraint ...", code)
+        result = eval(
             code,
             {'__builtins__': {'isinstance': isinstance, 'print': print,
-                              'int': int, 'float': float, 'bool': bool, 'str': str, 'tuple': tuple}
+                              'int': int, 'float': float, 'bool': bool, 'str': str, 'tuple': tuple, 'len': len}
              },  # globals
             {**kwargs, **funcs}  # locals
         )
+        # print('result =', result)
+        return result
+
+    def get_all_instances(self, type_name: str, include_subtypes=True):
+        result = [e_name for e_name, t_name in self.type_mapping.items() if t_name == type_name]
+        if include_subtypes:
+            for subtype_name in self.sub_types[type_name]:
+                # print(subtype_name, 'is subtype of ')
+                result += [e_name for e_name, t_name in self.type_mapping.items() if t_name == subtype_name]
+        return result
 
     def check_constraints(self):
         """
         Check whether all constraints defined for a model are respected
         """
-        # local constraints
         errors = []
+
+        def get_code(tm_name):
+            constraints = self.bottom.read_outgoing_elements(self.type_model, f"{tm_name}.constraint")
+            if len(constraints) == 1:
+                constraint = constraints[0]
+                code = ActionCode(UUID(self.bottom.read_value(constraint)), self.bottom.state).read()
+                return code
+
+        def check_result(result, local_or_global, tm_name, el_name=None):
+            suffix = f"in '{el_name}'" if local_or_global == "Local" else ""
+            if not isinstance(result, bool):
+                errors.append(f"{local_or_global} constraint `{code}` of '{tm_name}'{suffix} did not return boolean, instead got {type(result)} (value = {str(result)}).")
+            elif not result:
+                errors.append(f"{local_or_global} constraint `{code}` of '{tm_name}'{suffix} not satisfied.")
+
+        # local constraints
         for m_name, tm_name in self.type_mapping.items():
-            if tm_name != "GlobalConstraint":
+            code = get_code(tm_name)
+            if code != None:
                 tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
-                code = self.read_attribute(tm_element, "constraint")
-                if code != None:
-                    morphisms = self.bottom.read_incoming_elements(tm_element, "Morphism")
-                    morphisms = [m for m in morphisms if m in self.model_names]
-                    for m_element in morphisms:
-                        if not self.evaluate_constraint(code, element=m_element):
-                            errors.append(f"Local constraint of {tm_name} not satisfied in {m_name}.")
+                morphisms = self.bottom.read_incoming_elements(tm_element, "Morphism")
+                morphisms = [m for m in morphisms if m in self.model_names]
+                for m_element in morphisms:
+                    result = self.evaluate_constraint(code, element=m_element, type_name=tm_name)
+                    check_result(result, "Local", tm_name, m_name)
 
         # global constraints
-        for m_name, tm_name in self.type_mapping.items():
-            if tm_name == "GlobalConstraint":
-                tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
-                code = self.read_attribute(tm_element, "constraint")
-                if code != None:
-                    if not self.evaluate_constraint(code, model=self.model):
-                        errors.append(f"Global constraint {tm_name} not satisfied.")
+        glob_constraints = []
+        # find global constraints...
+        glob_constraint_type, = self.bottom.read_outgoing_elements(self.scd_model, "GlobalConstraint")
+        for tm_name in self.bottom.read_keys(self.type_model):
+            tm_node, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
+            # print(key,  node)
+            for type_of_node in self.bottom.read_outgoing_elements(tm_node, "Morphism"):
+                if type_of_node == glob_constraint_type:
+                    # node is GlobalConstraint
+                    glob_constraints.append(tm_name)
+        # evaluate them
+        for tm_name in glob_constraints:
+            code = get_code(tm_name)
+            if code != None:
+                # print('glob constr:', code)
+                result = self.evaluate_constraint(code, model=self.model)
+                check_result(result, "Global", tm_name)
         return errors
 
     def precompute_structures(self):
