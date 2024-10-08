@@ -181,7 +181,10 @@ class OD:
                     break
                 i += 1
 
-        type_edge, = self.bottom.read_outgoing_elements(self.type_model, assoc_name)
+        type_edges = self.bottom.read_outgoing_elements(self.type_model, assoc_name)
+        if len(type_edges) == 0:
+            raise Exception(f"No such attribute/association: {assoc_name}")
+        type_edge = type_edges[0]
         link_id = self._create_link(link_name, type_edge, src_obj_node, tgt_obj_node)
         return link_id
 

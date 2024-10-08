@@ -1,14 +1,12 @@
 grammar = r"""
-%import common.WS_INLINE
-%ignore WS_INLINE
+%import common.WS
+%ignore WS
 %ignore COMMENT
 
-%declare _INDENT _DEDENT
-
-?start: (_NL | object )*
+?start: object*
 
 IDENTIFIER: /[A-Za-z_][A-Za-z_0-9]*/
-COMMENT: /#.*/
+COMMENT: /#[^\n]*\n/
 
 # newline
 _NL: /(\r?\n[\t ]*)+/

@@ -1,4 +1,4 @@
-# Simple Class Diagram experiment
+# Model transformation experiment
 
 from state.devstate import DevState
 from bootstrap.scd import bootstrap_scd
@@ -14,12 +14,6 @@ from services.bottom.V0 import Bottom
 from services.primitives.integer_type import Integer
 from concrete_syntax.plantuml import renderer as plantuml
 from concrete_syntax.textual_od import parser, renderer
-
-def create_integer_node(state, i: int):
-    node = state.create_node()
-    integer_t = Integer(node, state)
-    integer_t.create(i)
-    return node
 
 def main():
     state = DevState()

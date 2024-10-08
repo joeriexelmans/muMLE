@@ -46,8 +46,8 @@ class _Code:
         self.code = code
 
 # given a concrete syntax text string, and a meta-model, parses the CS
-def parse_od(state, cs_text, mm):
-    tree = parser.parse(cs_text)
+def parse_od(state, m_text, mm):
+    tree = parser.parse(m_text)
 
     m = state.create_node()
     od = OD(mm, m, state)
