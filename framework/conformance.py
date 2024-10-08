@@ -19,6 +19,12 @@ def exec_then_eval(code, _globals, _locals):
     exec(compile(block, '<string>', mode='exec'), _globals, _locals)
     return eval(compile(last, '<string>', mode='eval'), _globals, _locals)
 
+def render_conformance_check_result(error_list):
+    if len(error_list) == 0:
+        return "OK"
+    else:
+        return f"There were {len(error_list)} errors: \n  {'\n  '.join(error_list)}"
+
 
 class Conformance:
     def __init__(self, state: State, model: UUID, type_model: UUID):
@@ -440,13 +446,12 @@ class Conformance:
         for m_name, tm_name in self.type_mapping.items():
             code = get_code(tm_name)
             if code != None:
+                # print('code:', code)
                 tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
-                morphisms = self.bottom.read_incoming_elements(tm_element, "Morphism")
-                morphisms = [m for m in morphisms if m in self.model_names]
-                for m_element in morphisms:
-                    result = self.evaluate_constraint(code, this=m_element)
-                    description = f"Local constraint of \"{tm_name}\" in \"{m_name}\""
-                    check_result(result, description)
+                m_element, = self.bottom.read_outgoing_elements(self.model, m_name)
+                result = self.evaluate_constraint(code, this=m_element)
+                description = f"Local constraint of \"{tm_name}\" in \"{m_name}\""
+                check_result(result, description)
 
         # global constraints
         glob_constraints = []
