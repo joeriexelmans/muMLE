@@ -8,6 +8,7 @@ from framework.conformance import Conformance
 from services.od import OD
 from transformation.matcher import mvs_adapter
 from transformation.ramify import ramify
+from transformation.cloner import clone_od
 from transformation import rewriter
 from services.bottom.V0 import Bottom
 from services.primitives.integer_type import Integer
@@ -30,11 +31,11 @@ def main():
     int_mm_id = UUID(state.read_value(state.read_dict(state.read_root(), "Integer")))
     string_mm_id = UUID(state.read_value(state.read_dict(state.read_root(), "String")))
 
-    conf = Conformance(state, scd_mm_id, scd_mm_id)
-    print("Conformance SCD_MM -> SCD_MM?", conf.check_nominal(log=True))
-    print("--------------------------------------")
-    print(renderer.render_od(state, scd_mm_id, scd_mm_id, hide_names=False))
-    print("--------------------------------------")
+    # conf = Conformance(state, scd_mm_id, scd_mm_id)
+    # print("Conformance SCD_MM -> SCD_MM?", conf.check_nominal(log=True))
+    # print("--------------------------------------")
+    # print(renderer.render_od(state, scd_mm_id, scd_mm_id, hide_names=True))
+    # print("--------------------------------------")
 
     def create_dsl_mm_api():
         # Create DSL MM with SCD API
@@ -60,40 +61,41 @@ def main():
     def create_dsl_mm_parser():
         # Create DSL MM with parser
         dsl_mm_cs = """
-# Integer:ModelRef
-Bear:Class
-Animal:Class {
-    abstract = True;
-}
-Man:Class {
-    lower_cardinality = 1;
-    upper_cardinality = 2;
-    constraint = `get_value(get_slot(element, "weight")) < 20`;
-}
-Man_weight:AttributeLink (Man -> Integer) {
-    name = "weight";
-    optional = False;
-    constraint = ```
-        node = get_target(element)
-        get_value(node) < 20
-    ```;
-}
-afraidOf:Association (Man -> Animal) {
-    target_lower_cardinality = 1;
-}
-Man_inh_Animal:Inheritance (Man -> Animal)
-Bear_inh_Animal:Inheritance (Bear -> Animal)
+            # Integer:ModelRef
+            Bear:Class
+            Animal:Class {
+                abstract = True;
+            }
+            Man:Class {
+                lower_cardinality = 1;
+                upper_cardinality = 2;
+                constraint = `get_value(get_slot(element, "weight")) > 20`;
+            }
+            Man_weight:AttributeLink (Man -> Integer) {
+                name = "weight";
+                optional = False;
+                constraint = ```
+                    # this is the same constraint as above, but this time, part of the attributelink itself (and thus shorter)
+                    node = get_target(element)
+                    get_value(node) > 20
+                ```;
+            }
+            afraidOf:Association (Man -> Animal) {
+                target_lower_cardinality = 1;
+            }
+            :Inheritance (Man -> Animal)
+            :Inheritance (Bear -> Animal)
 
-not_too_fat:GlobalConstraint {
-    constraint = ```
-        # total weight of all men low enough
-        total_weight = 0
-        for man_name, man_id in get_all_instances("Man"):
-            total_weight += get_value(get_slot(man_id, "weight"))
-        total_weight < 50
-    ```;
-}
-"""
+            not_too_fat:GlobalConstraint {
+                constraint = ```
+                    # total weight of all men low enough
+                    total_weight = 0
+                    for man_name, man_id in get_all_instances("Man"):
+                        total_weight += get_value(get_slot(man_id, "weight"))
+                    total_weight < 85
+                ```;
+            }
+        """
         dsl_mm_id = parser.parse_od(state, dsl_mm_cs, mm=scd_mm_id)
         return dsl_mm_id
     
@@ -113,14 +115,14 @@ not_too_fat:GlobalConstraint {
     def create_dsl_m_parser():
         # Create DSL M with parser
         dsl_m_cs = """
-george :Man {
-    weight = 80;
-}
-bear1:Bear
-bear2:Bear
-:afraidOf (george -> bear1)
-:afraidOf (george -> bear2)
-"""
+            george:Man {
+                weight = 80;
+            }
+            bear1:Bear
+            bear2:Bear
+            :afraidOf (george -> bear1)
+            :afraidOf (george -> bear2)
+        """
         dsl_m_id = parser.parse_od(state, dsl_m_cs, mm=dsl_mm_id)
         return dsl_m_id
 
@@ -128,20 +130,20 @@ bear2:Bear
     # dsl_mm_id = create_dsl_mm_api()
     dsl_mm_id = create_dsl_mm_parser()
 
-    print("DSL MM:")
-    print("--------------------------------------")
-    print(renderer.render_od(state, dsl_mm_id, scd_mm_id, hide_names=False))
-    print("--------------------------------------")
+    # print("DSL MM:")
+    # print("--------------------------------------")
+    # print(renderer.render_od(state, dsl_mm_id, scd_mm_id, hide_names=True))
+    # print("--------------------------------------")
 
     conf = Conformance(state, dsl_mm_id, scd_mm_id)
     print("Conformance DSL_MM -> SCD_MM?", conf.check_nominal(log=True))
 
     # dsl_m_id = create_dsl_m_api()
     dsl_m_id = create_dsl_m_parser()
-    print("DSL M:")
-    print("--------------------------------------")
-    print(renderer.render_od(state, dsl_m_id, dsl_mm_id, hide_names=False))
-    print("--------------------------------------")
+    # print("DSL M:")
+    # print("--------------------------------------")
+    # print(renderer.render_od(state, dsl_m_id, dsl_mm_id, hide_names=True))
+    # print("--------------------------------------")
 
     conf = Conformance(state, dsl_m_id, dsl_mm_id)
     print("Conformance DSL_M -> DSL_MM?", conf.check_nominal(log=True))
@@ -151,26 +153,47 @@ bear2:Bear
     ramified_mm_id = ramify(state, dsl_mm_id, prefix)
     ramified_int_mm_id = ramify(state, int_mm_id, prefix)
 
-    # LHS of our rule
-    lhs_id = state.create_node()
-    lhs_od = OD(ramified_mm_id, lhs_id, state)
-    lhs_od.create_object("man", prefix+"Man")
-    lhs_od.create_slot(prefix+"weight", "man", lhs_od.create_actioncode_value(f"man.{prefix}weight", 'v < 99'))
-    lhs_od.create_object("scaryAnimal", prefix+"Animal")
-    lhs_od.create_link("manAfraidOfAnimal", prefix+"afraidOf", "man", "scaryAnimal")
+    # LHS - pattern to match
+
+    # TODO: enable more powerful constraints
+    lhs_cs = f"""
+        # object to match
+        man:{prefix}Man {{
+            # match only men heavy enough
+            {prefix}weight = `v > 60`;
+        }}
+
+        # object to delete
+        scaryAnimal:{prefix}Animal
+
+        # link to delete
+        manAfraidOfAnimal:{prefix}afraidOf (man -> scaryAnimal)
+    """
+    lhs_id = parser.parse_od(state, lhs_cs, mm=ramified_mm_id)
+
 
     conf = Conformance(state, lhs_id, ramified_mm_id)
     print("Conformance LHS_M -> RAM_DSL_MM?", conf.check_nominal(log=True))
 
     # RHS of our rule
-    rhs_id = state.create_node()
-    rhs_od = OD(ramified_mm_id, rhs_id, state)
-    rhs_od.create_object("man", prefix+"Man")
-    rhs_od.create_slot(prefix+"weight", "man", rhs_od.create_actioncode_value(f"man.{prefix}weight", 'v + 5'))
-    rhs_od.create_object("bill", prefix+"Man")
-    rhs_od.create_slot(prefix+"weight", "bill", rhs_od.create_actioncode_value(f"bill.{prefix}weight", '100'))
 
-    rhs_od.create_link("billAfraidOfMan", prefix+"afraidOf", "bill", "man")
+    # TODO: enable more powerful actions
+    rhs_cs = f"""
+        # matched object
+        man:{prefix}Man {{
+            # man gains weight
+            {prefix}weight = `v + 5`;
+        }}
+
+        # object to create
+        bill:{prefix}Man {{
+            {prefix}weight = `100`;
+        }}
+
+        # link to create
+        billAfraidOfMan:{prefix}afraidOf (bill -> man)
+    """
+    rhs_id = parser.parse_od(state, rhs_cs, mm=ramified_mm_id)
 
     conf = Conformance(state, rhs_id, ramified_mm_id)
     print("Conformance RHS_M -> RAM_DSL_MM?", conf.check_nominal(log=True))
@@ -195,7 +218,6 @@ bear2:Bear
         # Render pattern
         uml += plantuml.render_package("RHS", plantuml.render_object_diagram(state, rhs_id, ramified_mm_id))
         uml += plantuml.render_trace_conformance(state, rhs_id, ramified_mm_id)
-
         return uml
 
     def render_all_matches():
@@ -207,11 +229,11 @@ bear2:Bear
 
         print("matching...")
         generator = mvs_adapter.match_od(state, dsl_m_id, dsl_mm_id, lhs_id, ramified_mm_id)
-        for name_mapping, color in zip(generator, ["red", "orange"]):
-            print("\nMATCH:\n", name_mapping)
+        for match, color in zip(generator, ["red", "orange"]):
+            print("\nMATCH:\n", match)
 
             # Render every match
-            uml += plantuml.render_trace_match(state, name_mapping, lhs_id, dsl_m_id, color)
+            uml += plantuml.render_trace_match(state, match, lhs_id, dsl_m_id, color)
 
         print("DONE")
         return uml
@@ -219,36 +241,44 @@ bear2:Bear
     def render_rewrite():
         uml = render_ramification()
 
-        generator = mvs_adapter.match_od(state, dsl_m_id, dsl_mm_id, lhs_id, ramified_mm_id)
-        for name_mapping in generator:
-            rewriter.rewrite(state, lhs_id, rhs_id, ramified_mm_id, name_mapping, dsl_m_id, dsl_mm_id)
-
-            conf = Conformance(state, dsl_m_id, dsl_mm_id)
-            print("Conformance DSL_M (after rewrite) -> DSL_MM?", conf.check_nominal(log=True))
-
-            # Render match
-            uml_match = plantuml.render_trace_match(state, name_mapping, rhs_id, dsl_m_id, 'orange')
-
-            # Stop matching after rewrite
-            break
-
-        # Render host graph (after rewriting)
-        uml += plantuml.render_package("Model (after rewrite)", plantuml.render_object_diagram(state, dsl_m_id, dsl_mm_id))
+        # Render host graph (before rewriting)
+        uml += plantuml.render_package("Model (before rewrite)", plantuml.render_object_diagram(state, dsl_m_id, dsl_mm_id))
         # Render conformance
         uml += plantuml.render_trace_conformance(state, dsl_m_id, dsl_mm_id)
 
-        uml += uml_match
+        generator = mvs_adapter.match_od(state, dsl_m_id, dsl_mm_id, lhs_id, ramified_mm_id)
+        for i, (match, color) in enumerate(zip(generator, ["red", "orange"])):
+            uml += plantuml.render_trace_match(state, match, lhs_id, dsl_m_id, color)
+
+            # rewrite happens in-place (which sucks), so we will only modify a clone:
+            snapshot_dsl_m_id = clone_od(state, dsl_m_id, dsl_mm_id)
+            rewriter.rewrite(state, lhs_id, rhs_id, ramified_mm_id, match, snapshot_dsl_m_id, dsl_mm_id)
+
+            conf = Conformance(state, snapshot_dsl_m_id, dsl_mm_id)
+            print(f"Conformance DSL_M (after rewrite {i}) -> DSL_MM?", conf.check_nominal(log=True))
+
+            # Render host graph (after rewriting)
+            uml += plantuml.render_package(f"Model (after rewrite {i})", plantuml.render_object_diagram(state, snapshot_dsl_m_id, dsl_mm_id))
+            # Render match
+            uml += plantuml.render_trace_match(state, match, rhs_id, snapshot_dsl_m_id, color)
+            # Render conformance
+            uml += plantuml.render_trace_conformance(state, snapshot_dsl_m_id, dsl_mm_id)
 
         return uml
 
     # plantuml_str = render_all_matches()
-    # plantuml_str = render_rewrite()
+    plantuml_str = render_rewrite()
 
-    # print()
+    print()
+    print("==============================================")
+    print("BEGIN PLANTUML")
     print("==============================================")
 
-    # print(plantuml_str)
+    print(plantuml_str)
 
+    print("==============================================")
+    print("END PLANTUML")
+    print("==============================================")
 
 if __name__ == "__main__":
     main()

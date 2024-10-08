@@ -1,12 +1,10 @@
 # Renderer for Object Diagrams textual concrete syntax
 
 from services import od
-from services.bottom.V0 import Bottom
 from concrete_syntax.common import display_value
 
 
 def render_od(state, m_id, mm_id, hide_names=True):
-    bottom = Bottom(state)
     output = ""
     
     m_od = od.OD(mm_id, m_id, state)
