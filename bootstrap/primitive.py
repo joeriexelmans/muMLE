@@ -36,13 +36,9 @@ def bootstrap_type(type_name: str, scd_root: UUID, model_root: UUID, integer_typ
     return class_node
 
 def bootstrap_constraint(class_node, type_name: str, python_type: str, scd_root: UUID, model_root: UUID, actioncode_type: UUID, state: State):
-
-    # set constraint
-    # chicken-and-egg problem: we cannot create an action-code constraint because the action-code MM doesn't exist yet
-
     bottom = Bottom(state)
     constraint_model = bottom.create_node()
-    ActionCode(constraint_model, state).create(f"isinstance(read_value(element),{python_type})")
+    ActionCode(constraint_model, state).create(f"isinstance(read_value(this),{python_type})")
     constraint_node = bottom.create_node(str(constraint_model))
     bottom.create_edge(model_root, constraint_node, f"{type_name}.constraint")
     constraint_link = bottom.create_edge(class_node, constraint_node)
@@ -52,24 +48,6 @@ def bootstrap_constraint(class_node, type_name: str, python_type: str, scd_root:
     bottom.create_edge(constraint_node, scd_node, "Morphism")
     bottom.create_edge(constraint_link, scd_link, "Morphism")
     
-
-# def bootstrap_type_type(scd_root: UUID, model_root: UUID, integer_type: UUID, actioncode_type: UUID, state: State):
-
-
-# def bootstrap_boolean_type(scd_root: UUID, model_root: UUID, integer_type: UUID, actioncode_type: UUID, state: State):
-
-
-# def bootstrap_integer_type(scd_root: UUID, model_root: UUID, integer_type: UUID, actioncode_type: UUID, state: State):
-
-
-# def bootstrap_float_type(scd_root: UUID, model_root: UUID, integer_type: UUID, actioncode_type: UUID, state: State):
-
-
-# def bootstrap_string_type(scd_root: UUID, model_root: UUID, integer_type: UUID, actioncode_type: UUID, state: State):
-
-# def bootstrap_actioncode_type(scd_root: UUID, model_root: UUID, integer_type: UUID, actioncode_type: UUID, state: State):
-#     # we store action code as Python string:
-
 def bootstrap_primitive_types(scd_root, state, integer_type, boolean_type, float_type, string_type, type_type, actioncode_type):
     # Order is important: Integer must come first
     class_integer    = bootstrap_type("Integer",    scd_root, integer_type,    integer_type, state)

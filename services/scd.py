@@ -355,6 +355,11 @@ class SCD:
                     name_to_attr[name] = edge
         return name_to_attr
 
+    def get_class_cardinalities(self, class_node):
+        lower_card = od.find_cardinality(self.bottom, class_node, od.get_scd_mm_class_lowercard_node(self.bottom))
+        upper_card = od.find_cardinality(self.bottom, class_node, od.get_scd_mm_class_uppercard_node(self.bottom))
+        return lower_card, upper_card
+
     def get_assoc_cardinalities(self, assoc_edge):
         src_lower_card = od.find_cardinality(self.bottom, assoc_edge, od.get_scd_mm_assoc_src_lowercard_node(self.bottom))
         src_upper_card = od.find_cardinality(self.bottom, assoc_edge, od.get_scd_mm_assoc_src_uppercard_node(self.bottom))

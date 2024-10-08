@@ -375,20 +375,32 @@ class Conformance:
             'read_value': self.state.read_value,
             'get_value': lambda el: od.read_primitive_value(self.bottom, el, self.type_model)[0],
             'get_target': lambda el: self.bottom.read_edge_target(el),
+            'get_source': lambda el: self.bottom.read_edge_source(el),
             'get_slot': od.OD(self.type_model, self.model, self.state).get_slot,
-            'get_all_instances': self.get_all_instances
+            'get_all_instances': self.get_all_instances,
+            'get_name': lambda el: [name for name in self.bottom.read_keys(self.model) if self.bottom.read_outgoing_elements(self.model, name)[0] == el][0],
+            'get_type_name': self.get_type_name,
+            'get_outgoing': self.get_outgoing,
+            'get_incoming': self.get_incoming,
         }
         # print("evaluating constraint ...", code)
-        loc = {**kwargs, **funcs}
+        loc = {**kwargs, }
         result = exec_then_eval(
             code,
             {'__builtins__': {'isinstance': isinstance, 'print': print,
-                              'int': int, 'float': float, 'bool': bool, 'str': str, 'tuple': tuple, 'len': len}
+                              'int': int, 'float': float, 'bool': bool, 'str': str, 'tuple': tuple, 'len': len, 'set': set, 'dict': dict},
+                **funcs
              },  # globals
              loc # locals
         )
         # print('result =', result)
         return result
+
+    def get_type_name(self, element: UUID):
+        type_node = self.bottom.read_outgoing_elements(element, "Morphism")[0]
+        for type_name in self.bottom.read_keys(self.type_model):
+            if self.bottom.read_outgoing_elements(self.type_model, type_name)[0] == type_node:
+                return type_name
 
     def get_all_instances(self, type_name: str, include_subtypes=True):
         result = [e_name for e_name, t_name in self.type_mapping.items() if t_name == type_name]
@@ -398,6 +410,12 @@ class Conformance:
                 result += [e_name for e_name, t_name in self.type_mapping.items() if t_name == subtype_name]
         result_with_ids = [ (e_name, self.bottom.read_outgoing_elements(self.model, e_name)[0]) for e_name in result]
         return result_with_ids
+
+    def get_outgoing(self, element: UUID, assoc_or_attr_name: str):
+        return od.find_outgoing_typed_by(self.bottom, src=element, type_node=self.bottom.read_outgoing_elements(self.type_model, assoc_or_attr_name)[0])
+
+    def get_incoming(self, element: UUID, assoc_or_attr_name: str):
+        return od.find_incoming_typed_by(self.bottom, tgt=element, type_node=self.bottom.read_outgoing_elements(self.type_model, assoc_or_attr_name)[0])
 
     def check_constraints(self):
         """
@@ -426,7 +444,7 @@ class Conformance:
                 morphisms = self.bottom.read_incoming_elements(tm_element, "Morphism")
                 morphisms = [m for m in morphisms if m in self.model_names]
                 for m_element in morphisms:
-                    result = self.evaluate_constraint(code, element=m_element, type_name=tm_name)
+                    result = self.evaluate_constraint(code, this=m_element)
                     description = f"Local constraint of \"{tm_name}\" in \"{m_name}\""
                     check_result(result, description)
 
@@ -555,7 +573,7 @@ class Conformance:
                                 # eval constraints
                                 code = self.read_attribute(attr_tm, "constraint")
                                 if code != None:
-                                    attr_conforms = self.evaluate_constraint(code, element=attr)
+                                    attr_conforms = self.evaluate_constraint(code, this=attr)
                             if attr_conforms:
                                 matched += 1
                                 print("     attr_conforms -> matched:", matched)

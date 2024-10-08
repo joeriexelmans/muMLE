@@ -1,16 +1,7 @@
 from state.devstate import DevState
 from bootstrap.scd import bootstrap_scd
-from uuid import UUID
 from services.scd import SCD
-from framework.conformance import Conformance
-from services.od import OD
-from transformation.ramify import ramify
-from transformation import rewriter
-from services.bottom.V0 import Bottom
-from services.primitives.integer_type import Integer
-from pattern_matching import mvs_adapter
-from pattern_matching.matcher import MatcherVF2
-from renderer import plantuml
+from concrete_syntax.plantuml import renderer as plantuml
 
 def main():
     state = DevState()

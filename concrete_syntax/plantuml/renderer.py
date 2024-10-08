@@ -23,10 +23,19 @@ def render_class_diagram(state, model, prefix_ids=""):
         if slot != None:
             is_abstract, _ = od.read_primitive_value(bottom, slot, model_od.type_model)
 
-        if is_abstract:
-            output += f"\nabstract class \"{name}\" as {make_id(class_node)}"
+        lower_card, upper_card = model_scd.get_class_cardinalities(class_node)
+
+        if lower_card == None and upper_card == None:
+            card_spec = ""
         else:
-            output += f"\nclass \"{name}\" as {make_id(class_node)}"
+            card_spec = f"{0 if lower_card == None else lower_card}..{"*" if upper_card == None else upper_card}"
+
+        if is_abstract:
+            output += f"\nabstract class \"{name} {card_spec}\" as {make_id(class_node)}"
+        else:
+            output += f"\nclass \"{name} {card_spec}\" as {make_id(class_node)}"
+
+
 
         # Render attributes
         output += " {"

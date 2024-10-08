@@ -317,6 +317,15 @@ def find_outgoing_typed_by(bottom, src: UUID, type_node: UUID):
                 break
     return edges
 
+def find_incoming_typed_by(bottom, tgt: UUID, type_node: UUID):
+    edges = []
+    for incoming_edge in bottom.read_incoming_edges(tgt):
+        for typedBy in bottom.read_outgoing_elements(incoming_edge, "Morphism"):
+            if typedBy == type_node:
+                edges.append(incoming_edge)
+                break
+    return edges
+
 def navigate_modelref(bottom, node: UUID):
     uuid = bottom.read_value(node)
     return UUID(uuid)

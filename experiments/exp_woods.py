@@ -15,8 +15,6 @@ from services.primitives.integer_type import Integer
 from concrete_syntax.plantuml import renderer as plantuml
 from concrete_syntax.textual_od import parser, renderer
 
-import sys
-
 def create_integer_node(state, i: int):
     node = state.create_node()
     integer_t = Integer(node, state)
@@ -27,119 +25,79 @@ def main():
     state = DevState()
     root = state.read_root() # id: 0
 
-    scd_mm_id = bootstrap_scd(state)
+    # Meta-meta-model: a class diagram that describes the language of class diagrams
+    scd_mmm_id = bootstrap_scd(state)
     int_mm_id = UUID(state.read_value(state.read_dict(state.read_root(), "Integer")))
     string_mm_id = UUID(state.read_value(state.read_dict(state.read_root(), "String")))
 
-    # conf = Conformance(state, scd_mm_id, scd_mm_id)
+    # conf = Conformance(state, scd_mmm_id, scd_mmm_id)
     # print("Conformance SCD_MM -> SCD_MM?", conf.check_nominal(log=True))
     # print("--------------------------------------")
-    # print(renderer.render_od(state, scd_mm_id, scd_mm_id, hide_names=True))
+    # print(renderer.render_od(state, scd_mmm_id, scd_mmm_id, hide_names=True))
     # print("--------------------------------------")
 
-    def create_dsl_mm_api():
-        # Create DSL MM with SCD API
-        dsl_mm_id = state.create_node()
-        dsl_mm_scd = SCD(dsl_mm_id, state)
-        dsl_mm_scd.create_class("Animal", abstract=True)
-        dsl_mm_scd.create_class("Man", min_c=1, max_c=2)
-        dsl_mm_scd.create_inheritance("Man", "Animal")
-        dsl_mm_scd.create_model_ref("Integer", int_mm_id)
-        dsl_mm_scd.create_attribute_link("Man", "Integer", "weight", optional=False)
-        dsl_mm_scd.create_class("Bear")
-        dsl_mm_scd.create_inheritance("Bear", "Animal")
-        dsl_mm_scd.create_association("afraidOf", "Man", "Animal",
-            # Every Man afraid of at least one Animal:
-            src_min_c=0,
-            src_max_c=None,
-            tgt_min_c=1,
-            tgt_max_c=None,
-        )
-        dsl_mm_scd.add_constraint("Man", "read_value(element) < 100")
-        return dsl_mm_id
+    # Create DSL MM with parser
+    dsl_mm_cs = """
+        # Integer:ModelRef
+        Bear:Class
+        Animal:Class {
+            abstract = True;
+        }
+        Man:Class {
+            lower_cardinality = 1;
+            upper_cardinality = 2;
+            constraint = ```
+                get_value(get_slot(this, "weight")) > 20
+            ```;
+        }
+        Man_weight:AttributeLink (Man -> Integer) {
+            name = "weight";
+            optional = False;
+            constraint = ```
+                # this is the same constraint as above, but this time, part of the attributelink itself (and thus shorter)
+                tgt = get_target(this)
+                tgt_type = get_type_name(tgt)
+                get_value(tgt) > 20
+            ```;
+        }
+        afraidOf:Association (Man -> Animal) {
+            target_lower_cardinality = 1;
+        }
+        :Inheritance (Man -> Animal)
+        :Inheritance (Bear -> Animal)
 
-    def create_dsl_mm_parser():
-        # Create DSL MM with parser
-        dsl_mm_cs = """
-            # Integer:ModelRef
-            Bear:Class
-            Animal:Class {
-                abstract = True;
-            }
-            Man:Class {
-                lower_cardinality = 1;
-                upper_cardinality = 2;
-                constraint = `get_value(get_slot(element, "weight")) > 20`;
-            }
-            Man_weight:AttributeLink (Man -> Integer) {
-                name = "weight";
-                optional = False;
-                constraint = ```
-                    # this is the same constraint as above, but this time, part of the attributelink itself (and thus shorter)
-                    node = get_target(element)
-                    get_value(node) > 20
-                ```;
-            }
-            afraidOf:Association (Man -> Animal) {
-                target_lower_cardinality = 1;
-            }
-            :Inheritance (Man -> Animal)
-            :Inheritance (Bear -> Animal)
-
-            not_too_fat:GlobalConstraint {
-                constraint = ```
-                    # total weight of all men low enough
-                    total_weight = 0
-                    for man_name, man_id in get_all_instances("Man"):
-                        total_weight += get_value(get_slot(man_id, "weight"))
-                    total_weight < 85
-                ```;
-            }
-        """
-        dsl_mm_id = parser.parse_od(state, dsl_mm_cs, mm=scd_mm_id)
-        return dsl_mm_id
+        not_too_fat:GlobalConstraint {
+            constraint = ```
+                # total weight of all men low enough
+                total_weight = 0
+                for man_name, man_id in get_all_instances("Man"):
+                    total_weight += get_value(get_slot(man_id, "weight"))
+                total_weight < 85
+            ```;
+        }
+    """
+    dsl_mm_id = parser.parse_od(state, dsl_mm_cs, mm=scd_mmm_id)
     
-    def create_dsl_m_api():
-        # Create DSL M with OD API
-        dsl_m_id = state.create_node()
-        dsl_m_od = OD(dsl_mm_id, dsl_m_id, state)
-        dsl_m_od.create_object("george", "Man")
-        dsl_m_od.create_slot("weight", "george",
-            dsl_m_od.create_integer_value("george.weight", 80))
-        dsl_m_od.create_object("bear1", "Bear")
-        dsl_m_od.create_object("bear2", "Bear")
-        dsl_m_od.create_link("georgeAfraidOfBear1", "afraidOf", "george", "bear1")
-        dsl_m_od.create_link("georgeAfraidOfBear2", "afraidOf", "george", "bear2")
-        return dsl_m_id
-
-    def create_dsl_m_parser():
-        # Create DSL M with parser
-        dsl_m_cs = """
-            george:Man {
-                weight = 80;
-            }
-            bear1:Bear
-            bear2:Bear
-            :afraidOf (george -> bear1)
-            :afraidOf (george -> bear2)
-        """
-        dsl_m_id = parser.parse_od(state, dsl_m_cs, mm=dsl_mm_id)
-        return dsl_m_id
-
-
-    # dsl_mm_id = create_dsl_mm_api()
-    dsl_mm_id = create_dsl_mm_parser()
+    # Create DSL M with parser
+    dsl_m_cs = """
+        george:Man {
+            weight = 80;
+        }
+        bear1:Bear
+        bear2:Bear
+        :afraidOf (george -> bear1)
+        :afraidOf (george -> bear2)
+    """
+    dsl_m_id = parser.parse_od(state, dsl_m_cs, mm=dsl_mm_id)
 
     # print("DSL MM:")
     # print("--------------------------------------")
-    # print(renderer.render_od(state, dsl_mm_id, scd_mm_id, hide_names=True))
+    # print(renderer.render_od(state, dsl_mm_id, scd_mmm_id, hide_names=True))
     # print("--------------------------------------")
 
-    conf = Conformance(state, dsl_mm_id, scd_mm_id)
+    conf = Conformance(state, dsl_mm_id, scd_mmm_id)
     print("Conformance DSL_MM -> SCD_MM?", conf.check_nominal(log=True))
 
-    # dsl_m_id = create_dsl_m_api()
-    dsl_m_id = create_dsl_m_parser()
     # print("DSL M:")
     # print("--------------------------------------")
     # print(renderer.render_od(state, dsl_m_id, dsl_mm_id, hide_names=True))

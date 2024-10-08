@@ -29,8 +29,11 @@ BOOL: "True" | "False"
 CODE: /`[^`]*`/
 INDENTED_CODE: /```[^`]*```/
 
-object: [IDENTIFIER] ":" IDENTIFIER [link_spec] ["{" slot* "}"]
+#        name (optional)      type        
+object: [IDENTIFIER]     ":"  IDENTIFIER [link_spec] ["{" slot* "}"]
+
 link_spec: "(" IDENTIFIER "->" IDENTIFIER ")"
+
 slot: IDENTIFIER "=" literal ";"
 """
 
@@ -78,7 +81,7 @@ def parse_od(state, cs_text, mm):
                 space_count += 1
             lines = token.split('\n')[1:-1]
             for line in lines:
-                if line[0:space_count] != ' '*space_count:
+                if len(line) >= space_count and line[0:space_count] != ' '*space_count:
                     raise Exception("wrong indentation of INDENTED_CODE")
             unindented_lines = [l[space_count:] for l in lines]
             return _Code('\n'.join(unindented_lines))
