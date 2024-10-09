@@ -1,4 +1,1 @@
-pytest==6.2.4
-neo4j==4.3.4
-rdflib==6.0.0
-inquirerpy==0.3.4
+lark==1.1.9
