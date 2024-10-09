@@ -1,9 +1,10 @@
 # Parser for Object Diagrams textual concrete syntax
 
-from lark import Lark, logger, Transformer
+from lark import Lark, logger
 from lark.indenter import Indenter
 from services.od import OD
 from services.scd import SCD
+from concrete_syntax.common import _Code, TBase
 from uuid import UUID
 
 grammar = r"""
@@ -39,12 +40,6 @@ slot: IDENTIFIER "=" literal ";"
 
 parser = Lark(grammar, parser='lalr')
 
-# internal use only
-# just a dumb wrapper to distinguish between code and string
-class _Code:
-    def __init__(self, code):
-        self.code = code
-
 # given a concrete syntax text string, and a meta-model, parses the CS
 def parse_od(state, m_text, mm):
     tree = parser.parse(m_text)
@@ -54,40 +49,10 @@ def parse_od(state, m_text, mm):
 
     int_mm_id = UUID(state.read_value(state.read_dict(state.read_root(), "Integer")))
 
-    class T(Transformer):
+    class T(TBase):
         def __init__(self, visit_tokens):
             super().__init__(visit_tokens)
             self.obj_counter = 0
-
-        def IDENTIFIER(self, token):
-            return str(token)
-        
-        def INT(self, token):
-            return int(token)
-
-        def BOOL(self, token):
-            return token == "True"
-
-        def STR(self, token):
-            return str(token[1:-1]) # strip the "" or ''
-
-        def CODE(self, token):
-            return _Code(str(token[1:-1])) # strip the ``
-
-        def INDENTED_CODE(self, token):
-            skip = 4 # strip the ``` and the following newline character
-            space_count = 0
-            while token[skip+space_count] == " ":
-                space_count += 1
-            lines = token.split('\n')[1:-1]
-            for line in lines:
-                if len(line) >= space_count and line[0:space_count] != ' '*space_count:
-                    raise Exception("wrong indentation of INDENTED_CODE")
-            unindented_lines = [l[space_count:] for l in lines]
-            return _Code('\n'.join(unindented_lines))
-
-        def literal(self, el):
-            return el[0]
 
         def link_spec(self, el):
             [src, tgt] = el

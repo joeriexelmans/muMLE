@@ -43,6 +43,7 @@ woods_mm_cs = """
     Man:Class {
         # We can define lower and upper cardinalities on Classes
         # (if unspecified, the lower-card is 0, and upper-card is infinity)
+
         lower_cardinality = 1; # there must be at least one Man in every model
         upper_cardinality = 2; # there must be at most two Men in every model
 

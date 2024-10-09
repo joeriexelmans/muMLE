@@ -132,21 +132,21 @@ class SCD:
             set_cardinality("target_upper", tgt_max_c)
         return assoc_edge
 
-    def create_global_constraint(self, name: str):
-        """
-        Defines a global constraint element.
+    # def create_global_constraint(self, name: str):
+    #     """
+    #     Defines a global constraint element.
 
-        Args:
-            name: the name of the global constraint to be created
+    #     Args:
+    #         name: the name of the global constraint to be created
 
-        Returns:
-            Nothing.
-        """
-        # create element + morphism links
-        element_node = self.bottom.create_node()  # create element node
-        self.bottom.create_edge(self.model, element_node, name)  # attach to model
-        scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "GlobalConstraint")  # retrieve type
-        self.bottom.create_edge(element_node, scd_node, "Morphism")  # create morphism link
+    #     Returns:
+    #         Nothing.
+    #     """
+    #     # create element + morphism links
+    #     element_node = self.bottom.create_node()  # create element node
+    #     self.bottom.create_edge(self.model, element_node, name)  # attach to model
+    #     scd_node, = self.bottom.read_outgoing_elements(self.scd_model, "GlobalConstraint")  # retrieve type
+    #     self.bottom.create_edge(element_node, scd_node, "Morphism")  # create morphism link
 
     def create_attribute(self, name: str):
         """
