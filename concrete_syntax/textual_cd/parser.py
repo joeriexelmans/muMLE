@@ -122,8 +122,8 @@ def parse_cd(state, m_text):
             if attrs != None:
                 for attr in attrs:
                     (optional, attr_type, attr_name, constraint) = attr
-                    # TODO: only create type ref if it doesn't exist yet
-                    cd.create_model_ref(attr_type, primitive_types[attr_type])
+                    if state.read_dict(m, attr_type) == None:
+                        cd.create_model_ref(attr_type, primitive_types[attr_type])
                     cd.create_attribute_link(class_name, attr_type, attr_name, optional)
                     if constraint != None:
                         _add_constraint_to_obj(f"{class_name}_{attr_name}", constraint)
