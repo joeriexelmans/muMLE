@@ -23,7 +23,8 @@ def render_conformance_check_result(error_list):
     if len(error_list) == 0:
         return "OK"
     else:
-        return f"There were {len(error_list)} errors: \n  {'\n  '.join(error_list)}"
+        joined = '\n  '.join(error_list)
+        return f"There were {len(error_list)} errors: \n  {joined}"
 
 
 class Conformance:

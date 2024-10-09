@@ -28,7 +28,9 @@ def render_class_diagram(state, model, prefix_ids=""):
         if lower_card == None and upper_card == None:
             card_spec = ""
         else:
-            card_spec = f"{0 if lower_card == None else lower_card}..{"*" if upper_card == None else upper_card}"
+            low = "0" if lower_card == None else lower_card
+            upp = "*" if upper_card == None else upper_card
+            card_spec = f"{low}..{upp}"
 
         if is_abstract:
             output += f"\nabstract class \"{name} {card_spec}\" as {make_id(class_node)}"
