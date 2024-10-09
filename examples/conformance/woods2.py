@@ -32,8 +32,8 @@ print(render_conformance_check_result(conf.check_nominal()))
 woods_mm_cs = """
     abstract class Animal
 
-    class Bear (Animal)
-    
+    class Bear (Animal) # Bear inherits Animal
+
     class Man [1..2] (Animal) {
         Integer weight `get_value(get_target(this)) > 20`; # <- constraint in context of attribute-link
 
@@ -58,7 +58,8 @@ woods_mm = parser_cd.parse_cd(
 )
 print("OK")
 
-# As a double-check, you can serialize the parsed model:
+# We can serialize the class diagram to our object diagram syntax
+#  (because the class diagram IS also an object diagram):
 print("--------------")
 print(indent(
     renderer_od.render_od(state,
