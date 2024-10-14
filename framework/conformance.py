@@ -28,13 +28,14 @@ def render_conformance_check_result(error_list):
 
 
 class Conformance:
-    def __init__(self, state: State, model: UUID, type_model: UUID):
+    def __init__(self, state: State, model: UUID, type_model: UUID, constraint_check_subtypes=True):
         self.state = state
         self.bottom = Bottom(state)
         type_model_id = state.read_dict(state.read_root(), "SCD")
         self.scd_model = UUID(state.read_value(type_model_id))
         self.model = model
         self.type_model = type_model
+        self.constraint_check_subtypes = constraint_check_subtypes # for a class-level constraint, also check the constraint on the subtypes of that class?
         self.type_mapping: Dict[str, str] = {}
         self.model_names = {
             # map model elements to their names to prevent iterating too much
@@ -385,7 +386,7 @@ class Conformance:
             'get_source': lambda el: self.bottom.read_edge_source(el),
             'get_slot': od.OD(self.type_model, self.model, self.state).get_slot,
             'get_all_instances': self.get_all_instances,
-            'get_name': lambda el: [name for name in self.bottom.read_keys(self.model) if self.bottom.read_outgoing_elements(self.model, name)[0] == el][0],
+            'get_name': self.get_name,
             'get_type_name': self.get_type_name,
             'get_outgoing': self.get_outgoing,
             'get_incoming': self.get_incoming,
@@ -402,6 +403,9 @@ class Conformance:
         )
         # print('result =', result)
         return result
+
+    def get_name(self, element: UUID):
+        return [name for name in self.bottom.read_keys(self.model) if self.bottom.read_outgoing_elements(self.model, name)[0] == element][0]
 
     def get_type_name(self, element: UUID):
         type_node = self.bottom.read_outgoing_elements(element, "Morphism")[0]
@@ -444,15 +448,14 @@ class Conformance:
                 errors.append(f"{description} not satisfied.")
 
         # local constraints
-        for m_name, tm_name in self.type_mapping.items():
-            code = get_code(tm_name)
+        for type_name in self.bottom.read_keys(self.type_model):
+            code = get_code(type_name)
             if code != None:
-                # print('code:', code)
-                tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
-                m_element, = self.bottom.read_outgoing_elements(self.model, m_name)
-                result = self.evaluate_constraint(code, this=m_element)
-                description = f"Local constraint of \"{tm_name}\" in \"{m_name}\""
-                check_result(result, description)
+                instances = self.get_all_instances(type_name, include_subtypes=self.constraint_check_subtypes)
+                for obj_name, obj_id in instances:
+                    result = self.evaluate_constraint(code, this=obj_id)
+                    description = f"Local constraint of \"{type_name}\" in \"{obj_name}\""
+                    check_result(result, description)
 
         # global constraints
         glob_constraints = []
@@ -465,7 +468,7 @@ class Conformance:
                 if type_of_node == glob_constraint_type:
                     # node is GlobalConstraint
                     glob_constraints.append(tm_name)
-        # evaluate them
+        # evaluate them (each constraint once)
         for tm_name in glob_constraints:
             code = get_code(tm_name)
             if code != None:
