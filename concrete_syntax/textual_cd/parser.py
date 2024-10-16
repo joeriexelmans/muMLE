@@ -86,7 +86,10 @@ def parse_cd(state, m_text):
             return True
 
         def INT_OR_INF(self, el):
-            return float('inf') if el == "*" else int(el)
+            # infinity only used for upper cardinality,
+            # where the default value (None) represents infinity
+            # cannot use `float('inf')` because then it violates the constraint of type 'Integer'
+            return None if el == "*" else int(el)
 
         def multiplicity(self, el):
             [lower, upper] = el
