@@ -42,7 +42,7 @@ constraint: CODE | INDENTED_CODE
 
 class_: [ABSTRACT] "class" IDENTIFIER [multiplicity] ["(" superclasses ")"]  ["{" attrs [constraint] "}"]
 
-association: "association" IDENTIFIER  [multiplicity] IDENTIFIER "->" IDENTIFIER [multiplicity] ["{" [constraint] "}"]
+association: "association" IDENTIFIER  [multiplicity] IDENTIFIER "->" IDENTIFIER [multiplicity] ["{" attrs [constraint] "}"]
 
 OPTIONAL: "optional"
 
@@ -113,15 +113,7 @@ def parse_cd(state, m_text):
             od.create_object(name, "GlobalConstraint")
             _add_constraint_to_obj(name, constraint)
 
-        def class_(self, el):
-            [abstract, class_name, multiplicity, super_classes, attrs, constraint] = el
-            (lower, upper) = _handle_missing_multiplicity(multiplicity)
-            cd.create_class(class_name, abstract, lower, upper)
-            if super_classes != None:
-                for super_class in super_classes:
-                    cd.create_inheritance(class_name, super_class)
-            if constraint != None:
-                _add_constraint_to_obj(class_name, constraint)
+        def process_attrs(self, attrs, class_name):
             if attrs != None:
                 for attr in attrs:
                     (optional, attr_type, attr_name, constraint) = attr
@@ -131,13 +123,25 @@ def parse_cd(state, m_text):
                     if constraint != None:
                         _add_constraint_to_obj(f"{class_name}_{attr_name}", constraint)
 
+        def class_(self, el):
+            [abstract, class_name, multiplicity, super_classes, attrs, constraint] = el
+            (lower, upper) = _handle_missing_multiplicity(multiplicity)
+            cd.create_class(class_name, abstract, lower, upper)
+            if super_classes != None:
+                for super_class in super_classes:
+                    cd.create_inheritance(class_name, super_class)
+            if constraint != None:
+                _add_constraint_to_obj(class_name, constraint)
+            self.process_attrs(attrs, class_name)
+
         def association(self, el):
-            [assoc_name, src_multiplicity, src_name, tgt_name, tgt_multiplicity, constraint] = el
+            [assoc_name, src_multiplicity, src_name, tgt_name, tgt_multiplicity, attrs, constraint] = el
             (src_lower, src_upper) = _handle_missing_multiplicity(src_multiplicity)
             (tgt_lower, tgt_upper) = _handle_missing_multiplicity(tgt_multiplicity)
             cd.create_association(assoc_name, src_name, tgt_name, src_lower, src_upper, tgt_lower, tgt_upper)
             if constraint != None:
-                _add_constraint_to_obj(class_name, constraint)
+                _add_constraint_to_obj(assoc_name, constraint)
+            self.process_attrs(attrs, assoc_name)
 
     tree = parser.parse(m_text)
     t = T(visit_tokens=True).transform(tree)
