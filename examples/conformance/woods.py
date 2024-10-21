@@ -196,5 +196,7 @@ if yes_no("Print PlantUML?"):
     print("==================================")
     print(uml)
     print("==================================")
-    print("Go to http://www.plantuml.com/plantuml/uml/")
+    print("Go to either:")
+    print("  ▸ https://www.plantuml.com/plantuml/uml")
+    print("  ▸ https://mstro.duckdns.org/plantuml/uml")
     print("and paste the above string.")
