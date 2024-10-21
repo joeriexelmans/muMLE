@@ -47,7 +47,10 @@ def parse_od(state, m_text, mm):
     m = state.create_node()
     od = OD(mm, m, state)
 
-    int_mm_id = UUID(state.read_value(state.read_dict(state.read_root(), "Integer")))
+    primitive_types = {
+        type_name : UUID(state.read_value(state.read_dict(state.read_root(), type_name)))
+            for type_name in ["Integer", "String", "Boolean"]
+    }
 
     class T(TBase):
         def __init__(self, visit_tokens):
@@ -73,10 +76,10 @@ def parse_od(state, m_text, mm):
                 obj_node = od.create_object(obj_name, type_name)
             else:
                 src, tgt = link
-                if tgt == "Integer":
-                    if state.read_dict(m, "Integer") == None:
+                if tgt in primitive_types:
+                    if state.read_dict(m, tgt) == None:
                         scd = SCD(m, state)
-                        scd.create_model_ref("Integer", int_mm_id)
+                        scd.create_model_ref(tgt, primitive_types[tgt])
                 od.create_link(obj_name, type_name, src, tgt)
             # Create slots
             slots = el[3:]
