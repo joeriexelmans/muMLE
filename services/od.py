@@ -24,7 +24,7 @@ class OD:
                 type_model: The SCD-conforming class diagram that contains the types of this object diagram
                 model: UUID of the (OD) model to manipulate
         """
-
+        self.scd_model = UUID(state.read_value(state.read_dict(state.read_root(), "SCD")))
         self.type_model = type_model
         self.model = model
         self.bottom = Bottom(state)
@@ -44,7 +44,7 @@ class OD:
 
         slot = mm_od.get_slot(class_node, "abstract")
         if slot != None:
-            is_abstract, _ = read_primitive_value(self.bottom, slot, self.type_model)
+            is_abstract, _ = read_primitive_value(self.bottom, slot, self.scd_model)
             if is_abstract:
                 raise Exception("Cannot instantiate abstract class!")
 
@@ -117,8 +117,6 @@ class OD:
         bool_node = self.bottom.create_node()
         bool_service = Boolean(bool_node, self.bottom.state)
         bool_service.create(value)
-        # name = 'int'+str(value) # name of the ref to the created integer
-        # By convention, the type model must have a ModelRef named "Integer"
         self.create_model_ref(name, "Boolean", bool_node)
         return name
 
@@ -127,8 +125,6 @@ class OD:
         string_node = self.bottom.create_node()
         string_t = String(string_node, self.bottom.state)
         string_t.create(value)
-        # name = 'str-'+value # name of the ref to the created integer
-        # By convention, the type model must have a ModelRef named "Integer"
         self.create_model_ref(name, "String", string_node)
         return name
 
@@ -137,8 +133,6 @@ class OD:
         actioncode_node = self.bottom.create_node()
         actioncode_t = ActionCode(actioncode_node, self.bottom.state)
         actioncode_t.create(value)
-        # name = 'str-'+value # name of the ref to the created integer
-        # By convention, the type model must have a ModelRef named "Integer"
         self.create_model_ref(name, "ActionCode", actioncode_node)
         return name
 
