@@ -69,9 +69,11 @@ class OD:
     def create_slot(self, attr_name: str, object_name: str, target_name: str):
         class_name = self.get_class_of_object(object_name)
         attr_link_name = self.get_attr_link_name(class_name, attr_name)
+        if attr_link_name == None:
+            raise Exception(f"Failed to get link name for attribute '{attr_name}' of object '{object_name}'")
         # An attribute-link is indistinguishable from an ordinary link:
-        slot_id = self.create_link(
-            get_slot_link_name(object_name, attr_name),
+        slot_link_name = get_slot_link_name(object_name, attr_name)
+        slot_id = self.create_link(slot_link_name,
             attr_link_name, object_name, target_name)
         return slot_id
 
@@ -154,9 +156,9 @@ class OD:
             return assoc_name
         else:
             # look for attribute in the super-types
-            conf = Conformance(self.bottom.state, self.type_model, get_scd_mm(self.bottom))
+            conf = Conformance(self.bottom.state, self.model, self.type_model)
             conf.precompute_sub_types() # only need to know about subtypes
-            super_types = (s for s in conf.sub_types if class_name in conf.sub_types[s])
+            super_types = [s for s in conf.sub_types if class_name in conf.sub_types[s]]
             for s in super_types:
                 assoc_name = f"{s}_{attr_name}"
                 if len(self.bottom.read_outgoing_elements(self.type_model, assoc_name)) == 1:

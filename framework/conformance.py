@@ -35,7 +35,7 @@ class Conformance:
         self.scd_model = UUID(state.read_value(type_model_id))
         self.model = model
         self.type_model = type_model
-        self.constraint_check_subtypes = constraint_check_subtypes # for a class-level constraint, also check the constraint on the subtypes of that class?
+        self.constraint_check_subtypes = constraint_check_subtypes # for a class-level constraint, also check the constraint on the subtypes of that class? In other words, are constraints inherited.
         self.type_mapping: Dict[str, str] = {}
         self.model_names = {
             # map model elements to their names to prevent iterating too much
