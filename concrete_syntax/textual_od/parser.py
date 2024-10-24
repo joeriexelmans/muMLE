@@ -55,7 +55,7 @@ def parse_od(state, m_text, mm):
     class T(TBase):
         def __init__(self, visit_tokens):
             super().__init__(visit_tokens)
-            self.obj_counter = 0
+            self.obj_counter = 0 # used for generating unique names for anonymous objects
 
         def link_spec(self, el):
             [src, tgt] = el
@@ -67,10 +67,13 @@ def parse_od(state, m_text, mm):
         
         def object(self, el):
             [obj_name, type_name, link] = el[0:3]
+            slots = el[3:]
+            if state.read_dict(m, obj_name) != None:
+                raise Exception(f"Element '{obj_name}:{type_name}': name '{obj_name}' already in use. Object names must be unique.")
             if obj_name == None:
                 # object/link names are optional
                 #  generate a unique name if no name given
-                obj_name = f"__o{self.obj_counter}"
+                obj_name = f"__{type_name}_{self.obj_counter}"
                 self.obj_counter += 1
             if link == None:
                 obj_node = od.create_object(obj_name, type_name)
@@ -82,7 +85,6 @@ def parse_od(state, m_text, mm):
                         scd.create_model_ref(tgt, primitive_types[tgt])
                 od.create_link(obj_name, type_name, src, tgt)
             # Create slots
-            slots = el[3:]
             for attr_name, value in slots:
                 value_name = f"{obj_name}.{attr_name}"
                 # watch out: in Python, 'bool' is subtype of 'int'
