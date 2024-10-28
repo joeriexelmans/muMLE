@@ -64,8 +64,6 @@ class Conformance:
 
         self.odapi = ODAPI(state, model, type_model)
 
-        # CDAPI(state, type_model)
-
     def check_nominal(self, *, log=False):
         """
         Perform a nominal conformance check

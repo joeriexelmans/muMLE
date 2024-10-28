@@ -1,4 +1,6 @@
 import functools
+import random
+import math
 
 from state.devstate import DevState
 from bootstrap.scd import bootstrap_scd
@@ -16,7 +18,6 @@ print("Loading meta-meta-model...")
 scd_mmm = bootstrap_scd(state)
 print("Done")
 
-
 # Design meta-model
 woods_mm_cs = """
     Animal:Class {
@@ -29,7 +30,6 @@ woods_mm_cs = """
     Man:Class {
         lower_cardinality = 1;
         upper_cardinality = 2;
-
         constraint = `get_value(get_slot(this, "weight")) > 20`;
     }
     :Inheritance (Man -> Animal)
@@ -97,17 +97,20 @@ woods_rt_mm_cs = woods_mm_cs + """
         source_upper_cardinality = 1;
 
         constraint = ```
-            source = get_source(this)
-            if get_type_name(source) == "BearState":
+            attacker = get_source(this)
+            if get_type_name(attacker) == "BearState":
                 # only BearState has 'hunger' attribute
-                hunger = get_value(get_slot(source, "hunger"))
+                hunger = get_value(get_slot(attacker, "hunger"))
             else:
                 hunger = 100 # Man can always attack
-            animal_state = get_source(this)
-            animal_dead = get_value(get_slot(animal_state, "dead"))
-            man_state = get_target(this)
-            man_dead = get_value(get_slot(man_state, "dead"))
-            hunger > 50 and not animal_dead and not man_dead # whoever is dead cannot attack or get attacked
+            attacker_dead = get_value(get_slot(attacker, "dead"))
+            attacked_state = get_target(this)
+            attacked_dead = get_value(get_slot(attacked_state, "dead"))
+            (
+                hunger >= 50 
+                and not attacker_dead # cannot attack while dead
+                and not attacked_dead # cannot attack whoever is dead
+            )
         ```;
     }
 
@@ -195,7 +198,7 @@ woods_rt_initial_m_cs = woods_m_cs + """
 
     teddyState:BearState {
         dead = False;
-        hunger = 20;
+        hunger = 40;
     }
     :of (teddyState -> teddy)
 
@@ -219,37 +222,21 @@ print("RT-M valid?")
 conf = Conformance(state, woods_rt_m, woods_rt_mm)
 print(render_conformance_check_result(conf.check_nominal()))
 
-def filter_actions(old_od):
-    result = {}
-    for name, callback in get_actions(old_od).items():
-        # Clone OD before transforming
-        cloned_rt_m = clone_od(state, old_od.m, old_od.mm)
-        new_od = ODAPI(state, cloned_rt_m, old_od.mm)
 
-        print(f"checking '{name}' ...", end='\r')
-
-        msgs = callback(new_od)
-        conf = Conformance(state, new_od.m, new_od.mm)
-        errors = conf.check_nominal()
-        # erase current line:
-        print("                                                  ", end='\r')
-        if len(errors) == 0:
-            # updated RT-M is conform, we have a valid action:
-            yield (name, (new_od, msgs))
-
+# Helpers
 def state_of(od, animal):
     return od.get_source(od.get_incoming(animal, "of")[0])
-
 def animal_of(od, state):
     return od.get_target(od.get_outgoing(state, "of")[0])
+def get_time(od):
+    _, clock = od.get_all_instances("Clock")[0]
+    return clock, od.get_slot_value(clock, "time")
 
 def advance_time(od):
     msgs = []
-    _, clock = od.get_all_instances("Clock")[0]
-    old_time = od.get_slot_value(clock, "time")
+    clock, old_time = get_time(od)
     new_time = old_time + 1
     od.set_slot_value(clock, "time", new_time)
-    msgs.append(f"Time is now {new_time}")
 
     for _, attacking_link in od.get_all_instances("attacking"):
         man_state = od.get_target(attacking_link)
@@ -302,23 +289,114 @@ def get_actions(od):
         man_name = od.get_name(man)
         man_state = state_of(od, man)
         animal_state = state_of(od, animal)
-        actions[f"{animal_name} ({od.get_type_name(animal)}) attacks {man_name} ({od.get_type_name(man)})"] =functools.partial(attack, animal_name=animal_name, man_name=man_name)
+        descr = f"{animal_name} ({od.get_type_name(animal)}) attacks {man_name} ({od.get_type_name(man)})"
+        actions[descr] = functools.partial(attack, animal_name=animal_name, man_name=man_name)
+        
+    return { action_descr: functools.partial(exec_pure, action, od) for action_descr, action in actions.items() }
 
-    return actions
+# Copy model before modifying it
+def exec_pure(action, od):
+    cloned_rt_m = clone_od(state, od.m, od.mm)
+    new_od = ODAPI(state, cloned_rt_m, od.mm)
+    msgs = action(new_od)
+    return (new_od, msgs)
+
+def filter_actions(actions):
+    result = {}
+    def make_tuple(new_od, msgs):
+        return (new_od, msgs)
+    for name, callback in actions.items():
+        print(f"attempt '{name}' ...", end='\r')
+        (new_od, msgs) = callback()
+        conf = Conformance(state, new_od.m, new_od.mm)
+        errors = conf.check_nominal()
+        # erase current line:
+        print("                                                  ", end='\r')
+        if len(errors) == 0:
+            # updated RT-M is conform, we have a valid action:
+            yield (name, functools.partial(make_tuple, new_od, msgs))
+
+def unfilter_actions(actions, od):
+    for name, callback in actions.items():
+        yield (name, callback)
+    conf = Conformance(state, od.m, od.mm)
+    yield ("check conformance", lambda: (od, [render_conformance_check_result(conf.check_nominal())]))
+
+def render_woods(od):
+    txt = ""
+    _, time = get_time(od)
+    txt += f"T = {time}.\n"
+    txt += "Bears:\n"
+    def render_attacking(animal_state):
+        attacking = od.get_outgoing(animal_state, "attacking")
+        if len(attacking) == 1:
+            whom_state = od.get_target(attacking[0])
+            whom_name = od.get_name(animal_of(od, whom_state))
+            return f" attacking {whom_name}"
+        else:
+            return ""
+    def render_dead(animal_state):
+        return 'dead' if od.get_slot_value(animal_state, 'dead') else 'alive'
+    for _, bear_state in od.get_all_instances("BearState"):
+        bear = animal_of(od, bear_state)
+        hunger = od.get_slot_value(bear_state, "hunger")
+        txt += f"  🐻 {od.get_name(bear)} (hunger: {hunger}, {render_dead(bear_state)}) {render_attacking(bear_state)}\n"
+    txt += "Men:\n"
+    for _, man_state in od.get_all_instances("ManState"):
+        man = animal_of(od, man_state)
+        attacked_by = od.get_incoming(man_state, "attacking")
+        if len(attacked_by) == 1:
+            whom_state = od.get_source(attacked_by[0])
+            whom_name = od.get_name(animal_of(od, whom_state))
+            being_attacked = f" being attacked by {whom_name}"
+        else:
+            being_attacked = ""
+        txt += f"  👨 {od.get_name(man)} ({render_dead(man_state)}) {render_attacking(man_state)}{being_attacked}\n"
+    return txt
 
 od = ODAPI(state, woods_rt_m, woods_rt_mm)
 
+RANDOM_SEED = 0
+
+r = random.Random(RANDOM_SEED)
+
+def random_choice(options):
+    arr = [action for descr, action in options]
+    i = math.floor(r.random()*len(arr))
+    return arr[i]
+
+def termination_condition(od):
+    _, time = get_time(od)
+    return time >= 10 # stop after 10 steps
+
+print(f"Using random seed: {RANDOM_SEED} (only applicable to random simulation)")
+
 while True:
     print("--------------")
-    print(indent(
-        renderer.render_od(state,
-            m_id=od.m,
-            mm_id=od.mm),
-        4))
+    print(indent(render_woods(od), 4))
     print("--------------")
 
-    (od, msgs) = prompt.choose("Select action:", filter_actions(od))
-    print(indent('\n'.join(msgs), 4))
-    if od == None:
+    if termination_condition(od):
+        print("Termination condition satisfied. Quit.")
+        break
+
+    # print(indent(
+    #     renderer.render_od(state,
+    #         m_id=od.m,
+    #         mm_id=od.mm),
+    #     4))
+
+    # 1. Only 'valid' actions or all actions?
+    # actions = unfilter_actions(get_actions(od), od)
+    actions = filter_actions(get_actions(od))
+
+    # 2. Manual or random selection?
+    # action = prompt.choose("Select action:", actions)
+    action = random_choice(actions)
+
+    if action == None:
         print("No enabled actions. Quit.")
-        break # no more enabled actions
+        break
+
+    (od, msgs) = action()
+    print(indent('\n'.join(f"▸ {msg}" for msg in msgs), 2))
