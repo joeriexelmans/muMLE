@@ -23,6 +23,8 @@ class PyState(State):
         self.cache = {}
         self.cache_node = {}
 
+        self.cache_all = {}
+
         self.root = self.create_node()
 
     def create_node(self) -> Node:
@@ -46,6 +48,7 @@ class PyState(State):
                 dict_source, dict_target = self.edges[source]
                 if target in self.values:
                     self.cache.setdefault(dict_source, {})[self.values[target]] = source
+                    self.cache_all.setdefault(dict_source, {}).setdefault(self.values[target], set()).add(source)
                 self.cache_node.setdefault(dict_source, {})[target] = source
             return new_id
 
@@ -70,6 +73,7 @@ class PyState(State):
             assert n != None and e != None
             e2 = self.create_edge(e, n)
             self.cache.setdefault(source, {})[value] = e
+            self.cache_all.setdefault(source, {}).setdefault(value, set()).add(e)
             self.cache_node.setdefault(source, {})[n] = e
 
     def read_root(self) -> Node:
@@ -139,9 +143,30 @@ class PyState(State):
                 return first
             # Hit but invalid now
             del self.cache[elem][value]
+            self.cache_all[elem][value].remove(first)
             return None
         except KeyError:
             return None
+
+    def read_dict_edge_all(self, elem: Element, value: Any) -> List[Edge]:
+        result = []
+        try:
+            all_ = self.cache_all[elem][value]
+            for a in all_:
+                try:
+                    if ((self.edges[a][0] == elem) and (value in [self.values[self.edges[i][1]]
+                             for i in self.outgoing[a]
+                             if self.edges[i][1] in self.values])):
+                        result.append(a)
+                        continue
+                except KeyError:
+                    pass
+
+            if len(result) != len(all_):
+                self.cache_all[elem][value] = set(result)
+        except KeyError:
+            pass
+        return result
 
     def read_dict_node(self, elem: Element, value_node: Node) -> Optional[Element]:
         e = self.read_dict_node_edge(elem, value_node)
@@ -273,6 +298,7 @@ class PyState(State):
                 dset.add(key)
         for key in dset:
             del self.cache[key]
+            del self.cache_all[key]
 
         dset = set()
         for key in self.cache_node:

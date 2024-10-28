@@ -122,6 +122,15 @@ class Bottom:
         Returns:
             List of UUIDs of outgoing edges
         """
+
+        ### PERFORMANCE OPTIMIZATION ###
+        if label != None:
+            fast_result = self.state.read_dict_edge_all(source, label)
+            # if set(alt) != set(edges):
+            #     raise Exception("WRONG", alt, edges)
+            return fast_result
+        ### PERFORMANCE OPTIMIZATION ###
+
         def read_label(_edge: UUID):
             try:
                 label_edge, = self.state.read_outgoing(_edge)
@@ -136,6 +145,9 @@ class Bottom:
             return []
         if label != None:
             edges = [e for e in edges if read_label(e) == label]
+
+
+
         return edges
 
     def read_incoming_elements(self, target: UUID, label=None) -> List[UUID]:
