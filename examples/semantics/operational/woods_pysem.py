@@ -1,11 +1,14 @@
+import functools
+
 from state.devstate import DevState
 from bootstrap.scd import bootstrap_scd
 from framework.conformance import Conformance, render_conformance_check_result
 from concrete_syntax.textual_od import parser, renderer
 from concrete_syntax.common import indent
 from concrete_syntax.plantuml import renderer as plantuml
-from util.prompt import yes_no, pause
+from util import prompt
 from transformation.cloner import clone_od
+from api.od import ODAPI
 
 state = DevState()
 
@@ -86,6 +89,40 @@ woods_rt_mm_cs = woods_mm_cs + """
     }
     :Inheritance (ManState -> AnimalState)
 
+    attacking:Association (AnimalState -> ManState) {
+        # Animal can only attack one Man at a time
+        target_upper_cardinality = 1;
+
+        # Man can only be attacked by one Animal at a time
+        source_upper_cardinality = 1;
+
+        constraint = ```
+            source = get_source(this)
+            if get_type_name(source) == "BearState":
+                # only BearState has 'hunger' attribute
+                hunger = get_value(get_slot(source, "hunger"))
+            else:
+                hunger = 100 # Man can always attack
+            animal_state = get_source(this)
+            animal_dead = get_value(get_slot(animal_state, "dead"))
+            man_state = get_target(this)
+            man_dead = get_value(get_slot(man_state, "dead"))
+            hunger > 50 and not animal_dead and not man_dead # whoever is dead cannot attack or get attacked
+        ```;
+    }
+
+    attacking_starttime:AttributeLink (attacking -> Integer) {
+        name = "starttime";
+        optional = False;
+        constraint = ```
+            val = get_value(get_target(this))
+            _, clock = get_all_instances("Clock")[0]
+            current_time = get_slot_value(clock, "time")
+            val >= 0 and val <= current_time
+        ```;
+    }
+
+    # Just a clock singleton for keeping the time
     Clock:Class {
         lower_cardinality = 1;
         upper_cardinality = 1;
@@ -182,11 +219,106 @@ print("RT-M valid?")
 conf = Conformance(state, woods_rt_m, woods_rt_mm)
 print(render_conformance_check_result(conf.check_nominal()))
 
-# print("--------------")
-# print(indent(
-#     renderer.render_od(state,
-#         m_id=woods_rt_m,
-#         mm_id=woods_rt_mm),
-#     4))
-# print("--------------")
+def filter_actions(old_od):
+    result = {}
+    for name, callback in get_actions(old_od).items():
+        # Clone OD before transforming
+        cloned_rt_m = clone_od(state, old_od.m, old_od.mm)
+        new_od = ODAPI(state, cloned_rt_m, old_od.mm)
 
+        print(f"checking '{name}' ...", end='\r')
+
+        msgs = callback(new_od)
+        conf = Conformance(state, new_od.m, new_od.mm)
+        errors = conf.check_nominal()
+        # erase current line:
+        print("                                                  ", end='\r')
+        if len(errors) == 0:
+            # updated RT-M is conform, we have a valid action:
+            yield (name, (new_od, msgs))
+
+def state_of(od, animal):
+    return od.get_source(od.get_incoming(animal, "of")[0])
+
+def animal_of(od, state):
+    return od.get_target(od.get_outgoing(state, "of")[0])
+
+def advance_time(od):
+    msgs = []
+    _, clock = od.get_all_instances("Clock")[0]
+    old_time = od.get_slot_value(clock, "time")
+    new_time = old_time + 1
+    od.set_slot_value(clock, "time", new_time)
+    msgs.append(f"Time is now {new_time}")
+
+    for _, attacking_link in od.get_all_instances("attacking"):
+        man_state = od.get_target(attacking_link)
+        animal_state = od.get_source(attacking_link)
+        if od.get_type_name(animal_state) == "BearState":
+            od.set_slot_value(animal_state, "hunger", max(od.get_slot_value(animal_state, "hunger") - 50, 0))
+        od.set_slot_value(man_state, "dead", True)
+        od.delete(attacking_link)
+        msgs.append(f"{od.get_name(animal_of(od, animal_state))} kills {od.get_name(animal_of(od, man_state))}.")
+
+    for _, bear_state in od.get_all_instances("BearState"):
+        if od.get_slot_value(bear_state, "dead"):
+            continue # bear already dead
+        old_hunger = od.get_slot_value(bear_state, "hunger")
+        new_hunger = min(old_hunger + 5, 100)
+        od.set_slot_value(bear_state, "hunger", new_hunger)
+        bear = od.get_target(od.get_outgoing(bear_state, "of")[0])
+        bear_name = od.get_name(bear)
+        if new_hunger == 100:
+            od.set_slot_value(bear_state, "dead", True)
+            msgs.append(f"Bear {bear_name} dies of hunger.")
+        else:
+            msgs.append(f"Bear {bear_name}'s hunger level is now {new_hunger}.")
+    return msgs
+
+# we must use the names of the objects as parameters, because when cloning, the IDs of objects change!
+def attack(od, animal_name: str, man_name: str):
+    msgs = []
+    animal = od.get(animal_name)
+    man = od.get(man_name)
+    animal_state = state_of(od, animal)
+    man_state = state_of(od, man)
+    attack_link = od.create_link(None, # auto-generate link name
+        "attacking", animal_state, man_state)
+    _, clock = od.get_all_instances("Clock")[0]
+    current_time = od.get_slot_value(clock, "time")
+    od.set_slot_value(attack_link, "starttime", current_time)
+    msgs.append(f"{animal_name} is now attacking {man_name}")
+    return msgs
+
+def get_actions(od):
+    # can always advance time:
+    actions = { "advance time": advance_time }
+
+    # who can attack whom?
+    for _, afraid_link in od.get_all_instances("afraidOf"):
+        man = od.get_source(afraid_link)
+        animal = od.get_target(afraid_link)
+        animal_name = od.get_name(animal)
+        man_name = od.get_name(man)
+        man_state = state_of(od, man)
+        animal_state = state_of(od, animal)
+        actions[f"{animal_name} ({od.get_type_name(animal)}) attacks {man_name} ({od.get_type_name(man)})"] =functools.partial(attack, animal_name=animal_name, man_name=man_name)
+
+    return actions
+
+od = ODAPI(state, woods_rt_m, woods_rt_mm)
+
+while True:
+    print("--------------")
+    print(indent(
+        renderer.render_od(state,
+            m_id=od.m,
+            mm_id=od.mm),
+        4))
+    print("--------------")
+
+    (od, msgs) = prompt.choose("Select action:", filter_actions(od))
+    print(indent('\n'.join(msgs), 4))
+    if od == None:
+        print("No enabled actions. Quit.")
+        break # no more enabled actions

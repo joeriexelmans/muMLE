@@ -6,6 +6,9 @@ from state.base import State
 from typing import Dict, Tuple, Set, Any, List
 from pprint import pprint
 
+from api.cd import CDAPI
+from api.od import ODAPI
+
 import functools
 
 
@@ -21,10 +24,10 @@ def exec_then_eval(code, _globals, _locals):
 
 def render_conformance_check_result(error_list):
     if len(error_list) == 0:
-        return "OK"
+        return "CONFORM"
     else:
         joined = '\n  '.join(error_list)
-        return f"There were {len(error_list)} errors: \n  {joined}"
+        return f"NOT CONFORM, {len(error_list)} errors: \n  {joined}"
 
 
 class Conformance:
@@ -58,6 +61,10 @@ class Conformance:
         self.structures = {}
         self.matches = {}
         self.candidates = {}
+
+        self.odapi = ODAPI(state, model, type_model)
+
+        # CDAPI(state, type_model)
 
     def check_nominal(self, *, log=False):
         """
@@ -220,7 +227,8 @@ class Conformance:
             suc = self.read_attribute(tm_element, "source_upper_cardinality")
             if slc or suc:
                 mult = (
-                    slc if slc != None else float("-inf"),
+                    # slc if slc != None else float("-inf"),
+                    slc if slc != None else 0,
                     suc if suc != None else float("inf")
                 )
                 self.source_multiplicities[tm_name] = mult
@@ -228,7 +236,8 @@ class Conformance:
             tuc = self.read_attribute(tm_element, "target_upper_cardinality")
             if tlc or tuc:
                 mult = (
-                    tlc if tlc != None else float("-inf"),
+                    # tlc if tlc != None else float("-inf"),
+                    tlc if tlc != None else 0,
                     tuc if tuc != None else float("inf")
                 )
                 self.target_multiplicities[tm_name] = mult
@@ -381,15 +390,16 @@ class Conformance:
 
         funcs = {
             'read_value': self.state.read_value,
-            'get_value': lambda el: od.read_primitive_value(self.bottom, el, self.type_model)[0],
-            'get_target': lambda el: self.bottom.read_edge_target(el),
-            'get_source': lambda el: self.bottom.read_edge_source(el),
-            'get_slot': od.OD(self.type_model, self.model, self.state).get_slot,
-            'get_all_instances': self.get_all_instances,
-            'get_name': self.get_name,
-            'get_type_name': self.get_type_name,
-            'get_outgoing': self.get_outgoing,
-            'get_incoming': self.get_incoming,
+            'get_value': self.odapi.get_value,
+            'get_target': self.odapi.get_target,
+            'get_source': self.odapi.get_source,
+            'get_slot': self.odapi.get_slot,
+            'get_slot_value': self.odapi.get_slot_value,
+            'get_all_instances': self.odapi.get_all_instances,
+            'get_name': self.odapi.get_name,
+            'get_type_name': self.odapi.get_type_name,
+            'get_outgoing': self.odapi.get_outgoing,
+            'get_incoming': self.odapi.get_incoming,
         }
         # print("evaluating constraint ...", code)
         loc = {**kwargs, }
@@ -403,30 +413,6 @@ class Conformance:
         )
         # print('result =', result)
         return result
-
-    def get_name(self, element: UUID):
-        return [name for name in self.bottom.read_keys(self.model) if self.bottom.read_outgoing_elements(self.model, name)[0] == element][0]
-
-    def get_type_name(self, element: UUID):
-        type_node = self.bottom.read_outgoing_elements(element, "Morphism")[0]
-        for type_name in self.bottom.read_keys(self.type_model):
-            if self.bottom.read_outgoing_elements(self.type_model, type_name)[0] == type_node:
-                return type_name
-
-    def get_all_instances(self, type_name: str, include_subtypes=True):
-        result = [e_name for e_name, t_name in self.type_mapping.items() if t_name == type_name]
-        if include_subtypes:
-            for subtype_name in self.sub_types[type_name]:
-                # print(subtype_name, 'is subtype of ')
-                result += [e_name for e_name, t_name in self.type_mapping.items() if t_name == subtype_name]
-        result_with_ids = [ (e_name, self.bottom.read_outgoing_elements(self.model, e_name)[0]) for e_name in result]
-        return result_with_ids
-
-    def get_outgoing(self, element: UUID, assoc_or_attr_name: str):
-        return od.find_outgoing_typed_by(self.bottom, src=element, type_node=self.bottom.read_outgoing_elements(self.type_model, assoc_or_attr_name)[0])
-
-    def get_incoming(self, element: UUID, assoc_or_attr_name: str):
-        return od.find_incoming_typed_by(self.bottom, tgt=element, type_node=self.bottom.read_outgoing_elements(self.type_model, assoc_or_attr_name)[0])
 
     def check_constraints(self):
         """
@@ -451,10 +437,11 @@ class Conformance:
         for type_name in self.bottom.read_keys(self.type_model):
             code = get_code(type_name)
             if code != None:
-                instances = self.get_all_instances(type_name, include_subtypes=self.constraint_check_subtypes)
+                instances = self.odapi.get_all_instances(type_name, include_subtypes=self.constraint_check_subtypes)
                 for obj_name, obj_id in instances:
-                    result = self.evaluate_constraint(code, this=obj_id)
                     description = f"Local constraint of \"{type_name}\" in \"{obj_name}\""
+                    # print(description)
+                    result = self.evaluate_constraint(code, this=obj_id)
                     check_result(result, description)
 
         # global constraints

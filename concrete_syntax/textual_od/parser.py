@@ -90,16 +90,16 @@ def parse_od(state, m_text, mm):
                 # watch out: in Python, 'bool' is subtype of 'int'
                 #  so we must check for 'bool' first
                 if isinstance(value, bool):
-                    tgt = od.create_boolean_value(value_name, value)
+                    od.create_boolean_value(value_name, value)
                 elif isinstance(value, int):
-                    tgt = od.create_integer_value(value_name, value)
+                    od.create_integer_value(value_name, value)
                 elif isinstance(value, str):
-                    tgt = od.create_string_value(value_name, value)
+                    od.create_string_value(value_name, value)
                 elif isinstance(value, _Code):
-                    tgt = od.create_actioncode_value(value_name, value.code)
+                    od.create_actioncode_value(value_name, value.code)
                 else:
                     raise Exception("Unimplemented type "+value)
-                od.create_slot(attr_name, obj_name, tgt)
+                od.create_slot(attr_name, obj_name, value_name)
 
             return obj_name
 

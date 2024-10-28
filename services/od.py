@@ -78,14 +78,20 @@ class OD:
         return slot_id
 
     def get_slot(self, object_node: UUID, attr_name: str):
+        edge = self.get_slot_link(object_node, attr_name)
+        slot_ref = self.bottom.read_edge_target(edge)
+        return slot_ref
+
+    def get_slot_link(self, object_node: UUID, attr_name: str):
         # I really don't like how complex and inefficient it is to read an attribute of an object...
         class_name = self._get_class_of_object(object_node)
         attr_link_name = self.get_attr_link_name(class_name, attr_name)
+        if attr_link_name == None:
+            raise Exception(f"Type '{class_name}' has no attribute '{attr_name}'")
         type_edge, = self.bottom.read_outgoing_elements(self.type_model, attr_link_name)
         for outgoing_edge in self.bottom.read_outgoing_edges(object_node):
             if type_edge in self.bottom.read_outgoing_elements(outgoing_edge, "Morphism"):
-                slot_ref = self.bottom.read_edge_target(outgoing_edge)
-                return slot_ref
+                return outgoing_edge
 
     def get_slots(self, object_node):
         attrlink_node = get_scd_mm_attributelink_node(self.bottom)
@@ -111,32 +117,28 @@ class OD:
         integer_t.create(value)
         # name = 'int'+str(value) # name of the ref to the created integer
         # By convention, the type model must have a ModelRef named "Integer"
-        self.create_model_ref(name, "Integer", int_node)
-        return name
+        return self.create_model_ref(name, "Integer", int_node)
 
     def create_boolean_value(self, name: str, value: bool):
         from services.primitives.boolean_type import Boolean
         bool_node = self.bottom.create_node()
         bool_service = Boolean(bool_node, self.bottom.state)
         bool_service.create(value)
-        self.create_model_ref(name, "Boolean", bool_node)
-        return name
+        return self.create_model_ref(name, "Boolean", bool_node)
 
     def create_string_value(self, name: str, value: str):
         from services.primitives.string_type import String
         string_node = self.bottom.create_node()
         string_t = String(string_node, self.bottom.state)
         string_t.create(value)
-        self.create_model_ref(name, "String", string_node)
-        return name
+        return self.create_model_ref(name, "String", string_node)
 
     def create_actioncode_value(self, name: str, value: str):
         from services.primitives.actioncode_type import ActionCode
         actioncode_node = self.bottom.create_node()
         actioncode_t = ActionCode(actioncode_node, self.bottom.state)
         actioncode_t.create(value)
-        self.create_model_ref(name, "ActionCode", actioncode_node)
-        return name
+        return self.create_model_ref(name, "ActionCode", actioncode_node)
 
     # Identical to the same SCD method:
     def create_model_ref(self, name: str, type_name: str, model: UUID):
@@ -184,7 +186,10 @@ class OD:
         link_id = self._create_link(link_name, type_edge, src_obj_node, tgt_obj_node)
         return link_id
 
+    # used for attribute-links and association-links
     def _create_link(self, link_name: str, type_edge: UUID, src_obj_node: UUID, tgt_obj_node: UUID):
+        # print('create_link', link_name, type_edge, src_obj_node, tgt_obj_node)
+
         # the link itself is unlabeled:
         link_edge = self.bottom.create_edge(src_obj_node, tgt_obj_node)
         # it is only in the context of the model, that the link has a name:
