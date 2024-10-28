@@ -319,8 +319,6 @@ def filter_actions(actions):
 def unfilter_actions(actions, od):
     for name, callback in actions.items():
         yield (name, callback)
-    conf = Conformance(state, od.m, od.mm)
-    yield ("check conformance", lambda: (od, [render_conformance_check_result(conf.check_nominal())]))
 
 def render_woods(od):
     txt = ""
@@ -400,3 +398,7 @@ while True:
 
     (od, msgs) = action()
     print(indent('\n'.join(f"▸ {msg}" for msg in msgs), 2))
+
+    print()
+    conf = Conformance(state, od.m, od.mm)
+    print(render_conformance_check_result(conf.check_nominal()))
