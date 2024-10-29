@@ -74,7 +74,7 @@ class ODAPI:
         if include_subtypes:
             all_types = self.cd.transitive_sub_types[type_name]
         else:
-            all_types = set(type_name)
+            all_types = set([type_name])
         obj_names = [obj_name for type_name in all_types for obj_name in self.type_to_objs[type_name]]
         return [(obj_name, self.bottom.read_outgoing_elements(self.m, obj_name)[0]) for obj_name in obj_names]
 
@@ -108,6 +108,10 @@ class ODAPI:
     def delete(self, obj: UUID):
         self.bottom.delete_element(obj)
         self.__recompute_mappings()
+
+    def has_slot(self, obj: UUID, attr_name: str):
+        class_name = self.get_name(self.get_type(obj))
+        return self.od.get_attr_link_name(class_name, attr_name) != None
 
     def get_slot_value(self, obj: UUID, attr_name: str):
         return self.get_value(self.get_slot(obj, attr_name))
