@@ -92,7 +92,7 @@ def filter_valid_actions(pure_actions):
         conf = Conformance(new_od.state, new_od.m, new_od.mm)
         errors = conf.check_nominal()
         # erase current line:
-        print("                                                  ", end='\r')
+        print("                                                                                ", end='\r')
         if len(errors) == 0:
             # updated RT-M is conform, we have a valid action:
             yield (name, functools.partial(make_tuple, new_od, msgs))
