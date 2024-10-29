@@ -5,6 +5,8 @@ from uuid import UUID
 from state.base import State
 from typing import Dict, Tuple, Set, Any, List
 from pprint import pprint
+import traceback
+from concrete_syntax.common import indent
 
 from api.cd import CDAPI
 from api.od import ODAPI
@@ -26,8 +28,8 @@ def render_conformance_check_result(error_list):
     if len(error_list) == 0:
         return "CONFORM"
     else:
-        joined = '\n  '.join(error_list)
-        return f"NOT CONFORM, {len(error_list)} errors: \n  {joined}"
+        joined = ''.join(('\n  ▸ ' + err for err in error_list))
+        return f"NOT CONFORM, {len(error_list)} errors:{joined}"
 
 
 class Conformance:
@@ -276,7 +278,7 @@ class Conformance:
                 import traceback
                 traceback.format_exc(e)
                 # no or too many morphism links found
-                errors.append(f"Incorrectly typed element: {m_name}")
+                errors.append(f"Incorrectly typed element: '{m_name}'")
         return errors
 
     def check_link_typing(self):
@@ -301,14 +303,14 @@ class Conformance:
             source_type_expected = self.type_model_names[tm_source]
             if source_type_actual != source_type_expected:
                 if source_type_actual not in self.sub_types[source_type_expected]:
-                    errors.append(f"Invalid source type {source_type_actual} for element {m_name}")
+                    errors.append(f"Invalid source type '{source_type_actual}' for element '{m_name}'")
             # check if target is typed correctly
             target_name = self.model_names[m_target]
             target_type_actual = self.type_mapping[target_name]
             target_type_expected = self.type_model_names[tm_target]
             if target_type_actual != target_type_expected:
                 if target_type_actual not in self.sub_types[target_type_expected]:
-                    errors.append(f"Invalid target type {target_type_actual} for element {m_name}")
+                    errors.append(f"Invalid target type '{target_type_actual}' for element '{m_name}'")
         return errors
 
     def check_multiplicities(self):
@@ -323,7 +325,7 @@ class Conformance:
             if tm_name in self.abstract_types:
                 type_count = list(self.type_mapping.values()).count(tm_name)
                 if type_count > 0:
-                    errors.append(f"Invalid instantiation of abstract class: {tm_name}")
+                    errors.append(f"Invalid instantiation of abstract class: '{tm_name}'")
             # class multiplicities
             if tm_name in self.multiplicities:
                 lc, uc = self.multiplicities[tm_name]
@@ -331,7 +333,7 @@ class Conformance:
                 for sub_type in self.sub_types[tm_name]:
                     type_count += list(self.type_mapping.values()).count(sub_type)
                 if type_count < lc or type_count > uc:
-                    errors.append(f"Cardinality of type exceeds valid multiplicity range: {tm_name} ({type_count})")
+                    errors.append(f"Cardinality of type exceeds valid multiplicity range: '{tm_name}' ({type_count})")
             # association source multiplicities
             if tm_name in self.source_multiplicities:
                 tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
@@ -350,7 +352,7 @@ class Conformance:
                             except KeyError:
                                 pass  # for elements not part of model, e.g. morphism links
                         if count < lc or count > uc:
-                            errors.append(f"Source cardinality of type {tm_name} ({count}) out of bounds ({lc}..{uc}) in {tgt_obj_name}.")
+                            errors.append(f"Source cardinality of type '{tm_name}' ({count}) out of bounds ({lc}..{uc}) in '{tgt_obj_name}'.")
 
             # association target multiplicities
             if tm_name in self.target_multiplicities:
@@ -376,7 +378,7 @@ class Conformance:
                             except KeyError:
                                 pass  # for elements not part of model, e.g. morphism links
                         if count < lc or count > uc:
-                            errors.append(f"Target cardinality of type {tm_name} ({count}) out of bounds ({lc}..{uc}) in {src_obj_name}.")
+                            errors.append(f"Target cardinality of type '{tm_name}' ({count}) out of bounds ({lc}..{uc}) in '{src_obj_name}'.")
                         # else:
                             # print(f"OK: Target cardinality of type {tm_name} ({count}) within bounds ({lc}..{uc}) in {src_obj_name}.")
         return errors
@@ -425,10 +427,17 @@ class Conformance:
                 return code
 
         def check_result(result, description):
-            if not isinstance(result, bool):
-                raise Exception(f"{description} evaluation result is not boolean! Instead got {result}")
-            if not result:
-                errors.append(f"{description} not satisfied.")
+            if isinstance(result, str):
+                errors.append(f"{description} not satisfied. Reason: {result}")
+            elif isinstance(result, bool):
+                if not result:
+                    errors.append(f"{description} not satisfied.")
+            elif isinstance(result, list):
+                if len(result) > 0:
+                    reasons = indent('\n'.join(result), 2)
+                    errors.append(f"{description} not satisfied. Reasons:\n{reasons}")
+            else:
+                raise Exception(f"{description} evaluation result should be boolean or string! Instead got {result}")
 
         # local constraints
         for type_name in self.bottom.read_keys(self.type_model):
@@ -440,8 +449,9 @@ class Conformance:
                     # print(description)
                     try:
                         result = self.evaluate_constraint(code, this=obj_id)
-                    except Exception as e:
-                        raise Exception(f"Context of above error = {description}") from e
+                    except:
+                        errors.append(f"Runtime error during evaluation of {description}:\n{indent(traceback.format_exc(), 6)}")
+                        # raise Exception(f"Context of above error = {description}") from e
                     check_result(result, description)
 
         # global constraints
@@ -462,8 +472,8 @@ class Conformance:
                 description = f"Global constraint \"{tm_name}\""
                 try:
                     result = self.evaluate_constraint(code, model=self.model)
-                except Exception as e:
-                    raise Exception(f"Context of above error = {description}") from e
+                except:
+                    errors.append(f"Runtime error during evaluation of {description}:\n{indent(traceback.format_exc(), 6)}")
                 check_result(result, description)
         return errors
 
