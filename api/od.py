@@ -68,7 +68,11 @@ class ODAPI:
         return od.find_incoming_typed_by(self.bottom, tgt=obj, type_node=self.bottom.read_outgoing_elements(self.mm, assoc_name)[0])
 
     def get_all_instances(self, type_name: str, include_subtypes=True):
-        obj_names = self.type_to_objs[type_name]
+        if include_subtypes:
+            all_types = self.cd.transitive_sub_types[type_name]
+        else:
+            all_types = set(type_name)
+        obj_names = [obj_name for type_name in all_types for obj_name in self.type_to_objs[type_name]]
         return [(obj_name, self.bottom.read_outgoing_elements(self.m, obj_name)[0]) for obj_name in obj_names]
 
     def get_type(self, obj: UUID):
@@ -92,7 +96,7 @@ class ODAPI:
 
     def is_instance(obj: UUID, type_name: str, include_subtypes=True):
         typ = self.cd.get_type(type_name)
-        types = set(typ) if not include_subtypes else self.cd.transitive_subtypes[type_name]
+        types = set(typ) if not include_subtypes else self.cd.transitive_sub_types[type_name]
         for type_of_obj in self.bottom.read_outgoing_elements(obj, "Morphism"):
             if type_of_obj in types:
                 return True
