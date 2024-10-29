@@ -409,7 +409,6 @@ class Conformance:
              },  # globals
              loc # locals
         )
-        # print('result =', result)
         return result
 
     def check_constraints(self):
@@ -439,7 +438,10 @@ class Conformance:
                 for obj_name, obj_id in instances:
                     description = f"Local constraint of \"{type_name}\" in \"{obj_name}\""
                     # print(description)
-                    result = self.evaluate_constraint(code, this=obj_id)
+                    try:
+                        result = self.evaluate_constraint(code, this=obj_id)
+                    except Exception as e:
+                        raise Exception(f"Context of above error = {description}") from e
                     check_result(result, description)
 
         # global constraints
@@ -457,8 +459,11 @@ class Conformance:
         for tm_name in glob_constraints:
             code = get_code(tm_name)
             if code != None:
-                result = self.evaluate_constraint(code, model=self.model)
                 description = f"Global constraint \"{tm_name}\""
+                try:
+                    result = self.evaluate_constraint(code, model=self.model)
+                except Exception as e:
+                    raise Exception(f"Context of above error = {description}") from e
                 check_result(result, description)
         return errors
 
