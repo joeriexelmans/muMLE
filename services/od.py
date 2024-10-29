@@ -167,8 +167,14 @@ class OD:
                     return assoc_name
 
     def create_link(self, link_name: Optional[str], assoc_name: str, src_obj_name: str, tgt_obj_name: str):
-        src_obj_node, = self.bottom.read_outgoing_elements(self.model, src_obj_name)
-        tgt_obj_node, = self.bottom.read_outgoing_elements(self.model, tgt_obj_name)
+        src_obj_nodes = self.bottom.read_outgoing_elements(self.model, src_obj_name)
+        if len(src_obj_nodes) == 0:
+            raise Exception(f"Cannot create link '{link_name}' ({assoc_name}): source object '{src_obj_name}'' not found")
+        src_obj_node = src_obj_nodes[0]
+        tgt_obj_nodes = self.bottom.read_outgoing_elements(self.model, tgt_obj_name)
+        if len(tgt_obj_nodes) == 0:
+            raise Exception(f"Cannot create link '{link_name}' ({assoc_name}): target object '{tgt_obj_name}'' not found")
+        tgt_obj_node = tgt_obj_nodes[0]
 
         # generate a unique name for the link
         if link_name == None:
