@@ -9,15 +9,15 @@ from concrete_syntax.textual_od import parser, renderer
 from concrete_syntax.common import indent
 from concrete_syntax.plantuml import renderer as plantuml
 from util import prompt
-from transformation.cloner import clone_od
 from api.od import ODAPI
 
-from examples.semantics.operational.simulator import Simulator, RandomDecisionMaker, InteractiveDecisionMaker, filter_valid_actions
+from examples.semantics.operational.simulator import Simulator, RandomDecisionMaker, InteractiveDecisionMaker, make_actions_pure, filter_valid_actions
+
 
 state = DevState()
+scd_mmm = bootstrap_scd(state) # Load meta-meta-model
 
-# Load meta-meta-model
-scd_mmm = bootstrap_scd(state)
+### Load (meta-)models ###
 
 # Design meta-model
 woods_mm_cs = """
@@ -46,15 +46,6 @@ woods_mm_cs = """
         target_lower_cardinality = 1;
     }
 """
-
-woods_mm = parser.parse_od(
-    state,
-    m_text=woods_mm_cs,
-    mm=scd_mmm)
-
-conf = Conformance(state, woods_mm, scd_mmm)
-print("MM ...", render_conformance_check_result(conf.check_nominal()))
-
 # Runtime meta-model
 woods_rt_mm_cs = woods_mm_cs + """
     AnimalState:Class {
@@ -137,6 +128,14 @@ woods_rt_mm_cs = woods_mm_cs + """
     }
 """
 
+woods_mm = parser.parse_od(
+    state,
+    m_text=woods_mm_cs,
+    mm=scd_mmm)
+
+conf = Conformance(state, woods_mm, scd_mmm)
+print("MM ...", render_conformance_check_result(conf.check_nominal()))
+
 woods_rt_mm = parser.parse_od(
     state,
     m_text=woods_rt_mm_cs,
@@ -144,14 +143,6 @@ woods_rt_mm = parser.parse_od(
 
 conf = Conformance(state, woods_rt_mm, scd_mmm)
 print("RT-MM ...", render_conformance_check_result(conf.check_nominal()))
-
-# print("--------------")
-# print(indent(
-#     renderer.render_od(state,
-#         m_id=woods_rt_mm,
-#         mm_id=scd_mmm),
-#     4))
-# print("--------------")
 
 # Our design model - the part that doesn't change
 woods_m_cs = """
@@ -173,14 +164,6 @@ woods_m_cs = """
     :afraidOf (bill -> george)
     :afraidOf (george -> bill)
 """
-
-woods_m = parser.parse_od(
-    state,
-    m_text=woods_m_cs,
-    mm=woods_mm)
-
-conf = Conformance(state, woods_m, woods_mm)
-print("M ...", render_conformance_check_result(conf.check_nominal()))
 
 # Our runtime model - the part that changes with every execution step
 woods_rt_initial_m_cs = woods_m_cs + """
@@ -211,6 +194,14 @@ woods_rt_initial_m_cs = woods_m_cs + """
     }
 """
 
+woods_m = parser.parse_od(
+    state,
+    m_text=woods_m_cs,
+    mm=woods_mm)
+
+conf = Conformance(state, woods_m, woods_mm)
+print("M ...", render_conformance_check_result(conf.check_nominal()))
+
 woods_rt_m = parser.parse_od(
     state,
     m_text=woods_rt_initial_m_cs,
@@ -219,6 +210,10 @@ woods_rt_m = parser.parse_od(
 conf = Conformance(state, woods_rt_m, woods_rt_mm)
 print("RT-M ...", render_conformance_check_result(conf.check_nominal()))
 
+print()
+
+
+### Semantics ###
 
 # Helpers
 def state_of(od, animal):
@@ -229,7 +224,8 @@ def get_time(od):
     _, clock = od.get_all_instances("Clock")[0]
     return clock, od.get_slot_value(clock, "time")
 
-def advance_time(od):
+# Action: Time advances, whoever is being attacked dies, bears become hungrier
+def action_advance_time(od):
     msgs = []
     clock, old_time = get_time(od)
     new_time = old_time + 1
@@ -259,8 +255,9 @@ def advance_time(od):
             msgs.append(f"Bear {bear_name}'s hunger level is now {new_hunger}.")
     return msgs
 
-# we must use the names of the objects as parameters, because when cloning, the IDs of objects change!
-def attack(od, animal_name: str, man_name: str):
+# Action: Animal attacks Man
+# Note: We must use the names of the objects as parameters, because when cloning, the IDs of objects change!
+def action_attack(od, animal_name: str, man_name: str):
     msgs = []
     animal = od.get(animal_name)
     man = od.get(man_name)
@@ -274,11 +271,11 @@ def attack(od, animal_name: str, man_name: str):
     msgs.append(f"{animal_name} is now attacking {man_name}")
     return msgs
 
-
+# Get all actions that can be performed (including those that bring us to a non-conforming state)
 def get_all_actions(od):
-    def _get_actions(od):
+    def _generate_actions(od):
         # can always advance time:
-        yield ("advance time", advance_time)
+        yield ("advance time", action_advance_time)
 
         # who can attack whom?
         for _, afraid_link in od.get_all_instances("afraidOf"):
@@ -289,21 +286,15 @@ def get_all_actions(od):
             man_state = state_of(od, man)
             animal_state = state_of(od, animal)
             descr = f"{animal_name} ({od.get_type_name(animal)}) attacks {man_name} ({od.get_type_name(man)})"
-            yield (descr, functools.partial(attack, animal_name=animal_name, man_name=man_name))
-            
-    # Copy model before modifying it
-    def exec_pure(action, od):
-        cloned_rt_m = clone_od(state, od.m, od.mm)
-        new_od = ODAPI(state, cloned_rt_m, od.mm)
-        msgs = action(new_od)
-        return (new_od, msgs)
+            yield (descr, functools.partial(action_attack, animal_name=animal_name, man_name=man_name))
 
-    for descr, action in _get_actions(od):
-        yield (descr, functools.partial(exec_pure, action, od))
+    return make_actions_pure(_generate_actions(od), od)
 
+# Only get those actions that bring us to a conforming state
 def get_valid_actions(od):
     return filter_valid_actions(get_all_actions(od))
 
+# Render our run-time state to a string
 def render_woods(od):
     txt = ""
     _, time = get_time(od)
@@ -336,7 +327,7 @@ def render_woods(od):
         txt += f"  👨 {od.get_name(man)} ({render_dead(man_state)}) {render_attacking(man_state)}{being_attacked}\n"
     return txt
 
-
+# When should simulation stop?
 def termination_condition(od):
     _, time = get_time(od)
     if time >= 10:
@@ -351,18 +342,18 @@ def termination_condition(od):
     if len(who_is_dead) >= 2:
         return f"{' and '.join(who_is_dead)} are dead"
 
+
 sim = Simulator(
     action_generator=get_valid_actions,
-    # action_generator=get_actions,
+    # action_generator=get_all_actions,
     decision_maker=RandomDecisionMaker(seed=0),
     # decision_maker=InteractiveDecisionMaker(),
     termination_condition=termination_condition,
-    check_conformance=True,
+    check_conformance=False,
     verbose=True,
     renderer=render_woods,
 )
 
 od = ODAPI(state, woods_rt_m, woods_rt_mm)
 
-print()
 sim.run(od)

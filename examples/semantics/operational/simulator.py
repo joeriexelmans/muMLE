@@ -5,9 +5,10 @@ import functools
 import sys
 
 from framework.conformance import Conformance, render_conformance_check_result
-
 from concrete_syntax.common import indent
 from concrete_syntax.textual_od.renderer import render_od
+from transformation.cloner import clone_od
+from api.od import ODAPI
 
 class DecisionMaker:
     @abc.abstractmethod
@@ -37,6 +38,7 @@ class Simulator:
     # Run simulation until termination condition satisfied
     def run(self, od):
         self.__print("Start simulation")
+        self.__print(f"Decision maker: {self.decision_maker}")
         step_counter = 0
         while True:
             self.__print("--------------")
@@ -68,12 +70,23 @@ class Simulator:
         self.__print(f"Executed {step_counter} steps.")
         return od
 
+def make_actions_pure(actions, od):
+    # Copy model before modifying it
+    def exec_pure(action, od):
+        cloned_rt_m = clone_od(od.state, od.m, od.mm)
+        new_od = ODAPI(od.state, cloned_rt_m, od.mm)
+        msgs = action(new_od)
+        return (new_od, msgs)
 
-def filter_valid_actions(actions):
+    for descr, action in actions:
+        yield (descr, functools.partial(exec_pure, action, od))
+
+
+def filter_valid_actions(pure_actions):
     result = {}
     def make_tuple(new_od, msgs):
         return (new_od, msgs)
-    for name, callback in actions:
+    for name, callback in pure_actions:
         print(f"attempt '{name}' ...", end='\r')
         (new_od, msgs) = callback()
         conf = Conformance(new_od.state, new_od.m, new_od.mm)
@@ -87,7 +100,11 @@ def filter_valid_actions(actions):
 
 class RandomDecisionMaker(DecisionMaker):
     def __init__(self, seed=0, verbose=True):
+        self.seed = seed
         self.r = random.Random(seed)
+
+    def __str__(self):
+        return f"RandomDecisionMaker(seed={self.seed})"
 
     def __call__(self, actions):
         arr = [action for descr, action in actions]
@@ -97,6 +114,9 @@ class RandomDecisionMaker(DecisionMaker):
 class InteractiveDecisionMaker(DecisionMaker):
     def __init__(self, msg="Select action:"):
         self.msg = msg
+
+    def __str__(self):
+        return f"InteractiveDecisionMaker()"
 
     def __call__(self, actions):
         arr = []
