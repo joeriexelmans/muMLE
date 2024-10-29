@@ -31,7 +31,10 @@ class OD:
 
 
     def create_object(self, name: str, class_name: str):
-        class_node, = self.bottom.read_outgoing_elements(self.type_model, class_name)
+        class_nodes = self.bottom.read_outgoing_elements(self.type_model, class_name)
+        if len(class_nodes) == 0:
+            raise Exception(f"Cannot create object: No such class '{class_name}'")
+        class_node = class_nodes[0]
         abstract_nodes = self.bottom.read_outgoing_elements(self.type_model, f"{class_name}.abstract")
         return self._create_object(name, class_node)
 
