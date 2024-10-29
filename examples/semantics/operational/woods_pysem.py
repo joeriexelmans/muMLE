@@ -1,14 +1,10 @@
 import functools
-import random
-import math
 
 from state.devstate import DevState
 from bootstrap.scd import bootstrap_scd
 from framework.conformance import Conformance, render_conformance_check_result
 from concrete_syntax.textual_od import parser, renderer
-from concrete_syntax.common import indent
 from concrete_syntax.plantuml import renderer as plantuml
-from util import prompt
 from api.od import ODAPI
 
 from examples.semantics.operational.simulator import Simulator, RandomDecisionMaker, InteractiveDecisionMaker, make_actions_pure, filter_valid_actions
@@ -128,22 +124,6 @@ woods_rt_mm_cs = woods_mm_cs + """
     }
 """
 
-woods_mm = parser.parse_od(
-    state,
-    m_text=woods_mm_cs,
-    mm=scd_mmm)
-
-conf = Conformance(state, woods_mm, scd_mmm)
-print("MM ...", render_conformance_check_result(conf.check_nominal()))
-
-woods_rt_mm = parser.parse_od(
-    state,
-    m_text=woods_rt_mm_cs,
-    mm=scd_mmm)
-
-conf = Conformance(state, woods_rt_mm, scd_mmm)
-print("RT-MM ...", render_conformance_check_result(conf.check_nominal()))
-
 # Our design model - the part that doesn't change
 woods_m_cs = """
     george:Man {
@@ -194,21 +174,19 @@ woods_rt_initial_m_cs = woods_m_cs + """
     }
 """
 
-woods_m = parser.parse_od(
-    state,
-    m_text=woods_m_cs,
-    mm=woods_mm)
+def parse_and_check(m_cs: str, mm, descr: str):
+    m = parser.parse_od(
+        state,
+        m_text=m_cs,
+        mm=mm)
+    conf = Conformance(state, m, mm)
+    print(descr, "...", render_conformance_check_result(conf.check_nominal()))
+    return m
 
-conf = Conformance(state, woods_m, woods_mm)
-print("M ...", render_conformance_check_result(conf.check_nominal()))
-
-woods_rt_m = parser.parse_od(
-    state,
-    m_text=woods_rt_initial_m_cs,
-    mm=woods_rt_mm)
-
-conf = Conformance(state, woods_rt_m, woods_rt_mm)
-print("RT-M ...", render_conformance_check_result(conf.check_nominal()))
+woods_mm    = parse_and_check(woods_mm_cs,           scd_mmm,     "MM")
+woods_rt_mm = parse_and_check(woods_rt_mm_cs,        scd_mmm,     "RT-MM")
+woods_m     = parse_and_check(woods_m_cs,            woods_mm,    "M")
+woods_rt_m  = parse_and_check(woods_rt_initial_m_cs, woods_rt_mm, "RT-M")
 
 print()
 
@@ -277,7 +255,7 @@ def get_all_actions(od):
         # can always advance time:
         yield ("advance time", action_advance_time)
 
-        # who can attack whom?
+        # if A is afraid of B, then B can attack A:
         for _, afraid_link in od.get_all_instances("afraidOf"):
             man = od.get_source(afraid_link)
             animal = od.get_target(afraid_link)
