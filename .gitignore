@@ -1,3 +1,6 @@
+# Never accidently commit solutions to assignments :)
+*_solution.py
+
 # ---> Python
 # Byte-compiled / optimized / DLL files
 __pycache__/
