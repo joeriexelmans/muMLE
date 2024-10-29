@@ -56,7 +56,10 @@ class ODAPI:
         return self.bottom.read_edge_source(link)
 
     def get_slot(self, obj: UUID, attr_name: str):
-        return self.od.get_slot(obj, attr_name)
+        slot = self.od.get_slot(obj, attr_name)
+        if slot == None:
+            raise Exception(f"Object '{self.obj_to_name[obj]}' has no slot '{attr_name}'")
+        return slot
 
     def get_slot_link(self, obj: UUID, attr_name: str):
         return self.od.get_slot_link(obj, attr_name)
@@ -109,6 +112,7 @@ class ODAPI:
     def get_slot_value(self, obj: UUID, attr_name: str):
         return self.get_value(self.get_slot(obj, attr_name))
 
+    # create or update slot value
     def set_slot_value(self, obj: UUID, attr_name: str, new_value: any):
         obj_name = self.get_name(obj)
 
@@ -150,3 +154,6 @@ class ODAPI:
         link_id = self.od._create_link(link_name, typ, src, tgt)
         self.__recompute_mappings()
         return link_id
+
+    def create_object(self, object_name: Optional[str], class_name: str):
+        return self.od.create_object(object_name, class_name)
