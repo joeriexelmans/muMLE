@@ -9,6 +9,8 @@ def render_od(state, m_id, mm_id, hide_names=True):
     
     m_od = od.OD(mm_id, m_id, state)
 
+    serialized = set()
+
     def display_name(name: str):
         # object names that start with "__" are hidden
         return name if (name[0:2] != "__" or not hide_names) else ""
@@ -28,11 +30,23 @@ def render_od(state, m_id, mm_id, hide_names=True):
         for object_name, object_node in objects.items():
             output += f"\n{display_name(object_name)}:{class_name}"
             output += write_attributes(object_node)
+            serialized.add(object_name)
 
-    for assoc_name, links in m_od.get_all_links().items():
-        for link_name, (link_edge, src_name, tgt_name) in links.items():
-            output += f"\n{display_name(link_name)}:{assoc_name} ({src_name} -> {tgt_name})"
-            # links can also have slots:
-            output += write_attributes(link_edge)
+    links = m_od.get_all_links()
+
+    while len(links) != 0:
+        postponed = {}
+        for assoc_name, links in links.items():
+            for link_name, (link_edge, src_name, tgt_name) in links.items():
+                if link_name in serialized:
+                    continue
+                if src_name not in serialized or tgt_name not in serialized:
+                    postponed[assoc_name] = links
+                    break
+                output += f"\n{display_name(link_name)}:{assoc_name} ({src_name} -> {tgt_name})"
+                # links can also have slots:
+                output += write_attributes(link_edge)
+                serialized.add(link_name)
+        links = postponed
 
     return output
