@@ -1,3 +1,5 @@
+import urllib
+from concrete_syntax.common import indent
 from examples.semantics.operational.port.helpers import design_to_state, state_to_design, get_time, get_num_ships
 
 def render_port_graphviz(od):
@@ -28,9 +30,6 @@ def render_port_graphviz(od):
 
     for _, gen in od.get_all_instances("Generator", include_subtypes=False):
         txt += f'"{od.get_name(gen)}" [ label = "+", shape = diamond, fillcolor = green, fontsize = 30, style = filled ]\n'
-
-    for _, blackhole in od.get_all_instances("BlackHole", include_subtypes=False):
-        txt += f'"{od.get_name(blackhole)}" [ label = "-", shape = diamond, fillcolor = red, fontsize = 30, style = filled ]\n'
 
     for _, conn in od.get_all_instances("connection"):
         src = od.get_source(conn)
