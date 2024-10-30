@@ -67,6 +67,9 @@ def render_port_textual(od):
     for _, berth_state in od.get_all_instances("BerthState", include_subtypes=False):
         berth = state_to_design(od, berth_state)
         name = od.get_name(berth)
-        txt += f'berth "{name}" {"🚢"*get_num_ships(od, berth)} {od.get_slot_value(berth_state, "status")}\n'
+        operated_descr = ""
+        if len(od.get_incoming(berth, "isOperating")):
+            operated_descr = " and being operated"
+        txt += f'berth "{name}" {"🚢"*get_num_ships(od, berth)} {od.get_slot_value(berth_state, "status")}{operated_descr}\n'
 
     return txt
