@@ -263,7 +263,7 @@ port_rt_m_cs = port_m_cs + """
         time = 0;
     }
 
-    waitingState:PlaceState         { numShips = 2; }  :of (waitingState -> waiting)
+    waitingState:PlaceState         { numShips = 0; }  :of (waitingState -> waiting)
     inboundPassageState:PlaceState  { numShips = 0; }  :of (inboundPassageState -> inboundPassage)
     outboundPassageState:PlaceState { numShips = 0; }  :of (outboundPassageState -> outboundPassage)
 

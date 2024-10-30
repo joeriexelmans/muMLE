@@ -139,6 +139,4 @@ def termination_condition(od):
 
     # TO IMPLEMENT: terminate simulation when the place 'served' contains 2 ships.
 
-    if len(od.get_all_instances("Place")) > 5:
-        return "More places than I can count :("
-
+    pass
