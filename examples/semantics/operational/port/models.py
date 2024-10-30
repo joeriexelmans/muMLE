@@ -47,16 +47,12 @@ port_mm_cs = """
     Generator:Class
     :Inheritance (Generator -> Source)
 
-    BlackHole:Class
-    :Inheritance (BlackHole -> Sink)
-
 
     # Those classes to which we want to attach a runtime state object
     Stateful:Class {
         abstract = True;
     }
     :Inheritance (Place      -> Stateful)
-    :Inheritance (BlackHole  -> Stateful)
     :Inheritance (WorkerSet  -> Stateful)
     :Inheritance (Berth      -> Stateful)
     :Inheritance (connection -> Stateful)
@@ -157,6 +153,7 @@ port_rt_mm_cs = port_mm_cs + """
         name = "moved";
         optional = False;
         constraint = ```
+            result = True
             all_successors_moved = True
             moved = get_value(get_target(this))
             conn_state = get_source(this)
@@ -167,16 +164,10 @@ port_rt_mm_cs = port_mm_cs + """
                 next_conn_state = get_source(get_incoming(next_conn, "of")[0])
                 if not get_slot_value(next_conn_state, "moved"):
                     all_successors_moved = False
-            not moved or all_successors_moved
+            if moved and not all_successors_moved:
+                result = f"Connection {get_name(conn)} played before its turn."
+            result
         ```;
-    }
-
-    BlackHoleState:Class
-    :Inheritance (BlackHoleState -> State)
-    BlackHoleState_counter:AttributeLink (BlackHoleState -> Integer) {
-        name = "counter";
-        optional = False;
-        constraint = `get_value(get_target(this)) >= 0`; # non-negative
     }
 
     Clock:Class {
@@ -255,7 +246,7 @@ port_m_cs = """
 
 
     # ships that have been served are counted here
-    served:BlackHole
+    served:Place
     c11:connection (outboundPassage -> served)
 
 
@@ -284,7 +275,7 @@ port_rt_m_cs = port_m_cs + """
     berth1State:BerthState { status = "empty"; numShips = 0; }  :of (berth1State -> berth1)
     berth2State:BerthState { status = "empty"; numShips = 0; }  :of (berth2State -> berth2)
 
-    servedState:BlackHoleState { counter = 0; }  :of (servedState -> served)
+    servedState:PlaceState { numShips = 0; }  :of (servedState -> served)
 
     workersState:WorkerSetState  :of (workersState -> workers)
 

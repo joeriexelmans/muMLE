@@ -427,6 +427,8 @@ class Conformance:
                 return code
 
         def check_result(result, description):
+            if result == None:
+                return # OK
             if isinstance(result, str):
                 errors.append(f"{description} not satisfied. Reason: {result}")
             elif isinstance(result, bool):
@@ -434,7 +436,7 @@ class Conformance:
                     errors.append(f"{description} not satisfied.")
             elif isinstance(result, list):
                 if len(result) > 0:
-                    reasons = indent('\n'.join(result), 2)
+                    reasons = indent('\n'.join(result), 4)
                     errors.append(f"{description} not satisfied. Reasons:\n{reasons}")
             else:
                 raise Exception(f"{description} evaluation result should be boolean or string! Instead got {result}")
