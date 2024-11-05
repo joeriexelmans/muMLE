@@ -63,6 +63,7 @@ class Conformance:
         self.matches = {}
         self.candidates = {}
 
+        self.cdapi = CDAPI(state, type_model)
         self.odapi = ODAPI(state, model, type_model)
 
     def check_nominal(self, *, log=False):
@@ -300,16 +301,14 @@ class Conformance:
             source_name = self.model_names[m_source]
             source_type_actual = self.type_mapping[source_name]
             source_type_expected = self.type_model_names[tm_source]
-            if source_type_actual != source_type_expected:
-                if source_type_actual not in self.sub_types[source_type_expected]:
-                    errors.append(f"Invalid source type '{source_type_actual}' for element '{m_name}'")
+            if not self.cdapi.is_subtype(super_type_name=source_type_expected, sub_type_name=source_type_actual):
+                errors.append(f"Invalid source type '{source_type_actual}' for element '{m_name}'")
             # check if target is typed correctly
             target_name = self.model_names[m_target]
             target_type_actual = self.type_mapping[target_name]
             target_type_expected = self.type_model_names[tm_target]
-            if target_type_actual != target_type_expected:
-                if target_type_actual not in self.sub_types[target_type_expected]:
-                    errors.append(f"Invalid target type '{target_type_actual}' for element '{m_name}'")
+            if not self.cdapi.is_subtype(super_type_name=source_type_expected, sub_type_name=source_type_actual):
+                errors.append(f"Invalid target type '{target_type_actual}' for element '{m_name}'")
         return errors
 
     def check_multiplicities(self):
