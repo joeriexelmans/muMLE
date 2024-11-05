@@ -372,7 +372,7 @@ def read_primitive_value(bottom, modelref: UUID, mm: UUID):
     if not is_typed_by(bottom, typ, get_scd_mm_modelref_node(bottom)):
         raise Exception("Assertion failed: argument must be typed by ModelRef", typ)
     referred_model = UUID(bottom.read_value(modelref))
-    typ_name = get_object_name(bottom, mm, typ)
+    typ_name = get_object_name(bottom, model=mm, object_node=typ)
     if typ_name == "Integer":
         return Integer(referred_model, bottom.state).read(), typ_name
     elif typ_name == "String":

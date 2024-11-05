@@ -49,7 +49,7 @@ class CDAPI:
         self.transitive_sub_types = { type_name: set(get_transitive_sub_types(type_name)) for type_name in self.direct_sub_types } 
         self.transitive_super_types = { type_name: set(get_transitive_super_types(type_name)) for type_name in self.direct_super_types }
 
-    def get_type(self, type_name: str):
+    def get(self, type_name: str):
         return self.bottom.read_outgoing_elements(self.m, type_name)[0]
 
     def is_direct_subtype(self, super_type_name: str, sub_type_name: str):
@@ -68,7 +68,9 @@ class CDAPI:
 
     # # The edge connecting an object to the value of a slot must be named `{object_name}_{attr_name}`
     def get_attr_link_name(self, class_name, attr_name):
-        return self.type_model_names[self.find_attribute_type(class_name, attr_name)]
+        attr_type_link = self.find_attribute_type(class_name, attr_name)
+        if attr_type_link != None:
+            return self.type_model_names[attr_type_link]
 
     # Attributes are inherited, so when we instantiate an attribute of a class, the AttributeLink may contain the name of the superclass
     def find_attribute_type(self, class_name: str, attr_name: str):

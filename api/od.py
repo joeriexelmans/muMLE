@@ -16,6 +16,9 @@ def build_name_mapping(state, m):
         mapping[element] = name
     return mapping
 
+class NoSuchSlotException(Exception):
+    pass
+
 # Object Diagram API
 # Intended to replace the 'services.od.OD' class eventually
 class ODAPI:
@@ -25,7 +28,7 @@ class ODAPI:
         self.m = m
         self.mm = mm
         self.od = od.OD(mm, m, state)
-        self.cd = cd.CDAPI(state, mm)
+        self.cdapi = cd.CDAPI(state, mm)
 
         self.create_boolean_value = self.od.create_boolean_value
         self.create_integer_value = self.od.create_integer_value
@@ -36,15 +39,16 @@ class ODAPI:
 
     # Called after every change - makes querying faster but modifying slower
     def __recompute_mappings(self):
-        self.obj_to_name = {**build_name_mapping(self.state, self.m), **build_name_mapping(self.state, self.mm)}
-        # self.obj_to_type = {}
+        self.m_obj_to_name = build_name_mapping(self.state, self.m)
+        self.mm_obj_to_name = build_name_mapping(self.state, self.mm)
         self.type_to_objs = { type_name : set() for type_name in self.bottom.read_keys(self.mm)}
         for m_name in self.bottom.read_keys(self.m):
             m_element, = self.bottom.read_outgoing_elements(self.m, m_name)
             tm_element = self.get_type(m_element)
-            tm_name = self.obj_to_name[tm_element]
-            # self.obj_to_type[m_name] = tm_name
-            self.type_to_objs[tm_name].add(m_name)
+            if tm_element in self.mm_obj_to_name:
+                tm_name = self.mm_obj_to_name[tm_element]
+                # self.obj_to_type[m_name] = tm_name
+                self.type_to_objs[tm_name].add(m_name)
 
     def get_value(self, obj: UUID):
         return od.read_primitive_value(self.bottom, obj, self.mm)[0]
@@ -58,21 +62,44 @@ class ODAPI:
     def get_slot(self, obj: UUID, attr_name: str):
         slot = self.od.get_slot(obj, attr_name)
         if slot == None:
-            raise Exception(f"Object '{self.obj_to_name[obj]}' has no slot '{attr_name}'")
+            raise NoSuchSlotException(f"Object '{self.m_obj_to_name[obj]}' has no slot '{attr_name}'")
         return slot
 
     def get_slot_link(self, obj: UUID, attr_name: str):
         return self.od.get_slot_link(obj, attr_name)
 
-    def get_outgoing(self, obj: UUID, assoc_name: str):
-        return od.find_outgoing_typed_by(self.bottom, src=obj, type_node=self.bottom.read_outgoing_elements(self.mm, assoc_name)[0])
+    # Parameter 'include_subtypes': whether to include subtypes of the given association
+    def get_outgoing(self, obj: UUID, assoc_name: str, include_subtypes=True):
+        outgoing = self.bottom.read_outgoing_edges(obj)
+        result = []
+        for o in outgoing:
+            try:
+                type_of_outgoing_link = self.get_type_name(o)
+            except:
+                continue # OK, not all edges are typed
+            if (include_subtypes and self.cdapi.is_subtype(super_type_name=assoc_name, sub_type_name=type_of_outgoing_link)
+                or not include_subtypes and type_of_outgoing_link == assoc_name):
+                    result.append(o)
+        return result
 
-    def get_incoming(self, obj: UUID, assoc_name: str):
-        return od.find_incoming_typed_by(self.bottom, tgt=obj, type_node=self.bottom.read_outgoing_elements(self.mm, assoc_name)[0])
+
+    # Parameter 'include_subtypes': whether to include subtypes of the given association
+    def get_incoming(self, obj: UUID, assoc_name: str, include_subtypes=True):
+        incoming = self.bottom.read_incoming_edges(obj)
+        result = []
+        for i in incoming:
+            try:
+                type_of_incoming_link = self.get_type_name(i)
+            except:
+                continue # OK, not all edges are typed
+            if (include_subtypes and self.cdapi.is_subtype(super_type_name=assoc_name, sub_type_name=type_of_incoming_link)
+                or not include_subtypes and type_of_incoming_link == assoc_name):
+                    result.append(i)
+        return result
 
     def get_all_instances(self, type_name: str, include_subtypes=True):
         if include_subtypes:
-            all_types = self.cd.transitive_sub_types[type_name]
+            all_types = self.cdapi.transitive_sub_types[type_name]
         else:
             all_types = set([type_name])
         obj_names = [obj_name for type_name in all_types for obj_name in self.type_to_objs[type_name]]
@@ -89,7 +116,6 @@ class ODAPI:
             [name for name in self.bottom.read_keys(self.m) if self.bottom.read_outgoing_elements(self.m, name)[0] == obj] +
             [name for name in self.bottom.read_keys(self.mm) if self.bottom.read_outgoing_elements(self.mm, name)[0] == obj]
         )[0]
-        return self.obj_to_name[obj]
 
     def get(self, name: str):
         return self.bottom.read_outgoing_elements(self.m, name)[0]
@@ -98,8 +124,8 @@ class ODAPI:
         return self.get_name(self.get_type(obj))
 
     def is_instance(obj: UUID, type_name: str, include_subtypes=True):
-        typ = self.cd.get_type(type_name)
-        types = set(typ) if not include_subtypes else self.cd.transitive_sub_types[type_name]
+        typ = self.cdapi.get_type(type_name)
+        types = set(typ) if not include_subtypes else self.cdapi.transitive_sub_types[type_name]
         for type_of_obj in self.bottom.read_outgoing_elements(obj, "Morphism"):
             if type_of_obj in types:
                 return True
@@ -109,12 +135,20 @@ class ODAPI:
         self.bottom.delete_element(obj)
         self.__recompute_mappings()
 
+    # Does the class of the object have the given attribute?
     def has_slot(self, obj: UUID, attr_name: str):
         class_name = self.get_name(self.get_type(obj))
         return self.od.get_attr_link_name(class_name, attr_name) != None
 
     def get_slot_value(self, obj: UUID, attr_name: str):
-        return self.get_value(self.get_slot(obj, attr_name))
+        slot = self.get_slot(obj, attr_name)
+        return self.get_value(slot)
+
+    def get_slot_value_default(self, obj: UUID, attr_name: str, default: any):
+        try:
+            return self.get_slot_value(obj, attr_name)
+        except NoSuchSlotException:
+            return default
 
     # create or update slot value
     def set_slot_value(self, obj: UUID, attr_name: str, new_value: any, is_code=False):
@@ -130,7 +164,7 @@ class ODAPI:
             self.bottom.delete_element(old_target) # this also deletes the slot-link
 
         new_target = self.create_primitive_value(target_name, new_value, is_code)
-        slot_type = self.cd.find_attribute_type(self.get_type_name(obj), attr_name)
+        slot_type = self.cdapi.find_attribute_type(self.get_type_name(obj), attr_name)
         new_link = self.od._create_link(link_name, slot_type, obj, new_target)
         self.__recompute_mappings()
 
