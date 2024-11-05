@@ -44,7 +44,8 @@ class CDAPI:
             # includes the type itself - reason: if we want to check if something is an instance of a type, we check if its type or one of its super types is equal to the type we're looking for, without having to consider the instance's type itself as an extra case
             return [type_name, *(super_type for parent_name in self.direct_super_types.get(type_name, set()) for super_type in get_transitive_super_types(parent_name))]
 
-
+        # The transitive sub-/super-types of every type includes the type itself.
+        # This is because, often we want to know if an instance's type is 'compatible' (substitutible) with a specified type.
         self.transitive_sub_types = { type_name: set(get_transitive_sub_types(type_name)) for type_name in self.direct_sub_types } 
         self.transitive_super_types = { type_name: set(get_transitive_super_types(type_name)) for type_name in self.direct_super_types }
 
