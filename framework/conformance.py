@@ -1,5 +1,4 @@
 from services.bottom.V0 import Bottom
-from services import od
 from services.primitives.actioncode_type import ActionCode
 from uuid import UUID
 from state.base import State
@@ -320,67 +319,66 @@ class Conformance:
         self.deref_primitive_values()
         self.precompute_multiplicities()
         errors = []
-        for tm_name in self.type_model_names.values():
+        for type_name in self.type_model_names.values():
             # abstract classes
-            if tm_name in self.abstract_types:
-                type_count = list(self.type_mapping.values()).count(tm_name)
+            if type_name in self.abstract_types:
+                type_count = list(self.type_mapping.values()).count(type_name)
                 if type_count > 0:
-                    errors.append(f"Invalid instantiation of abstract class: '{tm_name}'")
+                    errors.append(f"Invalid instantiation of abstract class: '{type_name}'")
             # class multiplicities
-            if tm_name in self.multiplicities:
-                lc, uc = self.multiplicities[tm_name]
-                type_count = list(self.type_mapping.values()).count(tm_name)
-                for sub_type in self.sub_types[tm_name]:
+            if type_name in self.multiplicities:
+                lc, uc = self.multiplicities[type_name]
+                type_count = list(self.type_mapping.values()).count(type_name)
+                for sub_type in self.sub_types[type_name]:
                     type_count += list(self.type_mapping.values()).count(sub_type)
                 if type_count < lc or type_count > uc:
-                    errors.append(f"Cardinality of type exceeds valid multiplicity range: '{tm_name}' ({type_count})")
-            # association source multiplicities
-            if tm_name in self.source_multiplicities:
-                tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
-                tm_tgt_element = self.bottom.read_edge_target(tm_element)
-                tm_tgt_name = self.type_model_names[tm_tgt_element]
-                lc, uc = self.source_multiplicities[tm_name]
-                for tgt_obj_name, t in self.type_mapping.items():
-                    if t == tm_tgt_name or t in self.sub_types[tm_tgt_name]:
+                    errors.append(f"Cardinality of type exceeds valid multiplicity range: '{type_name}' ({type_count})")
+
+            # association/attribute source multiplicities
+            if type_name in self.source_multiplicities:
+                # type is an association
+                type_obj, = self.bottom.read_outgoing_elements(self.type_model, type_name)
+                tgt_type_obj = self.bottom.read_edge_target(type_obj)
+                tgt_type_name = self.type_model_names[tgt_type_obj]
+                lc, uc = self.source_multiplicities[type_name]
+                for obj_name, obj_type_name in self.type_mapping.items():
+                    if obj_type_name == tgt_type_name or obj_type_name in self.sub_types[tgt_type_name]:
+                        # obj's type has this incoming association -> now we will count the number of links typed by it
                         count = 0
-                        tgt_obj_node, = self.bottom.read_outgoing_elements(self.model, tgt_obj_name)
-                        incoming = self.bottom.read_incoming_edges(tgt_obj_node)
+                        obj, = self.bottom.read_outgoing_elements(self.model, obj_name)
+                        incoming = self.bottom.read_incoming_edges(obj)
                         for i in incoming:
                             try:
-                                if self.type_mapping[self.model_names[i]] == tm_name:
+                                type_of_incoming_link = self.type_mapping[self.model_names[i]]
+                                if type_of_incoming_link == type_name or type_of_incoming_link in self.sub_types[type_name]:
                                     count += 1
                             except KeyError:
                                 pass  # for elements not part of model, e.g. morphism links
                         if count < lc or count > uc:
-                            errors.append(f"Source cardinality of type '{tm_name}' ({count}) out of bounds ({lc}..{uc}) in '{tgt_obj_name}'.")
+                            errors.append(f"Source cardinality of type '{type_name}' ({count}) out of bounds ({lc}..{uc}) in '{obj_name}'.")
 
-            # association target multiplicities
-            if tm_name in self.target_multiplicities:
-                tm_element, = self.bottom.read_outgoing_elements(self.type_model, tm_name)
-                # tm_target_element = self.bottom.read_edge_target(tm_element)
-                tm_src_element = self.bottom.read_edge_source(tm_element)
-                tm_src_name = self.type_model_names[tm_src_element]
-                lc, uc = self.target_multiplicities[tm_name]
-                # print("checking assoc", tm_name, "source", tm_src_name)
-                # print("subtypes of", tm_src_name, self.sub_types[tm_src_name])
-                for src_obj_name, t in self.type_mapping.items():
-                    if t == tm_src_name or t in self.sub_types[tm_src_name]:
-                        # print("got obj", src_obj_name, "of type", t)
+            # association/attribute target multiplicities
+            if type_name in self.target_multiplicities:
+                # type is an association
+                type_obj, = self.bottom.read_outgoing_elements(self.type_model, type_name)
+                src_type_obj = self.bottom.read_edge_source(type_obj)
+                src_type_name = self.type_model_names[src_type_obj]
+                lc, uc = self.target_multiplicities[type_name]
+                for obj_name, obj_type_name in self.type_mapping.items():
+                    if obj_type_name == src_type_name or obj_type_name in self.sub_types[src_type_name]:
+                        # obj's type has this outgoing association -> now we will count the number of links typed by it
                         count = 0
-                        src_obj_node, = self.bottom.read_outgoing_elements(self.model, src_obj_name)
-                        # outgoing = self.bottom.read_incoming_edges(src_obj_node)
-                        outgoing = self.bottom.read_outgoing_edges(src_obj_node)
+                        obj, = self.bottom.read_outgoing_elements(self.model, obj_name)
+                        outgoing = self.bottom.read_outgoing_edges(obj)
                         for o in outgoing:
                             try:
-                                if self.type_mapping[self.model_names[o]] == tm_name:
-                                    # print("have an outgoing edge", self.model_names[o], self.type_mapping[self.model_names[o]], "---> increase counter")
+                                type_of_outgoing_link = self.type_mapping[self.model_names[o]]
+                                if type_of_outgoing_link == type_name or type_of_outgoing_link in self.sub_types[type_name]:
                                     count += 1
                             except KeyError:
                                 pass  # for elements not part of model, e.g. morphism links
                         if count < lc or count > uc:
-                            errors.append(f"Target cardinality of type '{tm_name}' ({count}) out of bounds ({lc}..{uc}) in '{src_obj_name}'.")
-                        # else:
-                            # print(f"OK: Target cardinality of type {tm_name} ({count}) within bounds ({lc}..{uc}) in {src_obj_name}.")
+                            errors.append(f"Target cardinality of type '{type_name}' ({count}) out of bounds ({lc}..{uc}) in '{obj_name}'.")
         return errors
 
     def evaluate_constraint(self, code, **kwargs):
@@ -390,6 +388,7 @@ class Conformance:
 
         funcs = {
             'read_value': self.state.read_value,
+            'get': self.odapi.get,
             'get_value': self.odapi.get_value,
             'get_target': self.odapi.get_target,
             'get_source': self.odapi.get_source,
@@ -400,6 +399,7 @@ class Conformance:
             'get_type_name': self.odapi.get_type_name,
             'get_outgoing': self.odapi.get_outgoing,
             'get_incoming': self.odapi.get_incoming,
+            'has_slot': self.odapi.has_slot,
         }
         # print("evaluating constraint ...", code)
         loc = {**kwargs, }
@@ -450,11 +450,10 @@ class Conformance:
                     description = f"Local constraint of \"{type_name}\" in \"{obj_name}\""
                     # print(description)
                     try:
-                        result = self.evaluate_constraint(code, this=obj_id)
+                        result = self.evaluate_constraint(code, this=obj_id) # may raise
+                        check_result(result, description)
                     except:
                         errors.append(f"Runtime error during evaluation of {description}:\n{indent(traceback.format_exc(), 6)}")
-                        # raise Exception(f"Context of above error = {description}") from e
-                    check_result(result, description)
 
         # global constraints
         glob_constraints = []
