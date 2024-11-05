@@ -51,9 +51,6 @@ class Conformance:
             self.bottom.read_outgoing_elements(self.type_model, e)[0]
                 : e for e in self.bottom.read_keys(self.type_model)
         }
-        self.sub_types: Dict[str, Set[str]] = {
-            k: set() for k in self.bottom.read_keys(self.type_model)
-        }
         self.primitive_values: Dict[UUID, Any] = {}
         self.abstract_types: List[str] = []
         self.multiplicities: Dict[str, Tuple] = {}
@@ -130,40 +127,6 @@ class Conformance:
             return self.primitive_values.get(attr_elem, self.bottom.read_value(UUID(self.bottom.read_value(attr_elem))))
         except ValueError:
             return None
-
-    def precompute_sub_types(self):
-        """
-        Creates an internal representation of sub-type hierarchies that is
-        more easily queryable that the state graph
-        """
-        # collect inheritance link instances
-        inh_element, = self.bottom.read_outgoing_elements(self.scd_model, "Inheritance")
-        inh_links = []
-        for tm_element, tm_name in self.type_model_names.items():
-            morphisms = self.bottom.read_outgoing_elements(tm_element, "Morphism")
-            if inh_element in morphisms:
-                # we have an instance of an inheritance link
-                inh_links.append(tm_element)
-
-        # for each inheritance link we add the parent and child to the sub types map
-        for link in inh_links:
-            tm_source = self.bottom.read_edge_source(link)
-            tm_target = self.bottom.read_edge_target(link)
-            parent_name = self.type_model_names[tm_target]
-            child_name = self.type_model_names[tm_source]
-            self.sub_types[parent_name].add(child_name)
-
-        # iteratively expand the sub type hierarchies in the sub types map
-        stop = False
-        while not stop:
-            stop = True
-            for child_name, child_children in self.sub_types.items():
-                for parent_name, parent_children in self.sub_types.items():
-                    if child_name in parent_children:
-                        original_size = len(parent_children)
-                        parent_children.update(child_children)
-                        if len(parent_children) != original_size:
-                            stop = False
 
     def deref_primitive_values(self):
         """
@@ -286,7 +249,6 @@ class Conformance:
         for each link, check whether its source and target are of a valid type
         """
         errors = []
-        self.precompute_sub_types()
         for m_name, tm_name in self.type_mapping.items():
             m_element, = self.bottom.read_outgoing_elements(self.model, m_name)
             m_source = self.bottom.read_edge_source(m_element)
@@ -321,17 +283,17 @@ class Conformance:
         for type_name in self.type_model_names.values():
             # abstract classes
             if type_name in self.abstract_types:
-                type_count = list(self.type_mapping.values()).count(type_name)
-                if type_count > 0:
+                count = list(self.type_mapping.values()).count(type_name)
+                if count > 0:
                     errors.append(f"Invalid instantiation of abstract class: '{type_name}'")
             # class multiplicities
             if type_name in self.multiplicities:
                 lc, uc = self.multiplicities[type_name]
-                type_count = list(self.type_mapping.values()).count(type_name)
-                for sub_type in self.sub_types[type_name]:
-                    type_count += list(self.type_mapping.values()).count(sub_type)
-                if type_count < lc or type_count > uc:
-                    errors.append(f"Cardinality of type exceeds valid multiplicity range: '{type_name}' ({type_count})")
+                count = 0
+                for sub_type in self.cdapi.transitive_sub_types[type_name]:
+                    count += list(self.type_mapping.values()).count(sub_type)
+                if count < lc or count > uc:
+                    errors.append(f"Cardinality of type exceeds valid multiplicity range: '{type_name}' ({count})")
 
             # association/attribute source multiplicities
             if type_name in self.source_multiplicities:
@@ -341,7 +303,7 @@ class Conformance:
                 tgt_type_name = self.type_model_names[tgt_type_obj]
                 lc, uc = self.source_multiplicities[type_name]
                 for obj_name, obj_type_name in self.type_mapping.items():
-                    if obj_type_name == tgt_type_name or obj_type_name in self.sub_types[tgt_type_name]:
+                    if self.cdapi.is_subtype(super_type_name=tgt_type_name, sub_type_name=obj_type_name):
                         # obj's type has this incoming association -> now we will count the number of links typed by it
                         count = 0
                         obj, = self.bottom.read_outgoing_elements(self.model, obj_name)
@@ -349,7 +311,7 @@ class Conformance:
                         for i in incoming:
                             try:
                                 type_of_incoming_link = self.type_mapping[self.model_names[i]]
-                                if type_of_incoming_link == type_name or type_of_incoming_link in self.sub_types[type_name]:
+                                if self.cdapi.is_subtype(super_type_name=type_name, sub_type_name=type_of_incoming_link):
                                     count += 1
                             except KeyError:
                                 pass  # for elements not part of model, e.g. morphism links
@@ -364,7 +326,7 @@ class Conformance:
                 src_type_name = self.type_model_names[src_type_obj]
                 lc, uc = self.target_multiplicities[type_name]
                 for obj_name, obj_type_name in self.type_mapping.items():
-                    if obj_type_name == src_type_name or obj_type_name in self.sub_types[src_type_name]:
+                    if self.cdapi.is_subtype(super_type_name=src_type_name, sub_type_name=obj_type_name):
                         # obj's type has this outgoing association -> now we will count the number of links typed by it
                         count = 0
                         obj, = self.bottom.read_outgoing_elements(self.model, obj_name)
@@ -372,7 +334,7 @@ class Conformance:
                         for o in outgoing:
                             try:
                                 type_of_outgoing_link = self.type_mapping[self.model_names[o]]
-                                if type_of_outgoing_link == type_name or type_of_outgoing_link in self.sub_types[type_name]:
+                                if self.cdapi.is_subtype(super_type_name=type_name, sub_type_name=type_of_outgoing_link):
                                     count += 1
                             except KeyError:
                                 pass  # for elements not part of model, e.g. morphism links
@@ -481,7 +443,6 @@ class Conformance:
         """
         Make an internal representation of type structures such that comparing type structures is easier
         """
-        self.precompute_sub_types()
         scd_elements = self.bottom.read_outgoing_elements(self.scd_model)
         # collect types
         class_element, = self.bottom.read_outgoing_elements(self.scd_model, "Class")
@@ -523,9 +484,12 @@ class Conformance:
                 # attribute is stored as a (name, optional, type) triple
                 self.structures.setdefault(source_type_name, set()).add((name, opt, target_type_name))
         # extend structures of sub types with attrs of super types
-        for super_type, sub_types in self.sub_types.items():
+        for super_type, sub_types in self.odapi.transitive_sub_types.items():
+        # JE: I made an untested change here! Can't test because structural conformance checking is broken.
+        # for super_type, sub_types in self.sub_types.items():
             for sub_type in sub_types:
-                self.structures.setdefault(sub_type, set()).update(self.structures[super_type])
+                if sub_type != super_type:
+                    self.structures.setdefault(sub_type, set()).update(self.structures[super_type])
         # filter out abstract types, as they cannot be instantiated
         # retrieve Class_abstract to check whether element is a morphism of Class_abstract
         class_abs_element, = self.bottom.read_outgoing_elements(self.scd_model, "Class_abstract")
@@ -616,11 +580,13 @@ class Conformance:
                     candidate_element, = self.bottom.read_outgoing_elements(self.type_model, candidate_name)
                     candidate_source = self.type_model_names[self.bottom.read_edge_source(candidate_element)]
                     if candidate_source not in source_candidates:
-                        if len(source_candidates.intersection(set(self.sub_types[candidate_source]))) == 0:
+                        if len(source_candidates.intersection(set(self.odapi.transitive_sub_types[candidate_source]))) == 0:
+                        # if len(source_candidates.intersection(set(self.sub_types[candidate_source]))) == 0:
                             remove.add(candidate_name)
                     candidate_target = self.type_model_names[self.bottom.read_edge_target(candidate_element)]
                     if candidate_target not in target_candidates:
-                        if len(target_candidates.intersection(set(self.sub_types[candidate_target]))) == 0:
+                        if len(target_candidates.intersection(set(self.odapi.transitive_sub_types[candidate_target]))) == 0:
+                        # if len(target_candidates.intersection(set(self.sub_types[candidate_target]))) == 0:
                             remove.add(candidate_name)
                 self.candidates[m_name] = self.candidates[m_name].difference(remove)
 
