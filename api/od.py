@@ -117,7 +117,7 @@ class ODAPI:
         return self.get_value(self.get_slot(obj, attr_name))
 
     # create or update slot value
-    def set_slot_value(self, obj: UUID, attr_name: str, new_value: any):
+    def set_slot_value(self, obj: UUID, attr_name: str, new_value: any, is_code=False):
         obj_name = self.get_name(obj)
 
         link_name = f"{obj_name}_{attr_name}"
@@ -129,12 +129,14 @@ class ODAPI:
             # if old_target != None:
             self.bottom.delete_element(old_target) # this also deletes the slot-link
 
-        new_target = self.create_primitive_value(target_name, new_value)
+        new_target = self.create_primitive_value(target_name, new_value, is_code)
         slot_type = self.cd.find_attribute_type(self.get_type_name(obj), attr_name)
         new_link = self.od._create_link(link_name, slot_type, obj, new_target)
         self.__recompute_mappings()
 
     def create_primitive_value(self, name: str, value: any, is_code=False):
+        # watch out: in Python, 'bool' is subtype of 'int'
+        #  so we must check for 'bool' first
         if isinstance(value, bool):
             tgt = self.create_boolean_value(name, value)
         elif isinstance(value, int):

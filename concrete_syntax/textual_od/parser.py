@@ -2,7 +2,7 @@
 
 from lark import Lark, logger
 from lark.indenter import Indenter
-from services.od import OD
+from api.od import ODAPI
 from services.scd import SCD
 from concrete_syntax.common import _Code, TBase
 from uuid import UUID
@@ -45,11 +45,11 @@ def parse_od(state, m_text, mm):
     tree = parser.parse(m_text)
 
     m = state.create_node()
-    od = OD(mm, m, state)
+    od = ODAPI(state, m, mm)
 
     primitive_types = {
         type_name : UUID(state.read_value(state.read_dict(state.read_root(), type_name)))
-            for type_name in ["Integer", "String", "Boolean"]
+            for type_name in ["Integer", "String", "Boolean", "ActionCode"]
     }
 
     class T(TBase):
@@ -83,23 +83,15 @@ def parse_od(state, m_text, mm):
                     if state.read_dict(m, tgt) == None:
                         scd = SCD(m, state)
                         scd.create_model_ref(tgt, primitive_types[tgt])
-                od.create_link(obj_name, type_name, src, tgt)
+                src_obj = od.get(src)
+                tgt_obj = od.get(tgt)
+                obj_node = od.create_link(obj_name, type_name, src_obj, tgt_obj)
             # Create slots
             for attr_name, value in slots:
-                value_name = f"{obj_name}.{attr_name}"
-                # watch out: in Python, 'bool' is subtype of 'int'
-                #  so we must check for 'bool' first
-                if isinstance(value, bool):
-                    od.create_boolean_value(value_name, value)
-                elif isinstance(value, int):
-                    od.create_integer_value(value_name, value)
-                elif isinstance(value, str):
-                    od.create_string_value(value_name, value)
-                elif isinstance(value, _Code):
-                    od.create_actioncode_value(value_name, value.code)
+                if isinstance(value, _Code):
+                    od.set_slot_value(obj_node, attr_name, value.code, is_code=True)
                 else:
-                    raise Exception("Unimplemented type "+value)
-                od.create_slot(attr_name, obj_name, value_name)
+                    od.set_slot_value(obj_node, attr_name, value)
 
             return obj_name
 
