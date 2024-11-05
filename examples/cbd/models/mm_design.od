@@ -1,0 +1,129 @@
+Block:Class {
+  abstract = True;
+}
+
+InPort:Class {
+  abstract = True;
+}
+OutPort:Class {
+  abstract = True;
+}
+
+hasInPort:Association (Block -> InPort) {
+  # Every Port contained by exactly one Block:
+  source_lower_cardinality = 1;
+  source_upper_cardinality = 1;
+}
+hasOutPort:Association (Block -> OutPort) {
+  # Every Port contained by exactly one Block:
+  source_lower_cardinality = 1;
+  source_upper_cardinality = 1;
+}
+
+link:Association (OutPort -> InPort) {
+  #abstract = True;
+
+  # Every InPort connected to exactly one OutPort
+  source_lower_cardinality = 1;
+  source_upper_cardinality = 1;
+}
+
+
+# In- and Out-Ports are labeled:
+
+# hasInPort_label:AttributeLink (hasInPort -> String) {
+#   name = "label";
+#   optional = False;
+# }
+# hasOutPort_label:AttributeLink (hasOutPort -> String) {
+#   name = "label";
+#   optional = False;
+# }
+
+
+
+# Function Block: pure function that computes outputs based on inputs
+
+Function:Class
+:Inheritance (Function -> Block)
+
+Function_func:AttributeLink (Function -> ActionCode) {
+  name = "func";
+  optional = False;
+}
+
+DetailedFunction:Class
+:Inheritance (DetailedFunction -> Function)
+
+VeryDetailedFunction:Class
+:Inheritance (VeryDetailedFunction -> DetailedFunction)
+
+
+
+# Delay Block
+
+Delay:Class {
+  constraint = ```
+    errors = []
+    num_inports = len(get_outgoing(this, "hasInPort"))
+    num_outports = len(get_outgoing(this, "hasOutPort"))
+    if num_inports != 1:
+      errors.append(f"Delay block must have one inport, instead got {num_inports}")
+      in_type = None
+    else:
+      in_type = get_type_name(get_target(get_outgoing(this, "hasInPort")[0]))
+    if num_outports != 1:
+      errors.append(f"Delay block must have one inport, instead got {num_outports}")
+      out_type = None
+    else:
+      out_type = get_type_name(get_target(get_outgoing(this, "hasOutPort")[0]))
+    if in_type != None and out_type != None and in_type[0:3] != out_type[0:3]:
+      errors.append(f"Inport type ({in_type}) differs from outport type ({out_type})")
+    errors
+  ```;
+}
+:Inheritance (Delay -> Block)
+
+
+
+
+# Object Diagrams are statically typed, so we must create in/out-ports, and MemorySlots for all primitive types:
+
+
+# Port types
+
+BoolInPort:Class
+IntInPort:Class
+StrInPort:Class
+
+BoolOutPort:Class
+IntOutPort:Class
+StrOutPort:Class
+
+:Inheritance (BoolInPort -> InPort)
+:Inheritance (IntInPort -> InPort)
+:Inheritance (StrInPort -> InPort)
+
+:Inheritance (BoolOutPort -> OutPort)
+:Inheritance (IntOutPort -> OutPort)
+:Inheritance (StrOutPort -> OutPort)
+
+# Link types
+
+boolLink:Association (BoolOutPort -> BoolInPort)
+intLink:Association (IntOutPort -> IntInPort)
+strLink:Association (StrOutPort -> StrInPort)
+
+:Inheritance (boolLink -> link)
+:Inheritance (intLink -> link)
+:Inheritance (strLink -> link)
+
+# Delay block types
+
+BoolDelay:Class
+IntDelay:Class
+StrDelay:Class
+
+:Inheritance (BoolDelay -> Delay)
+:Inheritance (IntDelay -> Delay)
+:Inheritance (StrDelay -> Delay)

@@ -1,0 +1,8 @@
+d0s:IntState {
+  state = 0;
+}
+d1s:IntState {
+  state = 1;
+}
+:delay2State (d0 -> d0s)
+:delay2State (d1 -> d1s)

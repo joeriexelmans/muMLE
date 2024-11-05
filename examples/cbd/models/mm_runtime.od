@@ -1,0 +1,55 @@
+# Link state ("signal")
+# is optional: absent for yet-to-compute signals
+
+intLink_signal:AttributeLink (intLink -> Integer) {
+  name = "signal";
+  optional = True;
+}
+boolLink_signal:AttributeLink (boolLink -> Boolean) {
+  name = "signal";
+  optional = True;
+}
+strLink_signal:AttributeLink (strLink -> String) {
+  name = "signal";
+  optional = True;
+}
+
+
+
+# Delay block state
+# mandatory - otherwise we cannot determine the output signal of a delay block
+
+State:Class {
+  abstract = True;
+}
+
+delay2State:Association (Delay -> State) {
+  source_lower_cardinality = 1;
+  source_upper_cardinality = 1;
+  target_lower_cardinality = 1;
+  target_upper_cardinality = 1;
+}
+
+BoolState:Class
+IntState:Class
+StrState:Class
+
+:Inheritance (BoolState -> State)
+:Inheritance (IntState -> State)
+:Inheritance (StrState -> State)
+
+
+BoolState_state:AttributeLink (BoolState -> Boolean) {
+  name = "state";
+  optional = False;
+}
+
+IntState_state:AttributeLink (IntState -> Integer) {
+  name = "state";
+  optional = False;
+}
+
+StrState_state:AttributeLink (StrState -> String) {
+  name = "state";
+  optional = False;
+}

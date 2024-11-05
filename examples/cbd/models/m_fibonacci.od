@@ -1,0 +1,34 @@
+adder:Function {
+  func = ```
+    n2_out = in0 + in1
+  ```;
+}
+n0_in:IntInPort
+n1_in:IntInPort
+n2_out:IntOutPort
+:hasInPort (adder -> n0_in)
+:hasInPort (adder -> n1_in)
+:hasOutPort (adder -> n2_out)
+
+
+
+d0:Delay
+d0_in:IntInPort
+d0_out:IntOutPort
+:hasInPort (d0 -> d0_in)
+:hasOutPort (d0 -> d0_out)
+
+
+
+d1:Delay
+d1_in:IntInPort
+d1_out:IntOutPort
+:hasInPort (d1 -> d1_in)
+:hasOutPort (d1 -> d1_out)
+
+
+
+:intLink (n2_out -> d1_in)
+:intLink (d1_out -> n1_in)
+:intLink (d1_out -> d0_in)
+:intLink (d1_out -> n0_in)
