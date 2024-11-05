@@ -5,7 +5,7 @@ from services.primitives.integer_type import Integer
 from services.primitives.string_type import String
 from services.primitives.boolean_type import Boolean
 from services.primitives.actioncode_type import ActionCode
-from framework.conformance import Conformance
+from api.cd import CDAPI
 from typing import Optional
 
 def get_slot_link_name(obj_name: str, attr_name: str):
@@ -28,6 +28,7 @@ class OD:
         self.type_model = type_model
         self.model = model
         self.bottom = Bottom(state)
+        self.cd = CDAPI(self.bottom.state, self.type_model)
 
 
     def create_object(self, name: str, class_name: str):
@@ -36,7 +37,11 @@ class OD:
             raise Exception(f"Cannot create object: No such class '{class_name}'")
         class_node = class_nodes[0]
         abstract_nodes = self.bottom.read_outgoing_elements(self.type_model, f"{class_name}.abstract")
-        return self._create_object(name, class_node)
+        try:
+            return self._create_object(name, class_node)
+        except Exception as e:
+            e.add_note("Class: " + class_name)
+            raise
 
     def _create_object(self, name: str, class_node: UUID):
         # Look at our `type_model` as if it's an object diagram:
@@ -155,28 +160,16 @@ class OD:
 
     # The edge connecting an object to the value of a slot must be named `{object_name}_{attr_name}`
     def get_attr_link_name(self, class_name, attr_name):
-        assoc_name = f"{class_name}_{attr_name}"
-        type_edges = self.bottom.read_outgoing_elements(self.type_model, assoc_name)
-        if len(type_edges) == 1:
-            return assoc_name
-        else:
-            # look for attribute in the super-types
-            conf = Conformance(self.bottom.state, self.model, self.type_model)
-            conf.precompute_sub_types() # only need to know about subtypes
-            super_types = [s for s in conf.sub_types if class_name in conf.sub_types[s]]
-            for s in super_types:
-                assoc_name = f"{s}_{attr_name}"
-                if len(self.bottom.read_outgoing_elements(self.type_model, assoc_name)) == 1:
-                    return assoc_name
+        return self.cd.get_attr_link_name(class_name, attr_name)
 
     def create_link(self, link_name: Optional[str], assoc_name: str, src_obj_name: str, tgt_obj_name: str):
         src_obj_nodes = self.bottom.read_outgoing_elements(self.model, src_obj_name)
         if len(src_obj_nodes) == 0:
-            raise Exception(f"Cannot create link '{link_name}' ({assoc_name}): source object '{src_obj_name}'' not found")
+            raise Exception(f"Cannot create link '{link_name}' ({assoc_name}): source object '{src_obj_name}' not found")
         src_obj_node = src_obj_nodes[0]
         tgt_obj_nodes = self.bottom.read_outgoing_elements(self.model, tgt_obj_name)
         if len(tgt_obj_nodes) == 0:
-            raise Exception(f"Cannot create link '{link_name}' ({assoc_name}): target object '{tgt_obj_name}'' not found")
+            raise Exception(f"Cannot create link '{link_name}' ({assoc_name}): target object '{tgt_obj_name}' not found")
         tgt_obj_node = tgt_obj_nodes[0]
 
         # generate a unique name for the link
