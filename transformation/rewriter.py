@@ -11,24 +11,33 @@ from services import od
 from services.primitives.string_type import String
 from services.primitives.actioncode_type import ActionCode
 from services.primitives.integer_type import Integer
-from util.eval import exec_then_eval
+from util.eval import exec_then_eval, simply_exec
 
-def process_rule(state, lhs: UUID, rhs: UUID):
+def preprocess_rule(state, lhs: UUID, rhs: UUID, name_mapping):
     bottom = Bottom(state)
 
-    to_delete = { name for name in bottom.read_keys(lhs) if name not in bottom.read_keys(rhs) }
-    to_create = { name for name in bottom.read_keys(rhs) if name not in bottom.read_keys(lhs) }
-    common = { name for name in bottom.read_keys(lhs) if name in bottom.read_keys(rhs) }
+    to_delete = { name for name in bottom.read_keys(lhs) if name not in bottom.read_keys(rhs) and name in name_mapping }
+    to_create = { name for name in bottom.read_keys(rhs) if name not in bottom.read_keys(lhs)
+        # extremely dirty:
+        and "GlobalCondition" not in name }
+    common = { name for name in bottom.read_keys(lhs) if name in bottom.read_keys(rhs) and name in name_mapping }
 
-    # print("to_delete:", to_delete)
-    # print("to_create:", to_create)
+    print("to_delete:", to_delete)
+    print("to_create:", to_create)
 
     return to_delete, to_create, common
 
 # Rewrite is performed in-place (modifying `host_m`)
 # Also updates the `mapping` in-place, to become RHS -> host
-def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dict, host_m: UUID, mm: UUID):
+def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dict, host_m: UUID, host_mm: UUID):
     bottom = Bottom(state)
+
+    orig_name_mapping = dict(name_mapping)
+
+    # function that can be called from within RHS action code
+    def matched_callback(pattern_name: str):
+        host_name = orig_name_mapping[pattern_name]
+        return bottom.read_outgoing_elements(host_m, host_name)[0]
 
     scd_metamodel_id = state.read_dict(state.read_root(), "SCD")
     scd_metamodel = UUID(state.read_value(scd_metamodel_id))
@@ -38,12 +47,12 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
     assoc_type = od.get_scd_mm_assoc_node(bottom)
     modelref_type = od.get_scd_mm_modelref_node(bottom)
 
-    m_od = od.OD(mm, host_m, bottom.state)
+    m_od = od.OD(host_mm, host_m, bottom.state)
     rhs_od = od.OD(pattern_mm, rhs_m, bottom.state)
 
-    to_delete, to_create, common = process_rule(state, lhs_m, rhs_m)
+    to_delete, to_create, common = preprocess_rule(state, lhs_m, rhs_m, orig_name_mapping)
 
-    odapi = ODAPI(state, host_m, mm)
+    odapi = ODAPI(state, host_m, host_mm)
 
     # Perform deletions
     for pattern_name_to_delete in to_delete:
@@ -89,7 +98,7 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
                 # print(' -> postpone (is link)')
                 edges_to_create.append((pattern_name_to_create, rhs_el_to_create, original_type, 'link', model_el_name_to_create))
             else:
-                original_type_name = od.get_object_name(bottom, mm, original_type)
+                original_type_name = od.get_object_name(bottom, host_mm, original_type)
                 print(" -> warning: don't know about", original_type_name)
         else:
             # print(" -> no original (un-RAMified) type")
@@ -100,7 +109,11 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
                 # Assume the string is a Python expression to evaluate
                 python_expr = ActionCode(UUID(bottom.read_value(rhs_el_to_create)), bottom.state).read()
 
-                result = exec_then_eval(python_expr, _globals=bind_api(odapi))
+                result = exec_then_eval(python_expr, _globals={
+                    **bind_api(odapi),
+                    'matched': matched_callback,
+                })
+
                 # Write the result into the host model.
                 # This will be the *value* of an attribute. The attribute-link (connecting an object to the attribute) will be created as an edge later.
                 if isinstance(result, int):
@@ -109,7 +122,8 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
                     m_od.create_string_value(model_el_name_to_create, result)
                 name_mapping[pattern_name_to_create] = model_el_name_to_create
             else:
-                raise Exception(f"RHS element '{pattern_name_to_create}' needs to be created in host, but has no un-RAMified type, and I don't know what to do with it. It's type is '{type_name}'")
+                msg = f"RHS element '{pattern_name_to_create}' needs to be created in host, but has no un-RAMified type, and I don't know what to do with it. It's type is '{type_name}'"
+                raise Exception(msg)
 
     # print("create edges....")
     for pattern_name_to_create, rhs_el_to_create, original_type, original_type_name, model_el_name_to_create in edges_to_create:
@@ -130,7 +144,7 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
             tgt = bottom.read_edge_target(rhs_el_to_create)
             tgt_name = od.get_object_name(bottom, rhs_m, tgt)
             obj_name = name_mapping[src_name] # name of object in host graph to create slot for
-            attr_name = od.get_object_name(bottom, mm, original_type)
+            attr_name = od.get_object_name(bottom, host_mm, original_type)
             m_od.create_link(model_el_name_to_create, attr_name, obj_name, name_mapping[tgt_name])
 
 
@@ -146,7 +160,7 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
             # nothing to do
             pass
         elif od.is_typed_by(bottom, host_type, assoc_type):
-            print(' -> is association')
+            # print(' -> is association')
             # nothing to do
             pass
         elif od.is_typed_by(bottom, host_type, attr_link_type):
@@ -154,12 +168,15 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
             # nothing to do
             pass
         elif od.is_typed_by(bottom, host_type, modelref_type):
-            print(' -> is modelref')
-            old_value, _ = od.read_primitive_value(bottom, host_el, mm)
+            # print(' -> is modelref')
+            old_value, _ = od.read_primitive_value(bottom, host_el, host_mm)
             rhs_el, = bottom.read_outgoing_elements(rhs_m, pattern_el_name)
             python_expr, _ = od.read_primitive_value(bottom, rhs_el, pattern_mm)
             result = exec_then_eval(python_expr,
-                _globals=bind_api(odapi),
+                _globals={
+                    **bind_api(odapi),
+                    'matched': matched_callback,
+                },
                 _locals={'this': host_el})
             # print('eval result=', result)
             if isinstance(result, int):
@@ -172,3 +189,11 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
             msg = f"Don't know what to do with element '{pattern_el_name}'->'{host_el_name}' of type ({host_type})"
             # print(msg)
             raise Exception(msg)
+
+    rhs_odapi = ODAPI(state, rhs_m, pattern_mm)
+    for cond_name, cond in rhs_odapi.get_all_instances("GlobalCondition"):
+        python_code = rhs_odapi.get_slot_value(cond, "condition")
+        simply_exec(python_code, _globals={
+            **bind_api(odapi),
+            'matched': matched_callback,
+        })

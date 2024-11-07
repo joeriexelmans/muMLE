@@ -1,0 +1,20 @@
+# Our entire LHS (don't delete anything):
+
+delay:RAM_Delay
+
+delay_out:RAM_OutPort
+
+delay_has_output:RAM_hasOutPort (delay -> delay_out)
+
+state:RAM_State
+
+delay_to_state:RAM_delay2State (delay -> state)
+
+clock:RAM_Clock
+
+# To create:
+
+new_signal:RAM_Signal {
+  RAM_x = `get_slot_value(matched('state'), 'x')`;
+}
+:RAM_hasSignal (delay_out -> new_signal)

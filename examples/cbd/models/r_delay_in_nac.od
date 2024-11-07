@@ -1,0 +1,6 @@
+state:RAM_State # <- must repeat elements from LHS that we refer to
+
+in_signal:RAM_Signal {
+  # If the signal is already equal to the state, the NAC holds:
+  RAM_x = `get_value(this) == get_slot_value(matched('state'), 'x')`;
+}

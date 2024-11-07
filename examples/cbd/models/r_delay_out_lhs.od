@@ -1,0 +1,14 @@
+# We look for a Delay-block, its outport, and its State
+
+delay:RAM_Delay
+
+delay_out:RAM_OutPort
+
+delay_has_output:RAM_hasOutPort (delay -> delay_out)
+
+
+state:RAM_State
+
+delay_to_state:RAM_delay2State (delay -> state)
+
+clock:RAM_Clock

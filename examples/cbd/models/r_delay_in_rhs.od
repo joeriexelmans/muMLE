@@ -1,0 +1,26 @@
+# Everything from our LHS (don't delete anything)
+
+delay:RAM_Delay
+
+delay_in:RAM_InPort
+
+delay_has_input:RAM_hasOutPort (delay -> delay_in)
+
+some_outport:RAM_OutPort
+
+delay_in_conn:RAM_link (some_outport -> delay_in)
+
+in_signal:RAM_Signal
+
+port_has_signal:RAM_hasSignal (some_outport -> in_signal)
+
+state:RAM_State {
+  # Update:
+  RAM_x = ```
+    new_state = get_slot_value(matched('in_signal'), 'x')
+    print(f"Updating delay {get_name(matched('delay'))} state: {new_state}")
+    new_state
+  ```;
+}
+
+delay_to_state:RAM_delay2State (delay -> state)

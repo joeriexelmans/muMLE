@@ -54,8 +54,13 @@ def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
             # create traceability link
             bottom.create_edge(ramified_attr_link, attr_edge, RAMIFIES_LABEL)
 
+        # Additional constraint that can be specified
+        ramified_scd._create_attribute_link(prefix+class_name, actioncode_modelref, "condition", optional=True)
+
         already_ramified.add(class_name)
 
+    glob_cond = ramified_scd.create_class("GlobalCondition", abstract=None)
+    ramified_scd._create_attribute_link("GlobalCondition", actioncode_modelref, "condition", optional=False)
 
     assocs_to_ramify = m_scd.get_associations()
 
@@ -89,6 +94,9 @@ def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
 
             # create traceability link
             bottom.create_edge(ramified_assoc, assoc_node, RAMIFIES_LABEL)
+
+            # Additional constraint that can be specified
+            ramified_scd._create_attribute_link(prefix+assoc_name, actioncode_modelref, "condition", optional=True)
 
             already_ramified.add(assoc_name)
 

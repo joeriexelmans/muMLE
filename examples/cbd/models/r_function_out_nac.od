@@ -1,0 +1,14 @@
+# From our LHS:
+
+f:RAM_Function
+
+f_outport:RAM_OutPort
+
+f_has_outport:RAM_hasOutPort (f -> f_outport)
+
+
+# We don't want to see the function's out-connection already having a signal:
+
+some_signal:RAM_Signal
+
+:RAM_hasSignal (f_outport -> some_signal)

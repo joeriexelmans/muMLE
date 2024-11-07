@@ -1,9 +1,13 @@
 # Initial state for both delay blocks:
 d0s:State {
-  state = 0;
+  x = 0;
 }
 d1s:State {
-  state = 1;
+  x = 1;
 }
 :delay2State (d0 -> d0s)
 :delay2State (d1 -> d1s)
+
+clock:Clock {
+  time = 0;
+}

@@ -150,14 +150,18 @@ def render_trace_ramifies(state, mm, ramified_mm, render_attributes=True, prefix
 
     # Render RAMifies-edges between classes
     for ram_name, ram_class_node in ramified_mm_scd.get_classes().items():
-        original_class, = bottom.read_outgoing_elements(ram_class_node, ramify.RAMIFIES_LABEL)
+        original_class = ramify.get_original_type(bottom, ram_class_node)
+        if original_class == None:
+            continue # not all classes come from original (e.g., 'GlobalCondition')
         original_name = mm_scd.get_class_name(original_class)
         output += f"\n{make_ram_id(ram_class_node)} ..> {make_orig_id(original_class)} #line:green;text:green : RAMifies"
 
         if render_attributes:
             # and between attributes
             for (ram_attr_name, ram_attr_edge) in od.get_attributes(bottom, ram_class_node):
-                orig_attr_edge, = bottom.read_outgoing_elements(ram_attr_edge, ramify.RAMIFIES_LABEL)
+                orig_attr_edge = ramify.get_original_type(bottom, ram_attr_edge)
+                if orig_attr_edge == None:
+                    continue # not all attributes come from original (e.g., 'condition')
                 orig_class_node = bottom.read_edge_source(orig_attr_edge)
                 # dirty AF:
                 orig_attr_name = mm_scd.get_class_name(orig_attr_edge)[len(original_name)+1:]

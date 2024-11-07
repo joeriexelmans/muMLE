@@ -1,85 +1,47 @@
 # Link state ("signal")
 
-Signal:Class {
-  # abstract = True;
-}
+Signal:Class
 
-Signal_signal:AttributeLink (Signal -> Integer) {
-  name = "signal";
+Signal_x:AttributeLink (Signal -> Integer) {
+  name = "x";
   optional = False;
 }
 
-hasSignal:Association (link -> Signal) {
+hasSignal:Association (OutPort -> Signal) {
   # every Signal has 1 link
   source_lower_cardinality = 1;
   source_upper_cardinality = 1;
+
    # every link has 0..1 Signals: 
   target_upper_cardinality = 1;
 }
-
-# BoolSignal:Class
-# IntSignal:Class
-# StrSignal:Class
-
-# :Inheritance (BoolSignal -> Signal)
-# :Inheritance (IntSignal -> Signal)
-# :Inheritance (StrSignal -> Signal)
-
-# BoolSignal_signal:AttributeLink (BoolSignal -> Boolean) {
-#   name = "signal";
-#   optional = False;
-# }
-# IntSignal_signal:AttributeLink (IntSignal -> Integer) {
-#   name = "signal";
-#   optional = False;
-# }
-# StrSignal_signal:AttributeLink (StrSignal -> String) {
-#   name = "signal";
-#   optional = False;
-# }
-
 
 
 # Delay block state
 # mandatory - otherwise we cannot determine the output signal of a delay block
 
-State:Class {
-  # abstract = True;
-}
+State:Class
 
-State_state:AttributeLink (State -> Integer) {
-  name = "state";
+State_x:AttributeLink (State -> Integer) {
+  name = "x";
   optional = False;
 }
 
 
 delay2State:Association (Delay -> State) {
+  # one-to-one
   source_lower_cardinality = 1;
   source_upper_cardinality = 1;
   target_lower_cardinality = 1;
   target_upper_cardinality = 1;
 }
 
-# BoolState:Class
-# IntState:Class
-# StrState:Class
+Clock:Class {
+  lower_cardinality = 1;
+  upper_cardinality = 1;
+}
 
-# :Inheritance (BoolState -> State)
-# :Inheritance (IntState -> State)
-# :Inheritance (StrState -> State)
-
-
-# BoolState_state:AttributeLink (BoolState -> Boolean) {
-#   name = "state";
-#   optional = False;
-# }
-
-# IntState_state:AttributeLink (IntState -> Integer) {
-#   name = "state";
-#   optional = False;
-# }
-
-# StrState_state:AttributeLink (StrState -> String) {
-#   name = "state";
-#   optional = False;
-# }
+Clock_time:AttributeLink (Clock -> Integer) {
+  name = "time";
+  optional = False;
+}

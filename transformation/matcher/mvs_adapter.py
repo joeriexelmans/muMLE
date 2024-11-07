@@ -76,7 +76,8 @@ UUID_REGEX = re.compile(r"[0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-
 
 # Converts an object diagram in MVS state to the pattern matcher graph type
 # ModelRefs are flattened
-def model_to_graph(state: State, model: UUID, metamodel: UUID, prefix=""):
+def model_to_graph(state: State, model: UUID, metamodel: UUID,
+    _filter=lambda node: True, prefix=""):
     # with Timer("model_to_graph"):
         od = services_od.OD(model, metamodel, state)
         scd = SCD(model, state)
@@ -121,7 +122,7 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID, prefix=""):
             return node
 
         # Objects and Links become vertices
-        uuid_to_vtx = { node: to_vtx(node, prefix+key) for key in bottom.read_keys(model) for node in bottom.read_outgoing_elements(model, key) }
+        uuid_to_vtx = { node: to_vtx(node, prefix+key) for key in bottom.read_keys(model) for node in bottom.read_outgoing_elements(model, key) if _filter(node) }
         graph.vtxs = [ vtx for vtx in uuid_to_vtx.values() ]
 
         # For every Link, two edges are created (for src and tgt)
@@ -183,7 +184,6 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID, prefix=""):
             # # print(type_edge)
             # graph.edges.append(type_edge)
 
-
         # Add typing information for:
         #   - classes
         #   - attributes
@@ -192,25 +192,31 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID, prefix=""):
             objects = scd.get_typed_by(class_node)
             # print("typed by:", class_name, objects)
             for obj_name, obj_node in objects.items():
-                add_types(obj_node)
+                if _filter(obj_node):
+                    add_types(obj_node)
             for attr_name, attr_node in scd_mm.get_attributes(class_name).items():
                 attrs = scd.get_typed_by(attr_node)
                 for slot_name, slot_node in attrs.items():
-                    add_types(slot_node)
+                    if _filter(slot_node):
+                        add_types(slot_node)
         for assoc_name, assoc_node in scd_mm.get_associations().items():
             objects = scd.get_typed_by(assoc_node)
             # print("typed by:", assoc_name, objects)
             for link_name, link_node in objects.items():
-                add_types(link_node)
+                if _filter(link_node):
+                    add_types(link_node)
 
         return names, graph
 
 
 def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
+    bottom = Bottom(state)
 
     # compute subtype relations and such:
     cdapi = CDAPI(state, host_mm)
     odapi = ODAPI(state, host_m, host_mm)
+    pattern_odapi = ODAPI(state, pattern_m, pattern_mm)
+    pattern_mm_odapi = ODAPI(state, pattern_mm, cdapi.mm)
 
     # Function object for pattern matching. Decides whether to match host and guest vertices, where guest is a RAMified instance (e.g., the attributes are all strings with Python expressions), and the host is an instance (=object diagram) of the original model (=class diagram)
     class RAMCompare:
@@ -220,6 +226,9 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
 
             type_model_id = bottom.state.read_dict(bottom.state.read_root(), "SCD")
             self.scd_model = UUID(bottom.state.read_value(type_model_id))
+
+            # constraints need to be checked at the very end, after a complete match is established, because constraint code may refer to matched elements by their name
+            self.conditions_to_check = []
 
         def match_types(self, g_vtx_type, h_vtx_type):
             # types only match with their supertypes
@@ -256,26 +265,10 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
                     return False
 
                 python_code = services_od.read_primitive_value(self.bottom, g_vtx.node_id, pattern_mm)[0]
-                return exec_then_eval(python_code,
-                    _globals=bind_api_readonly(odapi),
-                    _locals={'this': h_vtx.node_id})
 
-                # nested_matches = [m for m in match_od(state, h_ref_m, h_ref_mm, g_ref_m, g_ref_mm)]
+                self.conditions_to_check.append((python_code, h_vtx.node_id))
 
-
-                # print('begin recurse')
-                # g_ref_m, g_ref_mm = g_vtx.modelref
-                # h_ref_m, h_ref_mm = h_vtx.modelref
-                # print('nested_matches:', nested_matches)
-                # if len(nested_matches) == 0:
-                #     return False
-                # elif len(nested_matches) == 1:
-                #     return True
-                # else:
-                #     raise Exception("We have a problem: there is more than 1 match in the nested models.")
-                # print('end recurse')
-
-            # Then, match by value
+                return True # do be determined later, if it's actually a match
 
             if g_vtx.value == None:
                 return h_vtx.value == None
@@ -293,20 +286,26 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
             if h_vtx.value == IS_MODELREF:
                 return False
 
-            # python_code = g_vtx.value
-            # try:
-            #     return exec_then_eval(python_code,
-            #         _globals=bind_api_readonly(odapi),
-            #         _locals={'this': h_vtx.node_id})
-            # except Exception as e:
-            #     print(e)
-            #     return False
             return True
 
     # Convert to format understood by matching algorithm
     h_names, host = model_to_graph(state, host_m, host_mm)
-    g_names, guest = model_to_graph(state, pattern_m, pattern_mm)
 
+    # Only match matchable pattern elements
+    # E.g., the 'condition'-attribute that is added to every class, cannot be matched with anything
+    def is_matchable(pattern_el):
+        pattern_el_name = pattern_odapi.get_name(pattern_el)
+        if pattern_odapi.get_type_name(pattern_el) == "GlobalCondition":
+            return False
+        # Super-cheap and unreliable way of filtering out the 'condition'-attribute, added to every class:
+        return not (pattern_el_name.endswith("condition")
+            # as an extra safety measure, if the user defined her own 'condition' attribute, RAMification turned this into 'RAM_condition', and we can detect this
+            # of course this breaks if the class name already ended with 'RAM', but let's hope that never happens
+            # also, we are assuming the default "RAM_" prefix is used, but the user can change this...
+            and not pattern_el_name.endswith("RAM_condition"))
+
+    g_names, guest = model_to_graph(state, pattern_m, pattern_mm,
+        _filter=is_matchable)
 
     graph_pivot = {
         g_names[guest_name] : h_names[host_name]
@@ -314,7 +313,46 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
                 if guest_name in g_names
     }
 
-    matcher = MatcherVF2(host, guest, RAMCompare(Bottom(state), services_od.OD(host_mm, host_m, state)))
+    obj_conditions = []
+    for class_name, class_node in pattern_mm_odapi.get_all_instances("Class"):
+        for obj_name, obj_node in pattern_odapi.get_all_instances(class_name):
+            python_code = pattern_odapi.get_slot_value_default(obj_node, "condition", 'True')
+            if class_name == "GlobalCondition":
+                obj_conditions.append((python_code, None))
+            else:
+                obj_conditions.append((python_code, obj_name))
+
+
+    def check_conditions(name_mapping):
+        def check(python_code: str, loc):
+            return exec_then_eval(python_code,
+                _globals={
+                    **bind_api_readonly(odapi),
+                    'matched': lambda name: bottom.read_outgoing_elements(host_m, name_mapping[name])[0],
+                },
+                _locals=loc)
+
+        # Attribute conditions
+        for python_code, host_node in compare.conditions_to_check:
+            if not check(python_code, {'this': host_node}):
+                return False
+
+        for python_code, pattern_el_name in obj_conditions:
+            if pattern_el_name == None:
+                # GlobalCondition
+                if not check(python_code, {}):
+                    return False
+            else:
+                # object-lvl condition
+                host_el_name = name_mapping[pattern_el_name]
+                host_node = odapi.get(host_el_name)
+                if not check(python_code, {'this': host_node}):
+                    return False
+        return True
+
+
+    compare = RAMCompare(bottom, services_od.OD(host_mm, host_m, state))
+    matcher = MatcherVF2(host, guest, compare)
     for m in matcher.match(graph_pivot):
         # print("\nMATCH:\n", m)
         # Convert mapping
@@ -322,4 +360,8 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
         for guest_vtx, host_vtx in m.mapping_vtxs.items():
             if isinstance(guest_vtx, NamedNode) and isinstance(host_vtx, NamedNode):
                 name_mapping[guest_vtx.name] = host_vtx.name
+
+        if not check_conditions(name_mapping):
+            continue # not a match after all...
+
         yield name_mapping

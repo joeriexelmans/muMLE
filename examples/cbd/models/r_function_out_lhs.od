@@ -1,0 +1,22 @@
+# Match function and its out-connection
+
+f:RAM_Function {
+  # Only match if the signal of all inputs has been computed:
+  condition = ```
+    ok = True
+    for o in get_outgoing(this, "hasInPort"):
+      inport = get_target(o)
+      in_conn = get_incoming(inport, "link")[0]
+      some_outport = get_source(in_conn)
+      if len(get_outgoing(some_outport, "hasSignal")) == 0:
+        ok = False
+        break
+    ok
+  ```;
+}
+
+f_outport:RAM_OutPort
+
+f_has_outport:RAM_hasOutPort (f -> f_outport)
+
+clock:RAM_Clock

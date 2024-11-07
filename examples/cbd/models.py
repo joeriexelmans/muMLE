@@ -51,7 +51,7 @@ def get_fibonacci(state, scd_mmm):
 
     return (mm, mm_rt, m, m_rt_initial)
 
-RULE_NAMES = ["delay"]
+RULE_NAMES = ["delay_out", "function_out", "delay_in", "advance_time"]
 KINDS = ["nac", "lhs", "rhs"]
 
 def get_rules(state, rt_mm):

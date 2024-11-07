@@ -1,0 +1,26 @@
+# Our entire LHS (don't delete anything):
+
+f:RAM_Function
+
+f_outport:RAM_OutPort
+
+f_has_outport:RAM_hasOutPort (f -> f_outport)
+
+clock:RAM_Clock
+
+# To create:
+
+f_out_signal:RAM_Signal {
+  RAM_x = ```
+    def read(inport_name):
+      inport = get(inport_name)
+      outport = get_source(get_incoming(inport, "link")[0])
+      signal = get_target(get_outgoing(outport, "hasSignal")[0])
+      return get_slot_value(signal, "x")
+
+    code = get_slot_value(matched('f'), 'func')
+
+    eval(code, {}, { 'read': read })
+  ```;
+}
+:RAM_hasSignal (f_outport -> f_out_signal)

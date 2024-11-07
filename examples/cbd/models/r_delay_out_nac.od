@@ -1,0 +1,10 @@
+# From our LHS:
+
+delay_out:RAM_OutPort
+
+
+# We don't want to see the delay block's outport already having a signal:
+
+some_signal:RAM_Signal
+
+:RAM_hasSignal (delay_out -> some_signal)

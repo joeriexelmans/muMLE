@@ -254,7 +254,10 @@ def is_typed_by(bottom, el: UUID, typ: UUID):
 def get_typed_by(bottom, model, type_node: UUID):
     name_to_instance = {}
     for key in bottom.read_keys(model):
-        element, = bottom.read_outgoing_elements(model, key)
+        els = bottom.read_outgoing_elements(model, key)
+        if len(els) > 1:
+            raise Exception(f"Assertion failed: Model contains more than one object named '{key}'!")
+        element = els[0]
         element_types = bottom.read_outgoing_elements(element, "Morphism")
         if type_node in element_types:
             name_to_instance[key] = element

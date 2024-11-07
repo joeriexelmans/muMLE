@@ -1,7 +1,7 @@
 # Adder, two inputs, one output
 adder:Function {
   func = ```
-    n2_out = n0_in + n1_in
+    read('n0_in') + read('n1_in')
   ```;
 }
 n0_in:InPort
