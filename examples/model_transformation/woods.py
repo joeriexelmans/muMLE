@@ -13,6 +13,7 @@ from transformation import rewriter
 from services.bottom.V0 import Bottom
 from services.primitives.integer_type import Integer
 from concrete_syntax.plantuml import renderer as plantuml
+from concrete_syntax.plantuml.make_url import make_url as make_plantuml_url
 from concrete_syntax.textual_od import parser, renderer
 
 def main():
@@ -112,7 +113,9 @@ def main():
         # object to match
         man:{prefix}Man {{
             # match only men heavy enough
-            {prefix}weight = `v > 60`;
+            {prefix}weight = ```
+                get_value(this) > 60
+            ```;
         }}
 
         # object to delete
@@ -134,7 +137,7 @@ def main():
         # matched object
         man:{prefix}Man {{
             # man gains weight
-            {prefix}weight = `v + 5`;
+            {prefix}weight = `get_value(this) + 5`;
         }}
 
         # object to create
@@ -216,7 +219,7 @@ def main():
             # Render conformance
             uml += plantuml.render_trace_conformance(state, snapshot_dsl_m_id, dsl_mm_id)
 
-        return uml
+        return make_plantuml_url(uml)
 
     # plantuml_str = render_all_matches()
     plantuml_str = render_rewrite()

@@ -211,3 +211,42 @@ class ODAPI:
 
     def create_object(self, object_name: Optional[str], class_name: str):
         return self.od.create_object(object_name, class_name)
+
+
+# internal use
+# Get API methods as bound functions, to pass as globals to 'eval'
+# Readonly version is used for:
+#  - Conformance checking
+#  - Pattern matching (LHS/NAC of rule)
+def bind_api_readonly(odapi):
+    funcs = {
+        'read_value': odapi.state.read_value,
+        'get': odapi.get,
+        'get_value': odapi.get_value,
+        'get_target': odapi.get_target,
+        'get_source': odapi.get_source,
+        'get_slot': odapi.get_slot,
+        'get_slot_value': odapi.get_slot_value,
+        'get_slot_value_default': odapi.get_slot_value_default,
+        'get_all_instances': odapi.get_all_instances,
+        'get_name': odapi.get_name,
+        'get_type_name': odapi.get_type_name,
+        'get_outgoing': odapi.get_outgoing,
+        'get_incoming': odapi.get_incoming,
+        'has_slot': odapi.has_slot,
+    }
+    return funcs
+
+# internal use
+# Get API methods as bound functions, to pass as globals to 'eval'
+# Read/write version is used for:
+#  - Graph rewriting (RHS of rule)
+def bind_api(odapi):
+    funcs = {
+        **bind_api_readonly(odapi),
+        'create_object': odapi.create_object,
+        'create_link': odapi.create_link,
+        'delete': odapi.delete,
+        'set_slot_value': odapi.set_slot_value,
+    }
+    return funcs

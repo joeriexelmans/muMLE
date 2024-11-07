@@ -4,12 +4,14 @@
 #   - ? that's it?
 
 from uuid import UUID
+from api.od import ODAPI, bind_api
 from services.bottom.V0 import Bottom
 from transformation import ramify
 from services import od
 from services.primitives.string_type import String
 from services.primitives.actioncode_type import ActionCode
 from services.primitives.integer_type import Integer
+from util.eval import exec_then_eval
 
 def process_rule(state, lhs: UUID, rhs: UUID):
     bottom = Bottom(state)
@@ -40,6 +42,8 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
     rhs_od = od.OD(pattern_mm, rhs_m, bottom.state)
 
     to_delete, to_create, common = process_rule(state, lhs_m, rhs_m)
+
+    odapi = ODAPI(state, host_m, mm)
 
     # Perform deletions
     for pattern_name_to_delete in to_delete:
@@ -95,7 +99,8 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
             if type_name == "ActionCode":
                 # Assume the string is a Python expression to evaluate
                 python_expr = ActionCode(UUID(bottom.read_value(rhs_el_to_create)), bottom.state).read()
-                result = eval(python_expr, {}, {})
+
+                result = exec_then_eval(python_expr, _globals=bind_api(odapi))
                 # Write the result into the host model.
                 # This will be the *value* of an attribute. The attribute-link (connecting an object to the attribute) will be created as an edge later.
                 if isinstance(result, int):
@@ -152,8 +157,10 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
             print(' -> is modelref')
             old_value, _ = od.read_primitive_value(bottom, host_el, mm)
             rhs_el, = bottom.read_outgoing_elements(rhs_m, pattern_el_name)
-            expr, _ = od.read_primitive_value(bottom, rhs_el, pattern_mm)
-            result = eval(expr, {}, {'v': old_value})
+            python_expr, _ = od.read_primitive_value(bottom, rhs_el, pattern_mm)
+            result = exec_then_eval(python_expr,
+                _globals=bind_api(odapi),
+                _locals={'this': host_el})
             # print('eval result=', result)
             if isinstance(result, int):
                 # overwrite the old value, in-place

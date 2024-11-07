@@ -110,7 +110,8 @@ def render_object_diagram(state, m, mm, render_attributes=True, prefix_ids=""):
                     slot = m_od.get_slot(obj_node, attr_name)
                     if slot != None:
                         val, type_name = od.read_primitive_value(bottom, slot, mm)
-                        output += f"\n{attr_name} => {display_value(val, type_name)}"
+                        escaped_newline = ";"
+                        output += f"\n{attr_name} => {display_value(val, type_name, newline_character=escaped_newline)}"
             output += '\n}'
 
     output += '\n'

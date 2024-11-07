@@ -10,7 +10,7 @@ from concrete_syntax.common import indent
 from util.eval import exec_then_eval
 
 from api.cd import CDAPI
-from api.od import ODAPI
+from api.od import ODAPI, bind_api_readonly
 
 import functools
 
@@ -138,7 +138,7 @@ class Conformance:
             for ref_inst_name, ref_inst in self.odapi.get_all_instances(ref_name):
                 sub_m = UUID(self.bottom.read_value(ref_inst))
                 nested_errors = Conformance(self.state, sub_m, sub_mm).check_nominal()
-                errors += [f"In ModelRef ({m_name}):" + err for err in nested_errors]
+                errors += [f"In ModelRef ({ref_name}):" + err for err in nested_errors]
 
         return errors
 
@@ -219,38 +219,6 @@ class Conformance:
                         errors.append(f"Target cardinality of type '{assoc_name}' ({count}) out of bounds ({lc}..{uc}) in '{obj_name}'.")
         return errors
 
-    def evaluate_constraint(self, code, **kwargs):
-        """
-        Evaluate constraint code (Python code)
-        """
-
-        funcs = {
-            'read_value': self.state.read_value,
-            'get': self.odapi.get,
-            'get_value': self.odapi.get_value,
-            'get_target': self.odapi.get_target,
-            'get_source': self.odapi.get_source,
-            'get_slot': self.odapi.get_slot,
-            'get_slot_value': self.odapi.get_slot_value,
-            'get_all_instances': self.odapi.get_all_instances,
-            'get_name': self.odapi.get_name,
-            'get_type_name': self.odapi.get_type_name,
-            'get_outgoing': self.odapi.get_outgoing,
-            'get_incoming': self.odapi.get_incoming,
-            'has_slot': self.odapi.has_slot,
-        }
-        # print("evaluating constraint ...", code)
-        loc = {**kwargs, }
-        result = exec_then_eval(
-            code,
-            {'__builtins__': {'isinstance': isinstance, 'print': print,
-                              'int': int, 'float': float, 'bool': bool, 'str': str, 'tuple': tuple, 'len': len, 'set': set, 'dict': dict},
-                **funcs
-             },  # globals
-             loc # locals
-        )
-        return result
-
     def check_constraints(self):
         """
         Check whether all constraints defined for a model are respected
@@ -288,7 +256,7 @@ class Conformance:
                     description = f"Local constraint of \"{type_name}\" in \"{obj_name}\""
                     # print(description)
                     try:
-                        result = self.evaluate_constraint(code, this=obj_id) # may raise
+                        result = exec_then_eval(code, _globals=bind_api_readonly(self.odapi), _locals={'this': obj_id}) # may raise
                         check_result(result, description)
                     except:
                         errors.append(f"Runtime error during evaluation of {description}:\n{indent(traceback.format_exc(), 6)}")
@@ -310,10 +278,10 @@ class Conformance:
             if code != None:
                 description = f"Global constraint \"{tm_name}\""
                 try:
-                    result = self.evaluate_constraint(code, model=self.model)
+                    result = exec_then_eval(code, _globals=bind_api_readonly(self.odapi)) # may raise
+                    check_result(result, description)
                 except:
                     errors.append(f"Runtime error during evaluation of {description}:\n{indent(traceback.format_exc(), 6)}")
-                check_result(result, description)
         return errors
 
     def precompute_structures(self):

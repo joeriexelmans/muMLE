@@ -1,9 +1,11 @@
 from api.cd import CDAPI
+from api.od import ODAPI, bind_api_readonly
+from util.eval import exec_then_eval
 from state.base import State
 from uuid import UUID
 from services.bottom.V0 import Bottom
 from services.scd import SCD
-from services.od import OD
+from services import od as services_od
 from transformation.matcher.matcher import Graph, Edge, Vertex, MatcherVF2
 from transformation import ramify
 import itertools
@@ -76,7 +78,7 @@ UUID_REGEX = re.compile(r"[0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-
 # ModelRefs are flattened
 def model_to_graph(state: State, model: UUID, metamodel: UUID, prefix=""):
     # with Timer("model_to_graph"):
-        od = OD(model, metamodel, state)
+        od = services_od.OD(model, metamodel, state)
         scd = SCD(model, state)
         scd_mm = SCD(metamodel, state)
 
@@ -208,6 +210,7 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
 
     # compute subtype relations and such:
     cdapi = CDAPI(state, host_mm)
+    odapi = ODAPI(state, host_m, host_mm)
 
     # Function object for pattern matching. Decides whether to match host and guest vertices, where guest is a RAMified instance (e.g., the attributes are all strings with Python expressions), and the host is an instance (=object diagram) of the original model (=class diagram)
     class RAMCompare:
@@ -251,16 +254,26 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
             if hasattr(g_vtx, 'modelref'):
                 if not hasattr(h_vtx, 'modelref'):
                     return False
-                g_ref_m, g_ref_mm = g_vtx.modelref
-                h_ref_m, h_ref_mm = h_vtx.modelref
-                nested_matches = [m for m in match_od(state, h_ref_m, h_ref_mm, g_ref_m, g_ref_mm)]
+
+                python_code = services_od.read_primitive_value(self.bottom, g_vtx.node_id, pattern_mm)[0]
+                return exec_then_eval(python_code,
+                    _globals=bind_api_readonly(odapi),
+                    _locals={'this': h_vtx.node_id})
+
+                # nested_matches = [m for m in match_od(state, h_ref_m, h_ref_mm, g_ref_m, g_ref_mm)]
+
+
+                # print('begin recurse')
+                # g_ref_m, g_ref_mm = g_vtx.modelref
+                # h_ref_m, h_ref_mm = h_vtx.modelref
                 # print('nested_matches:', nested_matches)
-                if len(nested_matches) == 0:
-                    return False
-                elif len(nested_matches) == 1:
-                    return True
-                else:
-                    raise Exception("We have a problem: there is more than 1 match in the nested models.")
+                # if len(nested_matches) == 0:
+                #     return False
+                # elif len(nested_matches) == 1:
+                #     return True
+                # else:
+                #     raise Exception("We have a problem: there is more than 1 match in the nested models.")
+                # print('end recurse')
 
             # Then, match by value
 
@@ -280,23 +293,15 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
             if h_vtx.value == IS_MODELREF:
                 return False
 
-            # # print(g_vtx.value, h_vtx.value)
-            # def get_slot(h_vtx, slot_name: str):
-            #     slot_node = self.host_od.get_slot(h_vtx.node_id, slot_name)
-            #     return slot_node
-
-            # def read_int(slot: UUID):
-            #     i = Integer(slot, self.bottom.state)
-            #     return i.read()
-
-            try:
-                return eval(g_vtx.value, {}, {
-                    'v': h_vtx.value,
-                    # 'get_slot': functools.partial(get_slot, h_vtx),
-                    # 'read_int': read_int,
-                })
-            except Exception as e:
-                return False
+            # python_code = g_vtx.value
+            # try:
+            #     return exec_then_eval(python_code,
+            #         _globals=bind_api_readonly(odapi),
+            #         _locals={'this': h_vtx.node_id})
+            # except Exception as e:
+            #     print(e)
+            #     return False
+            return True
 
     # Convert to format understood by matching algorithm
     h_names, host = model_to_graph(state, host_m, host_mm)
@@ -309,7 +314,7 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
                 if guest_name in g_names
     }
 
-    matcher = MatcherVF2(host, guest, RAMCompare(Bottom(state), OD(host_mm, host_m, state)))
+    matcher = MatcherVF2(host, guest, RAMCompare(Bottom(state), services_od.OD(host_mm, host_m, state)))
     for m in matcher.match(graph_pivot):
         # print("\nMATCH:\n", m)
         # Convert mapping
