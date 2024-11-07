@@ -1,5 +1,5 @@
-import urllib
 from concrete_syntax.common import indent
+from concrete_syntax.graphviz.make_url import make_url
 from examples.semantics.operational.port.helpers import design_to_state, state_to_design, get_time, get_num_ships
 
 def render_port_graphviz(od):
@@ -53,9 +53,7 @@ def render_port_graphviz(od):
             if berth not in already_have:
                 txt += f"{name} -> {od.get_name(berth)} [style=dotted, arrowhead=none, color=chocolate];\n"
 
-    graphviz = f"digraph {{\n{indent(txt, 2)}}}"
-
-    return "https://dreampuf.github.io/GraphvizOnline/#"+urllib.parse.quote(graphviz)
+    return make_url(txt)
 
 def render_port_textual(od):
     txt = ""

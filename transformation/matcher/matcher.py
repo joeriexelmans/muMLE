@@ -76,10 +76,12 @@ class MatcherState:
         self.boundary = None
 
     @staticmethod
-    def make_initial(host, guest):
+    def make_initial(host, guest, pivot):
         state = MatcherState()
-        state.h_unmatched_vtxs = host.vtxs
-        state.g_unmatched_vtxs = guest.vtxs
+        state.h_unmatched_vtxs = [vtx for vtx in host.vtxs if vtx not in pivot.values()]
+        state.g_unmatched_vtxs = [vtx for vtx in guest.vtxs if vtx not in pivot.keys()]
+        state.mapping_vtxs = pivot
+        state.r_mapping_vtxs = { v: k for k,v in state.mapping_vtxs.items() }
         return state
 
     # Grow the match set (creating a new copy)
@@ -138,9 +140,9 @@ class MatcherVF2:
 
         # print("number of guest connected components:", len(self.guest_component_to_vtxs))
 
-    def match(self):
+    def match(self, pivot={}):
         yield from self._match(
-            state=MatcherState.make_initial(self.host, self.guest),
+            state=MatcherState.make_initial(self.host, self.guest, pivot),
             already_visited=set())
 
 

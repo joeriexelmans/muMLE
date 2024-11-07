@@ -26,6 +26,8 @@ def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
     string_modelref = ramified_scd.create_model_ref("String", string_type)
     actioncode_modelref = ramified_scd.create_model_ref("ActionCode", actioncode_type)
 
+    already_ramified = set() # for correct order of ramification
+
     classes = m_scd.get_classes()
     for class_name, class_node in classes.items():
         # For every class in our original model, create a class:
@@ -49,26 +51,48 @@ def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
             # Every attribute becomes 'string' type
             # The string will be a Python expression
             ramified_attr_link = ramified_scd._create_attribute_link(prefix+class_name, actioncode_modelref, prefix+attr_name, optional=True)
-            # traceability link
+            # create traceability link
             bottom.create_edge(ramified_attr_link, attr_edge, RAMIFIES_LABEL)
 
-    associations = m_scd.get_associations()
-    for assoc_name, assoc_node in associations.items():
-        # For every association in our original model, create an association:
-        #   - src-min-card: 0
-        #   - src-max-card: same as original
-        #   - tgt-min-card: 0
-        #   - tgt-max-card: same as original
-        _, src_upper_card, _, tgt_upper_card = m_scd.get_assoc_cardinalities(assoc_node)
-        src = m_scd.get_class_name(bottom.read_edge_source(assoc_node))
-        tgt = m_scd.get_class_name(bottom.read_edge_target(assoc_node))
-        # print('creating assoc', src, "->", tgt, ", name =", assoc_name, ", src card = 0 ..", src_upper_card, "and tgt card = 0 ..", tgt_upper_card)
-        ramified_assoc = ramified_scd.create_association(
-            prefix+assoc_name, prefix+src, prefix+tgt,
-            src_max_c=src_upper_card,
-            tgt_max_c=tgt_upper_card)
-        # traceability link
-        bottom.create_edge(ramified_assoc, assoc_node, RAMIFIES_LABEL)
+        already_ramified.add(class_name)
+
+
+    assocs_to_ramify = m_scd.get_associations()
+
+    while len(assocs_to_ramify) > 0:
+        ramify_later = {}
+        for assoc_name, assoc_node in assocs_to_ramify.items():
+            # For every association in our original model, create an association:
+            #   - src-min-card: 0
+            #   - src-max-card: same as original
+            #   - tgt-min-card: 0
+            #   - tgt-max-card: same as original
+
+            if assoc_name in already_ramified:
+                raise Exception("Assertion failed: did not expect this to ever happen!")
+                continue
+
+            _, src_upper_card, _, tgt_upper_card = m_scd.get_assoc_cardinalities(assoc_node)
+            src = m_scd.get_class_name(bottom.read_edge_source(assoc_node))
+            tgt = m_scd.get_class_name(bottom.read_edge_target(assoc_node))
+
+            if src not in already_ramified or tgt not in already_ramified:
+                ramify_later[assoc_name] = assoc_node
+                continue
+
+            # print('creating assoc', src, "->", tgt, ", name =", assoc_name, ", src card = 0 ..", src_upper_card, "and tgt card = 0 ..", tgt_upper_card)
+
+            ramified_assoc = ramified_scd.create_association(name=prefix+assoc_name,
+                source=prefix+src, target=prefix+tgt,
+                src_max_c=src_upper_card,
+                tgt_max_c=tgt_upper_card)
+
+            # create traceability link
+            bottom.create_edge(ramified_assoc, assoc_node, RAMIFIES_LABEL)
+
+            already_ramified.add(assoc_name)
+
+        assocs_to_ramify = ramify_later
 
     for inh_name, inh_node in m_scd.get_inheritances().items():
         # Re-create inheritance links like in our original model:

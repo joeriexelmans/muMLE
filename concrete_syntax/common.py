@@ -17,6 +17,11 @@ def display_value(val: any, type_name: str, indentation=0):
     else:
         raise Exception("don't know how to display value" + type_name)
 
+def display_name(raw_name: str) -> str:
+    if raw_name[0:2] == "__":
+        return "" # hide names that start with '__', they are anonymous (by convention)
+    else:
+        return raw_name
 
 # internal use only
 # just a dumb wrapper to distinguish between code and string

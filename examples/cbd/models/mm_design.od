@@ -3,10 +3,10 @@ Block:Class {
 }
 
 InPort:Class {
-  abstract = True;
+  # abstract = True;
 }
 OutPort:Class {
-  abstract = True;
+  # abstract = True;
 }
 
 hasInPort:Association (Block -> InPort) {
@@ -77,8 +77,8 @@ Delay:Class {
       out_type = None
     else:
       out_type = get_type_name(get_target(get_outgoing(this, "hasOutPort")[0]))
-    if in_type != None and out_type != None and in_type[0:3] != out_type[0:3]:
-      errors.append(f"Inport type ({in_type}) differs from outport type ({out_type})")
+    # if in_type != None and out_type != None and in_type[0:3] != out_type[0:3]:
+    #   errors.append(f"Inport type ({in_type}) differs from outport type ({out_type})")
     errors
   ```;
 }
@@ -90,40 +90,40 @@ Delay:Class {
 # Object Diagrams are statically typed, so we must create in/out-ports, and MemorySlots for all primitive types:
 
 
-# Port types
+# # Port types
 
-BoolInPort:Class
-IntInPort:Class
-StrInPort:Class
+# BoolInPort:Class
+# IntInPort:Class
+# StrInPort:Class
 
-BoolOutPort:Class
-IntOutPort:Class
-StrOutPort:Class
+# BoolOutPort:Class
+# IntOutPort:Class
+# StrOutPort:Class
 
-:Inheritance (BoolInPort -> InPort)
-:Inheritance (IntInPort -> InPort)
-:Inheritance (StrInPort -> InPort)
+# :Inheritance (BoolInPort -> InPort)
+# :Inheritance (IntInPort -> InPort)
+# :Inheritance (StrInPort -> InPort)
 
-:Inheritance (BoolOutPort -> OutPort)
-:Inheritance (IntOutPort -> OutPort)
-:Inheritance (StrOutPort -> OutPort)
+# :Inheritance (BoolOutPort -> OutPort)
+# :Inheritance (IntOutPort -> OutPort)
+# :Inheritance (StrOutPort -> OutPort)
 
-# Link types
+# # Link types
 
-boolLink:Association (BoolOutPort -> BoolInPort)
-intLink:Association (IntOutPort -> IntInPort)
-strLink:Association (StrOutPort -> StrInPort)
+# boolLink:Association (BoolOutPort -> BoolInPort)
+# intLink:Association (IntOutPort -> IntInPort)
+# strLink:Association (StrOutPort -> StrInPort)
 
-:Inheritance (boolLink -> link)
-:Inheritance (intLink -> link)
-:Inheritance (strLink -> link)
+# :Inheritance (boolLink -> link)
+# :Inheritance (intLink -> link)
+# :Inheritance (strLink -> link)
 
-# Delay block types
+# # Delay block types
 
-BoolDelay:Class
-IntDelay:Class
-StrDelay:Class
+# BoolDelay:Class
+# IntDelay:Class
+# StrDelay:Class
 
-:Inheritance (BoolDelay -> Delay)
-:Inheritance (IntDelay -> Delay)
-:Inheritance (StrDelay -> Delay)
+# :Inheritance (BoolDelay -> Delay)
+# :Inheritance (IntDelay -> Delay)
+# :Inheritance (StrDelay -> Delay)

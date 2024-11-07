@@ -118,7 +118,13 @@ class ODAPI:
         )[0]
 
     def get(self, name: str):
-        return self.bottom.read_outgoing_elements(self.m, name)[0]
+        results = self.bottom.read_outgoing_elements(self.m, name)
+        if len(results) == 1:
+            return results[0]
+        elif len(results) >= 2:
+            raise Exception("this should never happen")
+        else:
+            raise Exception(f"No such element in model: '{name}'")
 
     def get_type_name(self, obj: UUID):
         return self.get_name(self.get_type(obj))
@@ -144,6 +150,9 @@ class ODAPI:
         slot = self.get_slot(obj, attr_name)
         return self.get_value(slot)
 
+    # Returns the given default value if the slot does not exist on the object.
+    # The attribute must exist in the object's class, or an exception will be thrown.
+    # The slot may not exist however, if the attribute is defined as 'optional' in the class.
     def get_slot_value_default(self, obj: UUID, attr_name: str, default: any):
         try:
             return self.get_slot_value(obj, attr_name)
@@ -187,7 +196,12 @@ class ODAPI:
 
     def create_link(self, link_name: Optional[str], assoc_name: str, src: UUID, tgt: UUID):
         global NEXT_ID
-        typ, = self.bottom.read_outgoing_elements(self.mm, assoc_name)
+        types = self.bottom.read_outgoing_elements(self.mm, assoc_name) 
+        if len(types) == 0:
+            raise Exception(f"No such association: '{assoc_name}'")
+        elif len(types) >= 2:
+            raise Exception(f"More than one association exists with name '{assoc_name}' - this means the MM is invalid.")
+        typ = types[0]
         if link_name == None:
             link_name = f"__{assoc_name}{NEXT_ID}"
             NEXT_ID += 1

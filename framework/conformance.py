@@ -7,21 +7,13 @@ from pprint import pprint
 import traceback
 from concrete_syntax.common import indent
 
+from util.eval import exec_then_eval
+
 from api.cd import CDAPI
 from api.od import ODAPI
 
 import functools
 
-
-# based on https://stackoverflow.com/a/39381428
-# Parses and executes a block of Python code, and returns the eval result of the last statement
-import ast
-def exec_then_eval(code, _globals, _locals):
-    block = ast.parse(code, mode='exec')
-    # assumes last node is an expression
-    last = ast.Expression(block.body.pop().value)
-    exec(compile(block, '<string>', mode='exec'), _globals, _locals)
-    return eval(compile(last, '<string>', mode='eval'), _globals, _locals)
 
 def render_conformance_check_result(error_list):
     if len(error_list) == 0:

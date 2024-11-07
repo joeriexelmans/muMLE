@@ -1,18 +1,42 @@
 # Link state ("signal")
-# is optional: absent for yet-to-compute signals
 
-intLink_signal:AttributeLink (intLink -> Integer) {
-  name = "signal";
-  optional = True;
+Signal:Class {
+  # abstract = True;
 }
-boolLink_signal:AttributeLink (boolLink -> Boolean) {
+
+Signal_signal:AttributeLink (Signal -> Integer) {
   name = "signal";
-  optional = True;
+  optional = False;
 }
-strLink_signal:AttributeLink (strLink -> String) {
-  name = "signal";
-  optional = True;
+
+hasSignal:Association (link -> Signal) {
+  # every Signal has 1 link
+  source_lower_cardinality = 1;
+  source_upper_cardinality = 1;
+   # every link has 0..1 Signals: 
+  target_upper_cardinality = 1;
 }
+
+# BoolSignal:Class
+# IntSignal:Class
+# StrSignal:Class
+
+# :Inheritance (BoolSignal -> Signal)
+# :Inheritance (IntSignal -> Signal)
+# :Inheritance (StrSignal -> Signal)
+
+# BoolSignal_signal:AttributeLink (BoolSignal -> Boolean) {
+#   name = "signal";
+#   optional = False;
+# }
+# IntSignal_signal:AttributeLink (IntSignal -> Integer) {
+#   name = "signal";
+#   optional = False;
+# }
+# StrSignal_signal:AttributeLink (StrSignal -> String) {
+#   name = "signal";
+#   optional = False;
+# }
 
 
 
@@ -20,8 +44,14 @@ strLink_signal:AttributeLink (strLink -> String) {
 # mandatory - otherwise we cannot determine the output signal of a delay block
 
 State:Class {
-  abstract = True;
+  # abstract = True;
 }
+
+State_state:AttributeLink (State -> Integer) {
+  name = "state";
+  optional = False;
+}
+
 
 delay2State:Association (Delay -> State) {
   source_lower_cardinality = 1;
@@ -30,26 +60,26 @@ delay2State:Association (Delay -> State) {
   target_upper_cardinality = 1;
 }
 
-BoolState:Class
-IntState:Class
-StrState:Class
+# BoolState:Class
+# IntState:Class
+# StrState:Class
 
-:Inheritance (BoolState -> State)
-:Inheritance (IntState -> State)
-:Inheritance (StrState -> State)
+# :Inheritance (BoolState -> State)
+# :Inheritance (IntState -> State)
+# :Inheritance (StrState -> State)
 
 
-BoolState_state:AttributeLink (BoolState -> Boolean) {
-  name = "state";
-  optional = False;
-}
+# BoolState_state:AttributeLink (BoolState -> Boolean) {
+#   name = "state";
+#   optional = False;
+# }
 
-IntState_state:AttributeLink (IntState -> Integer) {
-  name = "state";
-  optional = False;
-}
+# IntState_state:AttributeLink (IntState -> Integer) {
+#   name = "state";
+#   optional = False;
+# }
 
-StrState_state:AttributeLink (StrState -> String) {
-  name = "state";
-  optional = False;
-}
+# StrState_state:AttributeLink (StrState -> String) {
+#   name = "state";
+#   optional = False;
+# }

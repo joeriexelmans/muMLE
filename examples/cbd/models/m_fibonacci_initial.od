@@ -1,7 +1,8 @@
-d0s:IntState {
+# Initial state for both delay blocks:
+d0s:State {
   state = 0;
 }
-d1s:IntState {
+d1s:State {
   state = 1;
 }
 :delay2State (d0 -> d0s)

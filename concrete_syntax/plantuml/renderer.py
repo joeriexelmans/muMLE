@@ -3,8 +3,9 @@
 from services import scd, od
 from services.bottom.V0 import Bottom
 from transformation import ramify
-from concrete_syntax.common import display_value
+from concrete_syntax.common import display_value, display_name
 from uuid import UUID
+
 
 def render_class_diagram(state, model, prefix_ids=""):
     bottom = Bottom(state)
@@ -102,7 +103,7 @@ def render_object_diagram(state, m, mm, render_attributes=True, prefix_ids=""):
             attributes = od.get_attributes(bottom, class_node)
 
         for obj_name, obj_node in m_od.get_objects(class_node).items():
-            output += f"\nmap \"{obj_name} : {class_name}\" as {make_id(obj_node)} {{"
+            output += f"\nmap \"{display_name(obj_name)} : {class_name}\" as {make_id(obj_node)} {{"
 
             if render_attributes:
                 for attr_name, attr_edge in attributes:
@@ -122,7 +123,7 @@ def render_object_diagram(state, m, mm, render_attributes=True, prefix_ids=""):
             src_name = m_od.get_object_name(src_obj)
             tgt_name = m_od.get_object_name(tgt_obj)
 
-            output += f"\n{make_id(src_obj)} -> {make_id(tgt_obj)} : :{assoc_name}"
+            output += f"\n{make_id(src_obj)} -> {make_id(tgt_obj)} : {display_name(link_name)}:{assoc_name}"
 
     return output
 
@@ -229,4 +230,3 @@ def render_trace_match(state, name_mapping: dict, pattern_m: UUID, host_m: UUID,
             host_attr_name = od.get_attr_name(bottom, host_el_type)
             output += f"\n{make_pattern_id(pattern_obj)}::{pattern_attr_name} ..> {make_host_id(host_obj)}::{host_attr_name} {render_suffix}"
     return output
-

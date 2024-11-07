@@ -1,22 +1,15 @@
+# This module loads all the models (including the transformation rules) and performs a conformance-check on them.
+
 import os
 from framework.conformance import Conformance, render_conformance_check_result
 from concrete_syntax.textual_od import parser
-
+from transformation.ramify import ramify
 
 # get file contents as string
 def read_file(filename):
     dir = os.path.dirname(__file__)
     with open(dir+'/'+filename) as file:
         return file.read()
-
-# def parse_and_check(state, cs_file, mm):
-#     m_cs = read_file(cs_file)
-#     try:
-#         _parse_and_check(state, m_cs, mm)
-#     except Exception as e:
-#         e.add_note(f"While parsing '{cs_file}'")
-#         raise
-#     return m
 
 def parse_and_check(state, m_cs, mm, descr: str):
     try:
@@ -25,12 +18,16 @@ def parse_and_check(state, m_cs, mm, descr: str):
             m_text=m_cs,
             mm=mm,
         )
+    except Exception as e:
+        e.add_note("While parsing model " + descr)
+        raise
+    try:
         conf = Conformance(state, m, mm)
         errors = conf.check_nominal()
         if len(errors) > 0:
-            raise Exception(render_conformance_check_result(errors))
+            print(render_conformance_check_result(errors))
     except Exception as e:
-        e.add_note("While parsing model " + descr)
+        e.add_note("In model " + descr)
         raise
     return m
 
@@ -53,3 +50,22 @@ def get_fibonacci(state, scd_mmm):
     m_rt_initial = parse_and_check(state, m_rt_initial_cs, mm_rt, "Fibonacci initial state")
 
     return (mm, mm_rt, m, m_rt_initial)
+
+RULE_NAMES = ["delay"]
+KINDS = ["nac", "lhs", "rhs"]
+
+def get_rules(state, rt_mm):
+    rt_mm_ramified = ramify(state, rt_mm)
+
+    rules = {} # e.g., { "delay": {"nac": <UUID>, "lhs": <UUID>, ...}, ...}
+
+    for rule_name in RULE_NAMES:
+        rule = {}
+        for kind in KINDS:
+            filename = f"models/r_{rule_name}_{kind}.od";
+            cs = read_file(filename)
+            rule_m = parse_and_check(state, cs, rt_mm_ramified, descr=f"'{filename}'")
+            rule[kind] = rule_m
+        rules[rule_name] = rule
+
+    return (rt_mm_ramified, rules)

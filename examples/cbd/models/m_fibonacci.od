@@ -1,34 +1,34 @@
+# Adder, two inputs, one output
 adder:Function {
   func = ```
-    n2_out = in0 + in1
+    n2_out = n0_in + n1_in
   ```;
 }
-n0_in:IntInPort
-n1_in:IntInPort
-n2_out:IntOutPort
+n0_in:InPort
+n1_in:InPort
+n2_out:OutPort
 :hasInPort (adder -> n0_in)
 :hasInPort (adder -> n1_in)
 :hasOutPort (adder -> n2_out)
 
-
-
+# Delay block 0
 d0:Delay
-d0_in:IntInPort
-d0_out:IntOutPort
+d0_in:InPort
+d0_out:OutPort
 :hasInPort (d0 -> d0_in)
 :hasOutPort (d0 -> d0_out)
 
 
-
+# Delay block 1
 d1:Delay
-d1_in:IntInPort
-d1_out:IntOutPort
+d1_in:InPort
+d1_out:OutPort
 :hasInPort (d1 -> d1_in)
 :hasOutPort (d1 -> d1_out)
 
 
-
-:intLink (n2_out -> d1_in)
-:intLink (d1_out -> n1_in)
-:intLink (d1_out -> d0_in)
-:intLink (d1_out -> n0_in)
+# Connections
+conn0:link (n2_out -> d1_in) # n2 becomes n1 in next step
+conn1:link (d1_out -> d0_in) # n1 becomes n0 in next step
+conn2:link (d1_out -> n1_in) # n1 input to adder
+conn3:link (d0_out -> n0_in) # n0 input to adder

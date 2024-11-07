@@ -65,6 +65,7 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
             model_el_name_to_create = pattern_name_to_create + str(i) # use the label of the element in the RHS as a basis
             if len(bottom.read_outgoing_elements(host_m, model_el_name_to_create)) == 0:
                 break # found an available name
+            i += 1
         
         # Determine the type of the thing to create
         rhs_el_to_create, = bottom.read_outgoing_elements(rhs_m, pattern_name_to_create)
@@ -130,12 +131,17 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
 
     # Perform updates (only on values)
     for pattern_el_name in common:
-        model_el_name = name_mapping[pattern_el_name]
-        # print('updating', model_el_name)
-        model_el, = bottom.read_outgoing_elements(host_m, model_el_name)
-        host_type = od.get_type(bottom, model_el)
+        host_el_name = name_mapping[pattern_el_name]
+        host_el, = bottom.read_outgoing_elements(host_m, host_el_name)
+        # print('updating', host_el_name, host_el)
+        host_type = od.get_type(bottom, host_el)
+        # print('we have', pattern_el_name, '->', host_el_name, 'of type', type_name)
         if od.is_typed_by(bottom, host_type, class_type):
             # print(' -> is classs')
+            # nothing to do
+            pass
+        elif od.is_typed_by(bottom, host_type, assoc_type):
+            print(' -> is association')
             # nothing to do
             pass
         elif od.is_typed_by(bottom, host_type, attr_link_type):
@@ -143,17 +149,19 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
             # nothing to do
             pass
         elif od.is_typed_by(bottom, host_type, modelref_type):
-            # print(' -> is modelref')
-            old_value, _ = od.read_primitive_value(bottom, model_el, mm)
+            print(' -> is modelref')
+            old_value, _ = od.read_primitive_value(bottom, host_el, mm)
             rhs_el, = bottom.read_outgoing_elements(rhs_m, pattern_el_name)
             expr, _ = od.read_primitive_value(bottom, rhs_el, pattern_mm)
             result = eval(expr, {}, {'v': old_value})
             # print('eval result=', result)
             if isinstance(result, int):
                 # overwrite the old value, in-place
-                referred_model_id = UUID(bottom.read_value(model_el))
+                referred_model_id = UUID(bottom.read_value(host_el))
                 Integer(referred_model_id, state).create(result)
             else:
                 raise Exception("Unimplemented type. Value:", result)
         else:
-            raise Exception("Don't know what to do with element of type", host_type)
+            msg = f"Don't know what to do with element '{pattern_el_name}'->'{host_el_name}' of type ({host_type})"
+            # print(msg)
+            raise Exception(msg)

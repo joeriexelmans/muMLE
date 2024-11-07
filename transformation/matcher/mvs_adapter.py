@@ -1,3 +1,4 @@
+from api.cd import CDAPI
 from state.base import State
 from uuid import UUID
 from services.bottom.V0 import Bottom
@@ -87,6 +88,8 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID, prefix=""):
         modelrefs = {}
         # constraints = {}
 
+        names = {}
+
         def to_vtx(el, name):
             # print("name:", name)
             if bottom.is_edge(el):
@@ -101,7 +104,9 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID, prefix=""):
                 #     except:
                 #         pass
                 mvs_edges.append(el)
-                return MVSEdge(el, name)
+                edge = MVSEdge(el, name)
+                names[name] = edge
+                return edge
             # If the value of the el is a ModelRef (only way to detect this is to match a regex - not very clean), then extract it. We'll create a link to the referred model later.
             value = bottom.read_value(el)
             if isinstance(value, str):
@@ -109,13 +114,15 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID, prefix=""):
                     # side-effect
                     modelrefs[el] = (UUID(value), name)
                     return MVSNode(IS_MODELREF, el, name)
-            return MVSNode(value, el, name)
+            node = MVSNode(value, el, name)
+            names[name] = node
+            return node
 
-        # MVS-Nodes become vertices
+        # Objects and Links become vertices
         uuid_to_vtx = { node: to_vtx(node, prefix+key) for key in bottom.read_keys(model) for node in bottom.read_outgoing_elements(model, key) }
         graph.vtxs = [ vtx for vtx in uuid_to_vtx.values() ]
 
-        # For every MSV-Edge, two edges are created (for src and tgt)
+        # For every Link, two edges are created (for src and tgt)
         for mvs_edge in mvs_edges:
             mvs_src = bottom.read_edge_source(mvs_edge)
             if mvs_src in uuid_to_vtx:
@@ -194,10 +201,13 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID, prefix=""):
             for link_name, link_node in objects.items():
                 add_types(link_node)
 
-        return graph
+        return names, graph
 
 
-def match_od(state, host_m, host_mm, pattern_m, pattern_mm):
+def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
+
+    # compute subtype relations and such:
+    cdapi = CDAPI(state, host_mm)
 
     # Function object for pattern matching. Decides whether to match host and guest vertices, where guest is a RAMified instance (e.g., the attributes are all strings with Python expressions), and the host is an instance (=object diagram) of the original model (=class diagram)
     class RAMCompare:
@@ -208,33 +218,23 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm):
             type_model_id = bottom.state.read_dict(bottom.state.read_root(), "SCD")
             self.scd_model = UUID(bottom.state.read_value(type_model_id))
 
-        def is_subtype_of(self, supposed_subtype: UUID, supposed_supertype: UUID):
-            if supposed_subtype == supposed_supertype:
-                # reflexive:
-                return True
-
-            inheritance_node, = self.bottom.read_outgoing_elements(self.scd_model, "Inheritance")
-
-            for outgoing in self.bottom.read_outgoing_edges(supposed_subtype):
-                if inheritance_node in self.bottom.read_outgoing_elements(outgoing, "Morphism"):
-                    # 'outgoing' is an inheritance link
-                    supertype = self.bottom.read_edge_target(outgoing)
-                    if supertype != supposed_subtype:
-                        if self.is_subtype_of(supertype, supposed_supertype):
-                            return True
-
-            return False
-
         def match_types(self, g_vtx_type, h_vtx_type):
             # types only match with their supertypes
             # we assume that 'RAMifies'-traceability links have been created between guest and host types
             try:
-                g_vtx_original_type = ramify.get_original_type(self.bottom, g_vtx_type)
+                g_vtx_unramified_type = ramify.get_original_type(self.bottom, g_vtx_type)
             except:
                 return False
 
-            return self.is_subtype_of(h_vtx_type, g_vtx_original_type)
+            try:
+                host_type_name = cdapi.type_model_names[h_vtx_type]
+                guest_type_name_unramified = cdapi.type_model_names[g_vtx_unramified_type]
+            except KeyError:
+                return False
 
+            return cdapi.is_subtype(
+                super_type_name=guest_type_name_unramified,
+                sub_type_name=host_type_name)
 
         # Memoizing the result of comparison gives a huge performance boost!
         # Especially `is_subtype_of` is very slow, and will be performed many times over on the same pair of nodes during the matching process.
@@ -299,11 +299,18 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm):
                 return False
 
     # Convert to format understood by matching algorithm
-    host = model_to_graph(state, host_m, host_mm)
-    guest = model_to_graph(state, pattern_m, pattern_mm)
+    h_names, host = model_to_graph(state, host_m, host_mm)
+    g_names, guest = model_to_graph(state, pattern_m, pattern_mm)
+
+
+    graph_pivot = {
+        g_names[guest_name] : h_names[host_name]
+            for guest_name, host_name in pivot.items()
+                if guest_name in g_names
+    }
 
     matcher = MatcherVF2(host, guest, RAMCompare(Bottom(state), OD(host_mm, host_m, state)))
-    for m in matcher.match():
+    for m in matcher.match(graph_pivot):
         # print("\nMATCH:\n", m)
         # Convert mapping
         name_mapping = {}
