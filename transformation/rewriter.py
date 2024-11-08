@@ -19,8 +19,8 @@ def preprocess_rule(state, lhs: UUID, rhs: UUID, name_mapping):
 
     to_delete = { name for name in bottom.read_keys(lhs) if name not in bottom.read_keys(rhs) and name in name_mapping }
     to_create = { name for name in bottom.read_keys(rhs) if name not in bottom.read_keys(lhs)
-        # extremely dirty:
-        and "GlobalCondition" not in name }
+        # extremely dirty - should think of a better way
+        and "GlobalCondition" not in name and not name.endswith("_condition") and not name.endswith(".condition") }
     common = { name for name in bottom.read_keys(lhs) if name in bottom.read_keys(rhs) and name in name_mapping }
 
     return to_delete, to_create, common
@@ -66,8 +66,8 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_name_mapping:
 
     to_delete, to_create, common = preprocess_rule(state, lhs_m, rhs_m, lhs_name_mapping)
 
-    print("to_delete:", to_delete)
-    print("to_create:", to_create)
+    # print("to_delete:", to_delete)
+    # print("to_create:", to_create)
 
     # to be grown
     rhs_name_mapping = { name : lhs_name_mapping[name] for name in common }
@@ -204,6 +204,23 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_name_mapping:
             msg = f"Don't know what to do with element '{common_name}' -> '{host_obj_name}:{host_type}')"
             # print(msg)
             raise Exception(msg)
+
+    # Finally, we iterate over the (now complete) mapping RHS -> Host, to execute all the user-specified conditions
+    for rhs_name, host_name in rhs_name_mapping.items():
+        host_obj = host_odapi.get(host_name)
+        rhs_obj = rhs_odapi.get(rhs_name)
+        rhs_type = rhs_odapi.get_type(rhs_obj)
+        rhs_type_of_type = rhs_mm_odapi.get_type(rhs_type)
+        rhs_type_of_type_name = rhs_mm_odapi.get_name(rhs_type_of_type)
+        if rhs_mm_odapi.cdapi.is_subtype(super_type_name="Class", sub_type_name=rhs_type_of_type_name):
+            # rhs_obj is an object or link (because association is subtype of class)
+            python_code = rhs_odapi.get_slot_value_default(rhs_obj, "condition", default="")
+            simply_exec(python_code,
+                _globals={
+                    **bind_api(host_odapi),
+                    'matched': matched_callback,
+                },
+                _locals={'this': host_obj})
 
     # Execute global conditions
     for cond_name, cond in rhs_odapi.get_all_instances("GlobalCondition"):

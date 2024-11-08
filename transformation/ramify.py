@@ -43,9 +43,6 @@ def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
         # We don't add a 'label' attribute (as described in literature on RAMification)
         # Instead, the names of the objects (which only exist in the scope of the object diagram 'model', and are not visible to the matcher) are used as labels
 
-        # Optional constraint on the object
-        # ramified_scd._create_attribute_link(prefix+class_name, string_modelref, "constraint", optional=True)
-
         for (attr_name, attr_edge) in od.get_attributes(bottom, class_node):
             # print('  creating attribute', attr_name, "with type String")
             # Every attribute becomes 'string' type
@@ -54,7 +51,9 @@ def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
             # create traceability link
             bottom.create_edge(ramified_attr_link, attr_edge, RAMIFIES_LABEL)
 
-        # Additional constraint that can be specified
+        # Additional condition that can be specified
+        # In LHS, this will be a boolean expression (pre-condition)
+        # In RHS, this is just a piece of action code
         ramified_scd._create_attribute_link(prefix+class_name, actioncode_modelref, "condition", optional=True)
 
         already_ramified.add(class_name)
