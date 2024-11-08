@@ -2,17 +2,22 @@
 
 delay:RAM_Delay
 
-delay_in:RAM_InPort
+delay_inport:RAM_InPort
 
-delay_has_input:RAM_hasInPort (delay -> delay_in)
+delay_has_inport:RAM_hasInPort (delay -> delay_inport)
 
 some_outport:RAM_OutPort
 
-delay_in_conn:RAM_link (some_outport -> delay_in)
+delay_in_conn:RAM_link (some_outport -> delay_inport)
 
-in_signal:RAM_Signal
+in_signal:RAM_Signal {
+  # If the signal is already equal to the state, don't match:
+  # (without this, the rule could keep firing)
 
-port_has_signal:RAM_hasSignal (some_outport -> in_signal)
+  RAM_x = `get_value(this) != get_slot_value(matched('state'), 'x')`;
+}
+
+port_in_signal:RAM_hasSignal (some_outport -> in_signal)
 
 
 
@@ -20,8 +25,16 @@ port_has_signal:RAM_hasSignal (some_outport -> in_signal)
 
 state:RAM_State {
   # Attention: you MUST match the existing attribute, in order to force an UDPATE of the attribute, rather than CREATION
-  
   RAM_x = `True`;
 }
 
 delay_to_state:RAM_delay2State (delay -> state)
+
+
+
+# Only update Delay block state IF after its output signal has been computed:
+
+delay_outport:RAM_OutPort
+delay_has_outport:RAM_hasOutPort (delay -> delay_outport)
+out_signal:RAM_Signal
+delay_out_signal:RAM_hasSignal (delay_outport -> out_signal)

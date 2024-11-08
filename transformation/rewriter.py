@@ -13,6 +13,7 @@ from services.primitives.actioncode_type import ActionCode
 from services.primitives.integer_type import Integer
 from util.eval import exec_then_eval, simply_exec
 
+
 def preprocess_rule(state, lhs: UUID, rhs: UUID, name_mapping):
     bottom = Bottom(state)
 
@@ -22,21 +23,27 @@ def preprocess_rule(state, lhs: UUID, rhs: UUID, name_mapping):
         and "GlobalCondition" not in name }
     common = { name for name in bottom.read_keys(lhs) if name in bottom.read_keys(rhs) and name in name_mapping }
 
-    print("to_delete:", to_delete)
-    print("to_create:", to_create)
-
     return to_delete, to_create, common
 
+class TryAgainNextRound(Exception):
+    pass
+
 # Rewrite is performed in-place (modifying `host_m`)
-# Also updates the `mapping` in-place, to become RHS -> host
-def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dict, host_m: UUID, host_mm: UUID):
+def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_name_mapping: dict, host_m: UUID, host_mm: UUID):
     bottom = Bottom(state)
 
-    orig_name_mapping = dict(name_mapping)
+    # Need to come up with a new, unique name when creating new element in host-model:
+    def first_available_name(prefix: str):
+        i = 0
+        while True:
+            name = prefix + str(i)
+            if len(bottom.read_outgoing_elements(host_m, name)) == 0:
+                return name # found unique name
+            i += 1
 
     # function that can be called from within RHS action code
     def matched_callback(pattern_name: str):
-        host_name = orig_name_mapping[pattern_name]
+        host_name = lhs_name_mapping[pattern_name]
         return bottom.read_outgoing_elements(host_m, host_name)[0]
 
     scd_metamodel_id = state.read_dict(state.read_root(), "SCD")
@@ -45,155 +52,163 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, name_mapping: dic
     class_type = od.get_scd_mm_class_node(bottom)
     attr_link_type = od.get_scd_mm_attributelink_node(bottom)
     assoc_type = od.get_scd_mm_assoc_node(bottom)
+    actioncode_type = od.get_scd_mm_actioncode_node(bottom)
     modelref_type = od.get_scd_mm_modelref_node(bottom)
 
-    m_od = od.OD(host_mm, host_m, bottom.state)
+    # To be replaced by ODAPI (below)
+    host_od = od.OD(host_mm, host_m, bottom.state)
     rhs_od = od.OD(pattern_mm, rhs_m, bottom.state)
 
-    to_delete, to_create, common = preprocess_rule(state, lhs_m, rhs_m, orig_name_mapping)
+    host_odapi = ODAPI(state, host_m, host_mm)
+    host_mm_odapi = ODAPI(state, host_mm, scd_metamodel)
+    rhs_odapi = ODAPI(state, rhs_m, pattern_mm)
+    rhs_mm_odapi = ODAPI(state, pattern_mm, scd_metamodel)
 
-    odapi = ODAPI(state, host_m, host_mm)
+    to_delete, to_create, common = preprocess_rule(state, lhs_m, rhs_m, lhs_name_mapping)
+
+    print("to_delete:", to_delete)
+    print("to_create:", to_create)
+
+    # to be grown
+    rhs_name_mapping = { name : lhs_name_mapping[name] for name in common }
+
 
     # Perform deletions
     for pattern_name_to_delete in to_delete:
         # For every name in `to_delete`, look up the name of the matched element in the host graph
-        model_el_name_to_delete = name_mapping[pattern_name_to_delete]
+        model_el_name_to_delete = lhs_name_mapping[pattern_name_to_delete]
         # print('deleting', model_el_name_to_delete)
         # Look up the matched element in the host graph
         el_to_delete, = bottom.read_outgoing_elements(host_m, model_el_name_to_delete)
         # Delete
         bottom.delete_element(el_to_delete)
-        # Remove from mapping
-        del name_mapping[pattern_name_to_delete]
 
-    # extended_mapping = dict(name_mapping) # will be extended with created elements
     edges_to_create = [] # postpone creation of edges after creation of nodes
 
-    # Perform creations
-    for pattern_name_to_create in to_create:
-        # print('creating', pattern_name_to_create)
-        # We have to come up with a name for the element-to-create in the host graph
-        i = 0
-        while True:
-            model_el_name_to_create = pattern_name_to_create + str(i) # use the label of the element in the RHS as a basis
-            if len(bottom.read_outgoing_elements(host_m, model_el_name_to_create)) == 0:
-                break # found an available name
-            i += 1
-        
-        # Determine the type of the thing to create
-        rhs_el_to_create, = bottom.read_outgoing_elements(rhs_m, pattern_name_to_create)
-        rhs_type = od.get_type(bottom, rhs_el_to_create)
-        original_type = ramify.get_original_type(bottom, rhs_type)
-        if original_type != None:
-            # Now get the type of the type
-            if od.is_typed_by(bottom, original_type, class_type):
-                # It's type is typed by Class -> it's an object
-                # print(' -> creating object')
-                o = m_od._create_object(model_el_name_to_create, original_type)
-                name_mapping[pattern_name_to_create] = model_el_name_to_create
-            elif od.is_typed_by(bottom, original_type, attr_link_type):
-                # print(' -> postpone (is attribute link)')
-                edges_to_create.append((pattern_name_to_create, rhs_el_to_create, original_type, 'attribute link', model_el_name_to_create))
-            elif od.is_typed_by(bottom, original_type, assoc_type):
-                # print(' -> postpone (is link)')
-                edges_to_create.append((pattern_name_to_create, rhs_el_to_create, original_type, 'link', model_el_name_to_create))
+    # Perform creations - in the right order!
+    remaining_to_create = list(to_create)
+    while len(remaining_to_create) > 0:
+        next_round = []
+        for rhs_name in remaining_to_create:
+            # Determine the type of the thing to create
+            rhs_obj = rhs_odapi.get(rhs_name)
+            rhs_type = rhs_odapi.get_type(rhs_obj)
+            host_type = ramify.get_original_type(bottom, rhs_type)
+            # for debugging:
+            if host_type != None:
+                host_type_name = host_odapi.get_name(host_type)
             else:
-                original_type_name = od.get_object_name(bottom, host_mm, original_type)
-                print(" -> warning: don't know about", original_type_name)
-        else:
-            # print(" -> no original (un-RAMified) type")
-            # assume the type of the object is already the original type
-            # this is because primitive types (e.g., Integer) are not RAMified
-            type_name = od.get_object_name(bottom, pattern_mm, rhs_type)
-            if type_name == "ActionCode":
-                # Assume the string is a Python expression to evaluate
-                python_expr = ActionCode(UUID(bottom.read_value(rhs_el_to_create)), bottom.state).read()
+                host_type_name = ""
 
-                result = exec_then_eval(python_expr, _globals={
-                    **bind_api(odapi),
-                    'matched': matched_callback,
-                })
+            def get_src_tgt():
+                src = rhs_odapi.get_source(rhs_obj)
+                tgt = rhs_odapi.get_target(rhs_obj)
+                src_name = rhs_odapi.get_name(src)
+                tgt_name = rhs_odapi.get_name(tgt)
+                try:
+                    host_src_name = rhs_name_mapping[src_name]
+                    host_tgt_name = rhs_name_mapping[tgt_name]
+                except KeyError:
+                    # some creations (e.g., edges) depend on other creations
+                    raise TryAgainNextRound()
+                host_src = host_odapi.get(host_src_name)
+                host_tgt = host_odapi.get(host_tgt_name)
+                return (host_src_name, host_tgt_name, host_src, host_tgt)
 
-                # Write the result into the host model.
-                # This will be the *value* of an attribute. The attribute-link (connecting an object to the attribute) will be created as an edge later.
-                if isinstance(result, int):
-                    m_od.create_integer_value(model_el_name_to_create, result)
-                elif isinstance(result, str):
-                    m_od.create_string_value(model_el_name_to_create, result)
-                name_mapping[pattern_name_to_create] = model_el_name_to_create
-            else:
-                msg = f"RHS element '{pattern_name_to_create}' needs to be created in host, but has no un-RAMified type, and I don't know what to do with it. It's type is '{type_name}'"
-                raise Exception(msg)
+            try:
+                if od.is_typed_by(bottom, rhs_type, class_type):
+                    obj_name = first_available_name(rhs_name)
+                    host_od._create_object(obj_name, host_type)
+                    host_odapi._ODAPI__recompute_mappings()
+                    rhs_name_mapping[rhs_name] = obj_name
+                elif od.is_typed_by(bottom, rhs_type, assoc_type):
+                    _, _, host_src, host_tgt = get_src_tgt()
+                    link_name = first_available_name(rhs_name)
+                    host_od._create_link(link_name, host_type, host_src, host_tgt)
+                    host_odapi._ODAPI__recompute_mappings()
+                    rhs_name_mapping[rhs_name] = link_name
+                elif od.is_typed_by(bottom, rhs_type, attr_link_type):
+                    host_src_name, _, host_src, host_tgt = get_src_tgt()
+                    host_attr_link = ramify.get_original_type(bottom, rhs_type)
+                    host_attr_name = host_mm_odapi.get_slot_value(host_attr_link, "name")
+                    link_name = f"{host_src_name}_{host_attr_name}" # must follow naming convention here
+                    host_od._create_link(link_name, host_type, host_src, host_tgt)
+                    host_odapi._ODAPI__recompute_mappings()
+                    rhs_name_mapping[rhs_name] = link_name
+                elif rhs_type == rhs_mm_odapi.get("ActionCode"):
+                    # If we encounter ActionCode in our RHS, we assume that the code computes the value of an attribute...
+                    # This will be the *value* of an attribute. The attribute-link (connecting an object to the attribute) will be created as an edge later.
 
-    # print("create edges....")
-    for pattern_name_to_create, rhs_el_to_create, original_type, original_type_name, model_el_name_to_create in edges_to_create:
-        # print('creating', pattern_name_to_create)
-        if original_type_name == 'attribute link':
-            # print(' -> creating attribute link')
-            src = bottom.read_edge_source(rhs_el_to_create)
-            src_name = od.get_object_name(bottom, rhs_m, src)
-            tgt = bottom.read_edge_target(rhs_el_to_create)
-            tgt_name = od.get_object_name(bottom, rhs_m, tgt)
-            obj_name = name_mapping[src_name] # name of object in host graph to create slot for
-            orig_attr_name = od.get_attr_name(bottom, original_type)
-            m_od.create_slot(orig_attr_name, obj_name, name_mapping[tgt_name])
-        elif original_type_name == 'link':
-            # print(' -> creating link')
-            src = bottom.read_edge_source(rhs_el_to_create)
-            src_name = od.get_object_name(bottom, rhs_m, src)
-            tgt = bottom.read_edge_target(rhs_el_to_create)
-            tgt_name = od.get_object_name(bottom, rhs_m, tgt)
-            obj_name = name_mapping[src_name] # name of object in host graph to create slot for
-            attr_name = od.get_object_name(bottom, host_mm, original_type)
-            m_od.create_link(model_el_name_to_create, attr_name, obj_name, name_mapping[tgt_name])
+                    # Problem: attributes must follow the naming pattern '<obj_name>.<attr_name>'
+                    # So we must know the host-object-name, and the host-attribute-name.
+                    # However, all we have access to here is the name of the attribute in the RHS.
+                    # We cannot even see the link to the RHS-object.
+                    # But, assuming the RHS-attribute is also named '<RAMified_obj_name>.<RAMified_attr_name>', we can:
+                    rhs_src_name, rhs_attr_name = rhs_name.split('.')
+                    try:
+                        host_src_name = rhs_name_mapping[rhs_src_name]
+                    except KeyError:
+                        # unmet dependency - object to which attribute belongs not created yet
+                        raise TryAgainNextRound()
+                    rhs_src_type = rhs_odapi.get_type(rhs_odapi.get(rhs_src_name))
+                    rhs_src_type_name = rhs_mm_odapi.get_name(rhs_src_type)
+                    rhs_attr_link_name = f"{rhs_src_type_name}_{rhs_attr_name}"
+                    rhs_attr_link = rhs_mm_odapi.get(rhs_attr_link_name)
+                    host_attr_link = ramify.get_original_type(bottom, rhs_attr_link)
+                    host_attr_name = host_mm_odapi.get_slot_value(host_attr_link, "name")
+                    val_name = f"{host_src_name}.{host_attr_name}"
+                    python_expr = ActionCode(UUID(bottom.read_value(rhs_obj)), bottom.state).read()
+                    result = exec_then_eval(python_expr, _globals={
+                        **bind_api(host_odapi),
+                        'matched': matched_callback,
+                    })
+                    host_odapi.create_primitive_value(val_name, result, is_code=False)
+                    host_odapi._ODAPI__recompute_mappings()
+                    rhs_name_mapping[rhs_name] = val_name
+                else:
+                    rhs_type_name = rhs_odapi.get_name(rhs_type)
+                    raise Exception(f"Host type {host_type_name} of pattern element '{rhs_name}:{rhs_type_name}' is not a class, association or attribute link. Don't know what to do with it :(")
+            except TryAgainNextRound:
+                next_round.append(rhs_name)
 
+        if len(next_round) == len(remaining_to_create):
+            raise Exception("Creation of objects did not make any progress - there must be some kind of cyclic dependency?!")
+
+        remaining_to_create = next_round
 
     # Perform updates (only on values)
-    for pattern_el_name in common:
-        host_el_name = name_mapping[pattern_el_name]
-        host_el, = bottom.read_outgoing_elements(host_m, host_el_name)
-        # print('updating', host_el_name, host_el)
-        host_type = od.get_type(bottom, host_el)
-        # print('we have', pattern_el_name, '->', host_el_name, 'of type', type_name)
+    for common_name in common:
+        host_obj_name = rhs_name_mapping[common_name]
+        host_obj = host_odapi.get(host_obj_name)
+        host_type = host_odapi.get_type(host_obj)
         if od.is_typed_by(bottom, host_type, class_type):
-            # print(' -> is classs')
             # nothing to do
             pass
         elif od.is_typed_by(bottom, host_type, assoc_type):
-            # print(' -> is association')
             # nothing to do
             pass
         elif od.is_typed_by(bottom, host_type, attr_link_type):
-            # print(' -> is attr link')
             # nothing to do
             pass
         elif od.is_typed_by(bottom, host_type, modelref_type):
-            # print(' -> is modelref')
-            old_value, _ = od.read_primitive_value(bottom, host_el, host_mm)
-            rhs_el, = bottom.read_outgoing_elements(rhs_m, pattern_el_name)
-            python_expr, _ = od.read_primitive_value(bottom, rhs_el, pattern_mm)
+            rhs_obj = rhs_odapi.get(common_name)
+            python_expr = ActionCode(UUID(bottom.read_value(rhs_obj)), bottom.state).read()
             result = exec_then_eval(python_expr,
                 _globals={
-                    **bind_api(odapi),
+                    **bind_api(host_odapi),
                     'matched': matched_callback,
                 },
-                _locals={'this': host_el})
-            # print('eval result=', result)
-            if isinstance(result, int):
-                # overwrite the old value, in-place
-                referred_model_id = UUID(bottom.read_value(host_el))
-                Integer(referred_model_id, state).create(result)
-            else:
-                raise Exception("Unimplemented type. Value:", result)
+                _locals={'this': host_obj}) # 'this' can be used to read the previous value of the slot
+            host_odapi.overwrite_primitive_value(host_obj_name, result, is_code=False)
         else:
-            msg = f"Don't know what to do with element '{pattern_el_name}'->'{host_el_name}' of type ({host_type})"
+            msg = f"Don't know what to do with element '{common_name}' -> '{host_obj_name}:{host_type}')"
             # print(msg)
             raise Exception(msg)
 
-    rhs_odapi = ODAPI(state, rhs_m, pattern_mm)
+    # Execute global conditions
     for cond_name, cond in rhs_odapi.get_all_instances("GlobalCondition"):
         python_code = rhs_odapi.get_slot_value(cond, "condition")
         simply_exec(python_code, _globals={
-            **bind_api(odapi),
+            **bind_api(host_odapi),
             'matched': matched_callback,
         })

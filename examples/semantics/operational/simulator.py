@@ -36,7 +36,7 @@ class Simulator:
             print(*args)
 
     # Run simulation until termination condition satisfied
-    def run(self, od):
+    def run(self, od: ODAPI):
         self.__print("Start simulation")
         self.__print(f"Decision maker: {self.decision_maker}")
         step_counter = 0
@@ -112,8 +112,10 @@ class RandomDecisionMaker(DecisionMaker):
         return arr[i]
 
 class InteractiveDecisionMaker(DecisionMaker):
-    def __init__(self, msg="Select action:"):
+    # auto_proceed: whether to prompt if there is only one enabled action
+    def __init__(self, msg="Select action:", auto_proceed=False):
         self.msg = msg
+        self.auto_proceed = auto_proceed
 
     def __str__(self):
         return f"InteractiveDecisionMaker()"
@@ -125,6 +127,8 @@ class InteractiveDecisionMaker(DecisionMaker):
            arr.append(result)
         if len(arr) == 0:
            return
+        if len(arr) == 1 and self.auto_proceed:
+            return arr[0]
 
         def __choose():
            sys.stdout.write(f"{self.msg} ")

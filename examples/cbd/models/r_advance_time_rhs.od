@@ -2,6 +2,8 @@ clock:RAM_Clock {
   RAM_time = `get_value(this) + 1`;
 }
 
+# Delete all Signals:
+
 :GlobalCondition {
   condition = ```
     for _, signal in get_all_instances("Signal"):

@@ -10,8 +10,6 @@ state:RAM_State
 
 delay_to_state:RAM_delay2State (delay -> state)
 
-clock:RAM_Clock
-
 # To create:
 
 new_signal:RAM_Signal {

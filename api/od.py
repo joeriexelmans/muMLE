@@ -1,6 +1,10 @@
 from services import od
 from api import cd
 from services.bottom.V0 import Bottom
+from services.primitives.boolean_type import Boolean
+from services.primitives.integer_type import Integer
+from services.primitives.string_type import String
+from services.primitives.actioncode_type import ActionCode
 from uuid import UUID
 from typing import Optional
 
@@ -12,8 +16,10 @@ def build_name_mapping(state, m):
     mapping = {}
     bottom = Bottom(state)
     for name in bottom.read_keys(m):
-        element, = bottom.read_outgoing_elements(m, name)
-        mapping[element] = name
+        elements = bottom.read_outgoing_elements(m, name)
+        if len(elements) > 1:
+            print(f"Warning: more than one element with name '{name}'")
+        mapping[elements[0]] = name
     return mapping
 
 class NoSuchSlotException(Exception):
@@ -193,6 +199,22 @@ class ODAPI:
             raise Exception("Unimplemented type "+value)
         self.__recompute_mappings()
         return tgt
+
+    def overwrite_primitive_value(self, name: str, value: any, is_code=False):
+        referred_model = UUID(self.bottom.read_value(self.get(name)))
+        # watch out: in Python, 'bool' is subtype of 'int'
+        #  so we must check for 'bool' first
+        if isinstance(value, bool):
+            Boolean(referred_model, self.state).create(value)
+        elif isinstance(value, int):
+            Integer(referred_model, self.state).create(value)
+        elif isinstance(value, str):
+            if is_code:
+                ActionCode(referred_model, self.state).create(value)
+            else:
+                String(referred_model, self.state).create(value)
+        else:
+            raise Exception("Unimplemented type "+value)
 
     def create_link(self, link_name: Optional[str], assoc_name: str, src: UUID, tgt: UUID):
         global NEXT_ID

@@ -1,28 +1,6 @@
+# We cannot advance time until all outports have signals
 
-# If there is a Delay-block whose input signal differs from its state, we cannot yet advance time:
-
-delay:RAM_Delay
-
-delay_in:RAM_InPort
-
-delay_has_input:RAM_hasInPort (delay -> delay_in)
-
-some_outport:RAM_OutPort
-
-delay_in_conn:RAM_link (some_outport -> delay_in)
-
-in_signal:RAM_Signal
-
-port_has_signal:RAM_hasSignal (some_outport -> in_signal)
-
-state:RAM_State {
-  RAM_x = `get_slot_value(matched('in_signal'), 'x') != get_value(this)`;
-}
-
-delay_to_state:RAM_delay2State (delay -> state)
-
-
-# Also, we cannot advance time until all outports have signals:
+# BTW, this NAC is not really necessary, because our schedule already will only try to match 'advance_time' when no other actions are enabled
 
 :GlobalCondition {
   condition = ```

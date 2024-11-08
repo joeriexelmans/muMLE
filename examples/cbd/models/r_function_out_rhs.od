@@ -6,8 +6,6 @@ f_outport:RAM_OutPort
 
 f_has_outport:RAM_hasOutPort (f -> f_outport)
 
-clock:RAM_Clock
-
 # To create:
 
 f_out_signal:RAM_Signal {
