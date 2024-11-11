@@ -135,7 +135,7 @@ class ODAPI:
     def get_type_name(self, obj: UUID):
         return self.get_name(self.get_type(obj))
 
-    def is_instance(obj: UUID, type_name: str, include_subtypes=True):
+    def is_instance(self, obj: UUID, type_name: str, include_subtypes=True):
         typ = self.cdapi.get_type(type_name)
         types = set(typ) if not include_subtypes else self.cdapi.transitive_sub_types[type_name]
         for type_of_obj in self.bottom.read_outgoing_elements(obj, "Morphism"):
