@@ -99,6 +99,16 @@ def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
 
             already_ramified.add(assoc_name)
 
+            # Associations can also have attributes...
+            for (attr_name, attr_edge) in od.get_attributes(bottom, assoc_node):
+                # print('  creating attribute', attr_name, "with type String")
+                # Every attribute becomes 'string' type
+                # The string will be a Python expression
+                ramified_attr_link = ramified_scd._create_attribute_link(prefix+assoc_name, actioncode_modelref, prefix+attr_name, optional=True)
+                # create traceability link
+                bottom.create_edge(ramified_attr_link, attr_edge, RAMIFIES_LABEL)
+
+
         assocs_to_ramify = ramify_later
 
     for inh_name, inh_node in m_scd.get_inheritances().items():
