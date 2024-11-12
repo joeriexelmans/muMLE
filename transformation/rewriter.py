@@ -14,22 +14,11 @@ from services.primitives.integer_type import Integer
 from util.eval import exec_then_eval, simply_exec
 
 
-def preprocess_rule(state, lhs: UUID, rhs: UUID, name_mapping):
-    bottom = Bottom(state)
-
-    to_delete = { name for name in bottom.read_keys(lhs) if name not in bottom.read_keys(rhs) and name in name_mapping }
-    to_create = { name for name in bottom.read_keys(rhs) if name not in bottom.read_keys(lhs)
-        # extremely dirty - should think of a better way
-        and "GlobalCondition" not in name and not name.endswith("_condition") and not name.endswith(".condition") }
-    common = { name for name in bottom.read_keys(lhs) if name in bottom.read_keys(rhs) and name in name_mapping }
-
-    return to_delete, to_create, common
-
 class TryAgainNextRound(Exception):
     pass
 
 # Rewrite is performed in-place (modifying `host_m`)
-def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_name_mapping: dict, host_m: UUID, host_mm: UUID):
+def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_match: dict, host_m: UUID, host_mm: UUID):
     bottom = Bottom(state)
 
     # Need to come up with a new, unique name when creating new element in host-model:
@@ -43,7 +32,7 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_name_mapping:
 
     # function that can be called from within RHS action code
     def matched_callback(pattern_name: str):
-        host_name = lhs_name_mapping[pattern_name]
+        host_name = lhs_match[pattern_name]
         return bottom.read_outgoing_elements(host_m, host_name)[0]
 
     scd_metamodel_id = state.read_dict(state.read_root(), "SCD")
@@ -64,28 +53,22 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_name_mapping:
     rhs_odapi = ODAPI(state, rhs_m, pattern_mm)
     rhs_mm_odapi = ODAPI(state, pattern_mm, scd_metamodel)
 
-    to_delete, to_create, common = preprocess_rule(state, lhs_m, rhs_m, lhs_name_mapping)
+    lhs_keys = lhs_match.keys()
+    rhs_keys = set(k for k in bottom.read_keys(rhs_m)
+        # extremely dirty - should think of a better way
+        if "GlobalCondition" not in k and not k.endswith("_condition") and not k.endswith(".condition"))
+
+    common = lhs_keys & rhs_keys
+    to_delete = lhs_keys - common
+    to_create = rhs_keys - common
 
     # print("to_delete:", to_delete)
     # print("to_create:", to_create)
 
     # to be grown
-    rhs_name_mapping = { name : lhs_name_mapping[name] for name in common }
+    rhs_match = { name : lhs_match[name] for name in common }
 
-
-    # Perform deletions
-    for pattern_name_to_delete in to_delete:
-        # For every name in `to_delete`, look up the name of the matched element in the host graph
-        model_el_name_to_delete = lhs_name_mapping[pattern_name_to_delete]
-        # print('deleting', model_el_name_to_delete)
-        # Look up the matched element in the host graph
-        el_to_delete, = bottom.read_outgoing_elements(host_m, model_el_name_to_delete)
-        # Delete
-        bottom.delete_element(el_to_delete)
-
-    edges_to_create = [] # postpone creation of edges after creation of nodes
-
-    # Perform creations - in the right order!
+    # 1. Perform creations - in the right order!
     remaining_to_create = list(to_create)
     while len(remaining_to_create) > 0:
         next_round = []
@@ -106,8 +89,8 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_name_mapping:
                 src_name = rhs_odapi.get_name(src)
                 tgt_name = rhs_odapi.get_name(tgt)
                 try:
-                    host_src_name = rhs_name_mapping[src_name]
-                    host_tgt_name = rhs_name_mapping[tgt_name]
+                    host_src_name = rhs_match[src_name]
+                    host_tgt_name = rhs_match[tgt_name]
                 except KeyError:
                     # some creations (e.g., edges) depend on other creations
                     raise TryAgainNextRound()
@@ -120,13 +103,13 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_name_mapping:
                     obj_name = first_available_name(rhs_name)
                     host_od._create_object(obj_name, host_type)
                     host_odapi._ODAPI__recompute_mappings()
-                    rhs_name_mapping[rhs_name] = obj_name
+                    rhs_match[rhs_name] = obj_name
                 elif od.is_typed_by(bottom, rhs_type, assoc_type):
                     _, _, host_src, host_tgt = get_src_tgt()
                     link_name = first_available_name(rhs_name)
                     host_od._create_link(link_name, host_type, host_src, host_tgt)
                     host_odapi._ODAPI__recompute_mappings()
-                    rhs_name_mapping[rhs_name] = link_name
+                    rhs_match[rhs_name] = link_name
                 elif od.is_typed_by(bottom, rhs_type, attr_link_type):
                     host_src_name, _, host_src, host_tgt = get_src_tgt()
                     host_attr_link = ramify.get_original_type(bottom, rhs_type)
@@ -134,7 +117,7 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_name_mapping:
                     link_name = f"{host_src_name}_{host_attr_name}" # must follow naming convention here
                     host_od._create_link(link_name, host_type, host_src, host_tgt)
                     host_odapi._ODAPI__recompute_mappings()
-                    rhs_name_mapping[rhs_name] = link_name
+                    rhs_match[rhs_name] = link_name
                 elif rhs_type == rhs_mm_odapi.get("ActionCode"):
                     # If we encounter ActionCode in our RHS, we assume that the code computes the value of an attribute...
                     # This will be the *value* of an attribute. The attribute-link (connecting an object to the attribute) will be created as an edge later.
@@ -146,7 +129,7 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_name_mapping:
                     # But, assuming the RHS-attribute is also named '<RAMified_obj_name>.<RAMified_attr_name>', we can:
                     rhs_src_name, rhs_attr_name = rhs_name.split('.')
                     try:
-                        host_src_name = rhs_name_mapping[rhs_src_name]
+                        host_src_name = rhs_match[rhs_src_name]
                     except KeyError:
                         # unmet dependency - object to which attribute belongs not created yet
                         raise TryAgainNextRound()
@@ -163,8 +146,7 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_name_mapping:
                         'matched': matched_callback,
                     })
                     host_odapi.create_primitive_value(val_name, result, is_code=False)
-                    host_odapi._ODAPI__recompute_mappings()
-                    rhs_name_mapping[rhs_name] = val_name
+                    rhs_match[rhs_name] = val_name
                 else:
                     rhs_type_name = rhs_odapi.get_name(rhs_type)
                     raise Exception(f"Host type {host_type_name} of pattern element '{rhs_name}:{rhs_type_name}' is not a class, association or attribute link. Don't know what to do with it :(")
@@ -176,9 +158,9 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_name_mapping:
 
         remaining_to_create = next_round
 
-    # Perform updates (only on values)
+    # 2. Perform updates (only on values)
     for common_name in common:
-        host_obj_name = rhs_name_mapping[common_name]
+        host_obj_name = rhs_match[common_name]
         host_obj = host_odapi.get(host_obj_name)
         host_type = host_odapi.get_type(host_obj)
         if od.is_typed_by(bottom, host_type, class_type):
@@ -205,8 +187,21 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_name_mapping:
             # print(msg)
             raise Exception(msg)
 
-    # Finally, we iterate over the (now complete) mapping RHS -> Host, to execute all the user-specified conditions
-    for rhs_name, host_name in rhs_name_mapping.items():
+    # 3. Perform deletions
+    # This way, action code can read from elements that are deleted...
+    # Even better would be to not modify the model in-place, but use copy-on-write...
+    for pattern_name_to_delete in to_delete:
+        # For every name in `to_delete`, look up the name of the matched element in the host graph
+        model_el_name_to_delete = lhs_match[pattern_name_to_delete]
+        # print('deleting', model_el_name_to_delete)
+        # Look up the matched element in the host graph
+        el_to_delete, = bottom.read_outgoing_elements(host_m, model_el_name_to_delete)
+        # Delete
+        bottom.delete_element(el_to_delete)
+
+    # 4. Object-level actions
+    # Iterate over the (now complete) mapping RHS -> Host
+    for rhs_name, host_name in rhs_match.items():
         host_obj = host_odapi.get(host_name)
         rhs_obj = rhs_odapi.get(rhs_name)
         rhs_type = rhs_odapi.get_type(rhs_obj)
@@ -222,10 +217,12 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_name_mapping:
                 },
                 _locals={'this': host_obj})
 
-    # Execute global conditions
+    # 5. Execute global actions
     for cond_name, cond in rhs_odapi.get_all_instances("GlobalCondition"):
         python_code = rhs_odapi.get_slot_value(cond, "condition")
         simply_exec(python_code, _globals={
             **bind_api(host_odapi),
             'matched': matched_callback,
         })
+
+    return rhs_match
