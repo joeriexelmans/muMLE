@@ -208,7 +208,8 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID,
 
         return names, graph
 
-
+# This function returns a Generator of matches.
+# The idea is that the user can iterate over the match set, lazily generating it: if only interested in the first match, the entire match set doesn't have to be generated.
 def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
     bottom = Bottom(state)
 
@@ -228,7 +229,7 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
             self.scd_model = UUID(bottom.state.read_value(type_model_id))
 
             # constraints need to be checked at the very end, after a complete match is established, because constraint code may refer to matched elements by their name
-            self.conditions_to_check = []
+            self.conditions_to_check = {}
 
         def match_types(self, g_vtx_type, h_vtx_type):
             # types only match with their supertypes
@@ -266,7 +267,8 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
 
                 python_code = services_od.read_primitive_value(self.bottom, g_vtx.node_id, pattern_mm)[0]
 
-                self.conditions_to_check.append((python_code, h_vtx.node_id))
+                self.conditions_to_check[g_vtx.name] = python_code
+                # self.conditions_to_check.append((python_code, h_vtx.name, g_vtx.name))
 
                 return True # do be determined later, if it's actually a match
 
@@ -333,7 +335,12 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
                 _locals=loc)
 
         # Attribute conditions
-        for python_code, host_node in compare.conditions_to_check:
+        for pattern_name, host_name in name_mapping.items():
+            try:
+                python_code = compare.conditions_to_check[pattern_name]
+            except KeyError:
+                continue
+            host_node = odapi.get(host_name)
             if not check(python_code, {'this': host_node}):
                 return False
 
@@ -354,7 +361,6 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
     compare = RAMCompare(bottom, services_od.OD(host_mm, host_m, state))
     matcher = MatcherVF2(host, guest, compare)
     for m in matcher.match(graph_pivot):
-        # print("\nMATCH:\n", m)
         # Convert mapping
         name_mapping = {}
         for guest_vtx, host_vtx in m.mapping_vtxs.items():
