@@ -5,7 +5,7 @@ import functools
 
 from api.od import ODAPI
 from concrete_syntax.common import indent
-from transformation.matcher.mvs_adapter import match_od
+from transformation.matcher import match_od
 from transformation.rewriter import rewrite
 from transformation.cloner import clone_od
 

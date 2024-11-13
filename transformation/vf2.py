@@ -1,4 +1,5 @@
 # This module contains a VF2-inspired graph matching algorithm
+# It defines its own Graph type, and can be used standalone (no dependencies on the rest of muMLE framework)
 # Author: Joeri Exelmans
 
 import itertools

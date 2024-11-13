@@ -166,6 +166,10 @@ def main():
             + plantuml.render_trace_ramifies(state, int_mm_id, ramified_int_mm_id)
         )
 
+        return uml
+
+    def render_lhs_rhs():
+        uml = render_ramification()
         # Render pattern
         uml += plantuml.render_package("LHS", plantuml.render_object_diagram(state, lhs_id, ramified_mm_id))
         uml += plantuml.render_trace_conformance(state, lhs_id, ramified_mm_id)
@@ -175,8 +179,9 @@ def main():
         uml += plantuml.render_trace_conformance(state, rhs_id, ramified_mm_id)
         return uml
 
+
     def render_all_matches():
-        uml = render_ramification()
+        uml = render_lhs_rhs()
         # Render host graph (before rewriting)
         uml += plantuml.render_package("Model (before rewrite)", plantuml.render_object_diagram(state, dsl_m_id, dsl_mm_id))
         # Render conformance
@@ -194,7 +199,7 @@ def main():
         return uml
 
     def render_rewrite():
-        uml = render_ramification()
+        uml = render_lhs_rhs()
 
         # Render host graph (before rewriting)
         uml += plantuml.render_package("Model (before rewrite)", plantuml.render_object_diagram(state, dsl_m_id, dsl_mm_id))
@@ -219,8 +224,9 @@ def main():
             # Render conformance
             uml += plantuml.render_trace_conformance(state, snapshot_dsl_m_id, dsl_mm_id)
 
-        return make_plantuml_url(uml)
+        return uml
 
+    # plantuml_str = render_ramification()
     # plantuml_str = render_all_matches()
     plantuml_str = render_rewrite()
 
@@ -229,7 +235,7 @@ def main():
     print("BEGIN PLANTUML")
     print("==============================================")
 
-    print(plantuml_str)
+    print(make_plantuml_url(plantuml_str))
 
     print("==============================================")
     print("END PLANTUML")

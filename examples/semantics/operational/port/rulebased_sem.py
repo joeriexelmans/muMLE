@@ -2,7 +2,7 @@
 
 from concrete_syntax.textual_od.parser import parse_od
 from transformation.rule import Rule, RuleMatcherRewriter, PriorityActionGenerator
-from transformation.matcher.mvs_adapter import match_od
+from transformation.matcher import match_od
 from util import loader
 
 import os

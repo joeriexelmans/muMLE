@@ -6,15 +6,13 @@ from uuid import UUID
 from services.bottom.V0 import Bottom
 from services.scd import SCD
 from services import od as services_od
-from transformation.matcher.matcher import Graph, Edge, Vertex, MatcherVF2
+from transformation.vf2 import Graph, Edge, Vertex, MatcherVF2
 from transformation import ramify
 import itertools
 import re
 import functools
 
 from util.timer import Timer
-
-from services.primitives.integer_type import Integer
 
 class _is_edge:
     def __repr__(self):
