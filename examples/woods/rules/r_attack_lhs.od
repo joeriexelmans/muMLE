@@ -1,0 +1,18 @@
+# Some man is afraid of some animal:
+
+man:RAM_Man
+
+animal:RAM_Animal
+
+manAfraidOfAnimal:RAM_afraidOf (man -> animal)
+
+
+# Both man and animal have an associated state:
+
+manState:RAM_ManState
+
+man2State:RAM_of (manState -> man)
+
+animalState:RAM_AnimalState
+
+animal2State:RAM_of (animalState -> animal)

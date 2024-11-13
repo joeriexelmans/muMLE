@@ -1,0 +1,28 @@
+# Our entire LHS (don't delete anything)
+
+    # Some man is afraid of some animal:
+
+    man:RAM_Man
+
+    animal:RAM_Animal
+
+    manAfraidOfAnimal:RAM_afraidOf (man -> animal)
+
+
+    # Both man and animal have an associated state:
+
+    manState:RAM_ManState
+
+    man2State:RAM_of (manState -> man)
+
+    animalState:RAM_AnimalState
+
+    animal2State:RAM_of (animalState -> animal)
+
+
+
+# Animal attacks man:
+
+  :RAM_attacking(animalState -> manState) {
+    RAM_starttime = `get_slot_value(get_all_instances("Clock")[0][1], "time")`;
+  }

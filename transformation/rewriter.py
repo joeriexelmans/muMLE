@@ -62,8 +62,8 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_match: dict, 
     to_delete = lhs_keys - common
     to_create = rhs_keys - common
 
-    # print("to_delete:", to_delete)
-    # print("to_create:", to_create)
+    # print("to delete:", to_delete)
+    # print("to create:", to_create)
 
     # to be grown
     rhs_match = { name : lhs_match[name] for name in common }

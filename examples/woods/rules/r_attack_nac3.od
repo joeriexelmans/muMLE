@@ -1,0 +1,5 @@
+# If dead, cannot be attacked
+
+manState:RAM_ManState {
+  RAM_dead = `get_value(this)`;
+}

@@ -1,0 +1,7 @@
+# Bear won't attack unless hungry
+
+animalState:RAM_AnimalState {
+  condition = ```
+    get_type_name(this) == "BearState" and get_slot_value(this, "hunger") < 50
+  ```;
+}

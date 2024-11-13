@@ -98,7 +98,14 @@ port_rt_mm_cs = port_mm_cs + """
 
     BerthState:Class {
         # status == empty <=> numShips == 0
-        constraint = `(get_slot_value(this, "numShips") == 0) == (get_slot_value(this, "status") == "empty")`;
+        constraint = ```
+            errors = []
+            numShips = get_slot_value(this, "numShips")
+            status = get_slot_value(this, "status")
+            if (numShips == 0) != (status == "empty"):
+                errors.append(f"Inconsistent: numShips = {numShips}, but status = {status}")
+            errors
+        ```;
     }
     :Inheritance (BerthState -> PlaceState)
 

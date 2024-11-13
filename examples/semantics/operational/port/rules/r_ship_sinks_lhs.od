@@ -1,0 +1,5 @@
+# Find any place that has at least one ship:
+
+placeState:RAM_PlaceState {
+  RAM_numShips = `get_value(this) > 0`;
+}

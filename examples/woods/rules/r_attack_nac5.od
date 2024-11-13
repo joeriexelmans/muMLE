@@ -1,0 +1,7 @@
+# Not already attacking someone else:
+
+animalState:RAM_AnimalState
+
+other:RAM_ManState
+
+:RAM_attacking(animalState -> other)

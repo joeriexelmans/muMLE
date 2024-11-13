@@ -1,0 +1,27 @@
+clock:RAM_Clock {
+  RAM_time = `get_value(this) + 1`;
+}
+
+# Advance time has a bunch of side-effects that we cannot easily model using NAC/LHS/RHS-kind of rules,
+# so we just do it in code:
+
+:GlobalCondition {
+  condition = ```
+    for _, attacking_link in get_all_instances("attacking"):
+        man_state = get_target(attacking_link)
+        animal_state = get_source(attacking_link)
+        if get_type_name(animal_state) == "BearState":
+            # Bear hunger decreases
+            set_slot_value(animal_state, "hunger", max(get_slot_value(animal_state, "hunger") - 50, 0))
+        set_slot_value(man_state, "dead", True)
+        delete(attacking_link)
+
+    # Bear hunger increases
+    for _, bear_state in get_all_instances("BearState"):
+        if get_slot_value(bear_state, "dead"):
+            continue # bear already dead
+        old_hunger = get_slot_value(bear_state, "hunger")
+        new_hunger = min(old_hunger + 10, 100)
+        set_slot_value(bear_state, "hunger", new_hunger)
+  ```;
+}

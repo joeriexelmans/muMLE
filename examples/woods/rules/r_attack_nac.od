@@ -1,0 +1,7 @@
+# Cannot attack if already attacking
+
+manState:RAM_ManState
+
+animalState:RAM_AnimalState
+
+:RAM_attacking(animalState -> manState)

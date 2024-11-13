@@ -1,0 +1,4 @@
+berthState:RAM_BerthState {
+  RAM_numShips = `get_value(this) == 0`;
+  RAM_status   = `get_value(this) == "empty"`;
+}

@@ -1,0 +1,4 @@
+placeState:RAM_PlaceState {
+  # Decrement number of ships:
+  RAM_numShips = `get_value(this) - 1`;
+}

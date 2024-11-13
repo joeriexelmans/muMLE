@@ -1,0 +1,5 @@
+# If dead, cannot attack
+
+animalState:RAM_AnimalState {
+  RAM_dead = `get_value(this)`;
+}
