@@ -69,8 +69,9 @@ def parse_cd(state, m_text):
     od = OD(scd_mmm, m, state)
 
     def _add_constraint_to_obj(obj_name, constraint):
-        c = od.create_actioncode_value(f"{obj_name}.constraint", constraint.code)
-        od.create_slot("constraint", obj_name, c)
+        constraint_name = f"{obj_name}.constraint"
+        od.create_actioncode_value(constraint_name, constraint.code)
+        od.create_slot("constraint", obj_name, constraint_name)
 
     primitive_types = {
         type_name : UUID(state.read_value(state.read_dict(state.read_root(), type_name)))
