@@ -6,7 +6,7 @@ from uuid import UUID
 from services.scd import SCD
 from framework.conformance import Conformance
 from services.od import OD
-from transformation.matcher import mvs_adapter
+from transformation.matcher import match_od
 from transformation.ramify import ramify
 from transformation.cloner import clone_od
 from transformation import rewriter
@@ -188,7 +188,7 @@ def main():
         uml += plantuml.render_trace_conformance(state, dsl_m_id, dsl_mm_id)
 
         print("matching...")
-        generator = mvs_adapter.match_od(state, dsl_m_id, dsl_mm_id, lhs_id, ramified_mm_id)
+        generator = match_od(state, dsl_m_id, dsl_mm_id, lhs_id, ramified_mm_id)
         for match, color in zip(generator, ["red", "orange"]):
             print("\nMATCH:\n", match)
 
@@ -206,7 +206,7 @@ def main():
         # Render conformance
         uml += plantuml.render_trace_conformance(state, dsl_m_id, dsl_mm_id)
 
-        generator = mvs_adapter.match_od(state, dsl_m_id, dsl_mm_id, lhs_id, ramified_mm_id)
+        generator = match_od(state, dsl_m_id, dsl_mm_id, lhs_id, ramified_mm_id)
         for i, (match, color) in enumerate(zip(generator, ["red", "orange"])):
             uml += plantuml.render_trace_match(state, match, lhs_id, dsl_m_id, color)
 
