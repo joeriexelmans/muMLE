@@ -1,0 +1,30 @@
+# from slides:
+#   http://msdl.uantwerpen.be/people/hv/teaching/MoSIS/lectures/presentation.PetriNets.pdf
+#   page 51
+
+general_1:Place
+general_2:Place
+critical_1:Place
+critical_2:Place
+semaphore:Place
+
+enterCritical_1:Transition
+leaveCritical_1:Transition
+enterCritical_2:Transition
+leaveCritical_2:Transition
+
+:arc (general_1 -> enterCritical_1)
+:arc (semaphore -> enterCritical_1)
+:arc (enterCritical_1 -> critical_1)
+
+:arc (critical_1 -> leaveCritical_1)
+:arc (leaveCritical_1 -> semaphore)
+:arc (leaveCritical_1 -> general_1)
+
+:arc (semaphore -> enterCritical_2)
+:arc (general_2 -> enterCritical_2)
+:arc (enterCritical_2 -> critical_2)
+
+:arc (leaveCritical_2 -> semaphore)
+:arc (leaveCritical_2 -> general_2)
+:arc (critical_2 -> leaveCritical_2)
