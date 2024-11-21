@@ -53,10 +53,10 @@ class InteractiveDecisionMaker(DecisionMaker):
            sys.stdout.write(f"{self.msg} ")
            try:
               raw = input()
-              choice = int(ord(raw)-97) # may raise ValueError
+              choice = ord(raw)-97 # may raise ValueError
               if choice >= 0 and choice < len(arr):
                  return arr[choice]
-           except ValueError:
+           except (ValueError, TypeError):
               pass
            print("Invalid option")
            return __choose()
