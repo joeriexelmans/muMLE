@@ -42,7 +42,7 @@ class InteractiveDecisionMaker(DecisionMaker):
     def __call__(self, actions):
         arr = []
         for i, (key, result) in enumerate(actions):
-           print(f"  {i}. {key}")
+           print(f"  {chr(97+i)}. {key}")
            arr.append(result)
         if len(arr) == 0:
            return
@@ -53,7 +53,7 @@ class InteractiveDecisionMaker(DecisionMaker):
            sys.stdout.write(f"{self.msg} ")
            try:
               raw = input()
-              choice = int(raw) # may raise ValueError
+              choice = int(ord(raw)-97) # may raise ValueError
               if choice >= 0 and choice < len(arr):
                  return arr[choice]
            except ValueError:
