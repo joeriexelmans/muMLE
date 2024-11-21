@@ -1,5 +1,6 @@
 from state.devstate import DevState
 from api.od import ODAPI
+from concrete_syntax.textual_od.renderer import render_od
 from bootstrap.scd import bootstrap_scd
 from util import loader
 from transformation.rule import RuleMatcherRewriter, ActionGenerator
@@ -24,10 +25,10 @@ if __name__ == "__main__":
     # Read models from their files
     mm_cs           =         read_file('metamodels/mm_design.od')
     mm_rt_cs        = mm_cs + read_file('metamodels/mm_runtime.od')
-    # m_cs            =         read_file('models/m_example_simple.od')
-    # m_rt_initial_cs = m_cs +  read_file('models/m_example_simple_rt_initial.od')
-    m_cs            =         read_file('models/m_example_mutex.od')
-    m_rt_initial_cs = m_cs +  read_file('models/m_example_mutex_rt_initial.od')
+    m_cs            =         read_file('models/m_example_simple.od')
+    m_rt_initial_cs = m_cs +  read_file('models/m_example_simple_rt_initial.od')
+    # m_cs            =         read_file('models/m_example_mutex.od')
+    # m_rt_initial_cs = m_cs +  read_file('models/m_example_mutex_rt_initial.od')
 
     # Parse them
     mm           = loader.parse_and_check(state, mm_cs,           scd_mmm, "Petri-Net Design meta-model")
@@ -50,7 +51,7 @@ if __name__ == "__main__":
         action_generator=action_generator,
         decision_maker=simulator.InteractiveDecisionMaker(auto_proceed=False),
         # decision_maker=simulator.RandomDecisionMaker(seed=0),
-        renderer=render_petri_net,
+        renderer=lambda od: render_petri_net(od) + render_od(state, od.m, od.mm),
     )
 
     sim.run(ODAPI(state, m_rt_initial, mm_rt))
