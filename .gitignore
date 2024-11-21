@@ -1,5 +1,7 @@
-# Never accidently commit solutions to assignments :)
+# Never accidentally commit solutions to assignments :)
 *_solution.py
+# Never accidentally commit student submissions
+*_submission.py
 
 # ---> Python
 # Byte-compiled / optimized / DLL files

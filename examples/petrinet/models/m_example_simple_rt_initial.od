@@ -1,0 +1,11 @@
+p0s:PlaceState {
+  numTokens = 1;
+}
+
+:of (p0s -> p0)
+
+p1s:PlaceState {
+  numTokens = 0;
+}
+
+:of (p1s -> p1)

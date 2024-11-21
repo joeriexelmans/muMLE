@@ -17,7 +17,7 @@ class Simulator(MinimalSimulator):
     def __init__(self,
         action_generator,
         decision_maker: DecisionMaker,
-        termination_condition,
+        termination_condition=lambda od: None,
         check_conformance=True,
         verbose=True,
         renderer=lambda od: render_od(od.state, od.m, od.mm),

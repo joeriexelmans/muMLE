@@ -10,7 +10,6 @@ state = DevState()
 scd_mmm = bootstrap_scd(state)
 
 
-# Change this:
 mm_cs = """
     BaseA:Class {
         abstract = True;
@@ -49,7 +48,6 @@ print("Is our meta-model a valid class diagram?")
 conf = Conformance(state, mm, scd_mmm)
 print(render_conformance_check_result(conf.check_nominal()))
 
-# Change this:
 m_cs = """
     a0:A
     b0:B

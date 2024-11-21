@@ -1,0 +1,11 @@
+# Places, transitions, arcs (and only one kind of arc)
+
+Connectable:Class { abstract = True; }
+
+arc:Association (Connectable -> Connectable)
+
+Place:Class
+Transition:Class
+
+:Inheritance (Place -> Connectable)
+:Inheritance (Transition -> Connectable)

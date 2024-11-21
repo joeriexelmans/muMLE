@@ -1,0 +1,13 @@
+# A place with no tokens:
+
+p:RAM_Place
+ps:RAM_PlaceState {
+  RAM_numTokens = `get_value(this) == 0`;
+}
+:RAM_of (ps -> p)
+
+# An incoming arc from that place to our transition:
+
+t:RAM_Transition
+
+:RAM_arc (p -> t)

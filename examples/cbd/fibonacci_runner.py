@@ -10,9 +10,6 @@ from concrete_syntax.plantuml.make_url import make_url as make_plantuml_url
 from concrete_syntax.graphviz.make_url import make_url as make_graphviz_url
 from concrete_syntax.graphviz import renderer as graphviz
 
-from transformation.matcher import match_od
-from transformation.rewriter import rewrite
-from transformation.cloner import clone_od
 from transformation.ramify import ramify
 from transformation.rule import RuleMatcherRewriter, ActionGenerator
 
