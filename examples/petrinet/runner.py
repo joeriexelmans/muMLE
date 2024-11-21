@@ -5,6 +5,7 @@ from util import loader
 from transformation.rule import RuleMatcherRewriter, ActionGenerator
 from transformation.ramify import ramify
 from examples.semantics.operational import simulator
+from examples.petrinet.renderer import render_petri_net
 
 
 if __name__ == "__main__":
@@ -49,6 +50,7 @@ if __name__ == "__main__":
         action_generator=action_generator,
         decision_maker=simulator.InteractiveDecisionMaker(auto_proceed=False),
         # decision_maker=simulator.RandomDecisionMaker(seed=0),
+        renderer=render_petri_net,
     )
 
     sim.run(ODAPI(state, m_rt_initial, mm_rt))
