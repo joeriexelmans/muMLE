@@ -1,0 +1,9 @@
+# Only create inheritance link once:
+
+some_class:RAM_Class
+
+top:RAM_Class {
+  condition = `get_name(this) == "Top"`;
+}
+
+:RAM_Inheritance (some_class -> top)

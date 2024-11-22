@@ -1,0 +1,7 @@
+# If our class already inherits from another class, then DON'T create an inheritance link
+
+some_class:RAM_Class
+
+any_other_class:RAM_Class
+
+:RAM_Inheritance(some_class -> any_other_class)

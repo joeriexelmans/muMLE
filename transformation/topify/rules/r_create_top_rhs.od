@@ -1,0 +1,8 @@
+# We create the 'Top'-class with a GlobalCondition, because that's the only way we can control the name of the object to be created.
+
+:GlobalCondition {
+  condition = ```
+    top = create_object("Top", "Class")
+    set_slot_value(top, "abstract", True)
+  ```;
+}

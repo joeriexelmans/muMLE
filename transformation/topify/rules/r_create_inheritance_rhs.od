@@ -1,0 +1,9 @@
+some_class:RAM_Class
+
+top:RAM_Class {
+  condition = `get_name(this) == "Top"`;
+}
+
+# Create inheritance link
+
+:RAM_Inheritance (some_class -> top)

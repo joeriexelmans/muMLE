@@ -1,0 +1,5 @@
+# Top-class should not yet already exist:
+
+top:RAM_Class {
+  condition = `get_name(this) == "Top"`;
+}
