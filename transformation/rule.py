@@ -8,6 +8,7 @@ from concrete_syntax.common import indent
 from transformation.matcher import match_od
 from transformation.rewriter import rewrite
 from transformation.cloner import clone_od
+from util.timer import Timer
 
 class Rule:
     def __init__(self, nacs: list[UUID], lhs: UUID, rhs: UUID):
@@ -17,6 +18,9 @@ class Rule:
 
 
 PP = pprint.PrettyPrinter(depth=4)
+
+class _NAC_MATCHED(Exception):
+    pass
 
 # Helper for executing NAC/LHS/RHS-type rules
 class RuleMatcherRewriter:
@@ -36,37 +40,53 @@ class RuleMatcherRewriter:
 
         try:
             # First we iterate over LHS-matches:
-            for i, lhs_match in enumerate(lhs_matcher):
+            # for i, lhs_match in enumerate(lhs_matcher):
+            x=0
+            while True:
+                try:
+                    with Timer(f"MATCH LHS {rule_name}"):
+                        lhs_match = lhs_matcher.__next__()
+                    x += 1
 
-                nac_matched = False
-
-                for nac in nacs:
-                    # For every LHS-match, we see if there is a NAC-match:
-                    nac_matcher = match_od(self.state,
-                        host_m=m,
-                        host_mm=self.mm,
-                        pattern_m=nac,
-                        pattern_mm=self.mm_ramified,
-                        pivot=lhs_match) # try to "grow" LHS-match with NAC-match
+                    nac_matched = False
 
                     try:
-                        for j, nac_match in enumerate(nac_matcher):
-                            # The NAC has at least one match
-                            # (there could be more, but we know enough, so let's not waste CPU/MEM resources and proceed to next LHS match)
-                            nac_matched = True
-                            break
-                    except Exception as e:
-                        # The exception may originate from eval'ed condition-code in LHS or NAC
-                        # Decorate exception with some context, to help with debugging
-                        e.add_note(f"while matching NAC of '{rule_name}'")
-                        raise
+                        for i_nac, nac in enumerate(nacs):
+                            # For every LHS-match, we see if there is a NAC-match:
+                            nac_matcher = match_od(self.state,
+                                host_m=m,
+                                host_mm=self.mm,
+                                pattern_m=nac,
+                                pattern_mm=self.mm_ramified,
+                                pivot=lhs_match) # try to "grow" LHS-match with NAC-match
 
-                    if nac_matched:
-                        break
+                            try:
+                                # for nac_match in nac_matcher:
+                                while True:
+                                    try:
+                                        with Timer(f"MATCH NAC{i_nac} {rule_name}"):
+                                            nac_match = nac_matcher.__next__()
 
-                if not nac_matched:
+                                        raise _NAC_MATCHED()
+                                    except StopIteration:
+                                        break # no more nac-matches
+
+                                    # The NAC has at least one match
+                                    # (there could be more, but we know enough, so let's not waste CPU/MEM resources and proceed to next LHS match)
+                                    nac_matched = True
+                                    break
+                            except Exception as e:
+                                # The exception may originate from eval'ed condition-code in LHS or NAC
+                                # Decorate exception with some context, to help with debugging
+                                e.add_note(f"while matching NAC of '{rule_name}'")
+                                raise
+                    except _NAC_MATCHED:
+                        continue # continue with next LHS-match
+
                     # There were no NAC matches -> yield LHS-match!
                     yield lhs_match
+                except StopIteration:
+                    break # no more lhs-matches
 
 
         except Exception as e:
@@ -102,17 +122,27 @@ class ActionGenerator:
     def __call__(self, od: ODAPI):
         at_least_one_match = False
         for rule_name, rule in self.rule_dict.items():
-            for lhs_match in self.matcher_rewriter.match_rule(od.m, rule.lhs, rule.nacs, rule_name):
-                # We got a match!
-                def do_action(od, rule, lhs_match, rule_name):
-                    new_m, rhs_match = self.matcher_rewriter.exec_rule(od.m, rule.lhs, rule.rhs, lhs_match, rule_name)
-                    msgs = [f"executed rule '{rule_name}'\n" + indent(PP.pformat(rhs_match), 6)]
-                    return (ODAPI(od.state, new_m, od.mm), msgs)
-                yield (
-                    rule_name + '\n' + indent(PP.pformat(lhs_match), 6), # description of action
-                    functools.partial(do_action, od, rule, lhs_match, rule_name) # the action itself (as a callback)
-                )
-                at_least_one_match = True
+            match_iterator = self.matcher_rewriter.match_rule(od.m, rule.lhs, rule.nacs, rule_name)
+            x = 0
+            while True:
+                try:
+                    # if True:
+                    with Timer(f"MATCH RULE {rule_name}"):
+                        lhs_match = match_iterator.__next__()
+                        x += 1
+                    # We got a match!
+                    def do_action(od, rule, lhs_match, rule_name):
+                        with Timer(f"EXEC RHS {rule_name}"):
+                            new_m, rhs_match = self.matcher_rewriter.exec_rule(od.m, rule.lhs, rule.rhs, lhs_match, rule_name)
+                        msgs = [f"executed rule '{rule_name}'\n" + indent(PP.pformat(rhs_match), 6)]
+                        return (ODAPI(od.state, new_m, od.mm), msgs)
+                    yield (
+                        rule_name + '\n' + indent(PP.pformat(lhs_match), 6), # description of action
+                        functools.partial(do_action, od, rule, lhs_match, rule_name) # the action itself (as a callback)
+                    )
+                    at_least_one_match = True
+                except StopIteration:
+                    break
         return at_least_one_match
 
 # Given a list of actions (in high -> low priority), will always yield the highest priority enabled actions.

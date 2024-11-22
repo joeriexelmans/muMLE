@@ -206,6 +206,11 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID,
 
         return names, graph
 
+class _No_Matched(Exception):
+    pass
+def _cannot_call_matched(_):
+    raise _No_Matched()
+
 # This function returns a Generator of matches.
 # The idea is that the user can iterate over the match set, lazily generating it: if only interested in the first match, the entire match set doesn't have to be generated.
 def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
@@ -265,10 +270,21 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
 
                 python_code = services_od.read_primitive_value(self.bottom, g_vtx.node_id, pattern_mm)[0]
 
-                self.conditions_to_check[g_vtx.name] = python_code
-                # self.conditions_to_check.append((python_code, h_vtx.name, g_vtx.name))
-
-                return True # do be determined later, if it's actually a match
+                try:
+                    # Try to execute code, but if the `matched` API-function is called, we fail.
+                    with Timer(f'EVAL condition {g_vtx.name}'):
+                        ok = exec_then_eval(python_code,
+                            _globals={
+                                **bind_api_readonly(odapi),
+                                'matched': _cannot_call_matched,
+                            },
+                            _locals={'this': h_vtx.node_id})
+                    self.conditions_to_check.pop(g_vtx.name, None)
+                    return ok
+                except _No_Matched:
+                    # The code made a call to the `matched`-function.
+                    self.conditions_to_check[g_vtx.name] = python_code
+                    return True # to be determined later, if it's actually a match
 
             if g_vtx.value == None:
                 return h_vtx.value == None
@@ -339,20 +355,23 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
             except KeyError:
                 continue
             host_node = odapi.get(host_name)
-            if not check(python_code, {'this': host_node}):
-                return False
+            with Timer(f'EVAL condition {pattern_name}'):
+                if not check(python_code, {'this': host_node}):
+                    return False
 
         for python_code, pattern_el_name in obj_conditions:
             if pattern_el_name == None:
                 # GlobalCondition
-                if not check(python_code, {}):
-                    return False
+                with Timer(f'EVAL all global conditions'):
+                    if not check(python_code, {}):
+                        return False
             else:
                 # object-lvl condition
                 host_el_name = name_mapping[pattern_el_name]
                 host_node = odapi.get(host_el_name)
-                if not check(python_code, {'this': host_node}):
-                    return False
+                with Timer(f'EVAL local condition {pattern_el_name}'):
+                    if not check(python_code, {'this': host_node}):
+                        return False
         return True
 
 
