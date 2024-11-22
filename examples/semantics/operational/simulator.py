@@ -41,7 +41,7 @@ class Simulator(MinimalSimulator):
             conf = Conformance(od.state, od.m, od.mm)
             self._print(render_conformance_check_result(conf.check_nominal()))
             self._print()
-            return self.actual_termination_condition(od)
+        return self.actual_termination_condition(od)
 
 def make_actions_pure(actions, od):
     # Copy model before modifying it
