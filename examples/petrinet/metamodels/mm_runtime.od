@@ -1,13 +1,13 @@
 # A place has a number of tokens, and that's it.
 
-PlaceState:Class
-PlaceState_numTokens:AttributeLink (PlaceState -> Integer) {
+PNPlaceState:Class
+PNPlaceState_numTokens:AttributeLink (PNPlaceState -> Integer) {
   name = "numTokens";
   optional = False;
   constraint = `"numTokens cannot be negative" if get_value(get_target(this)) < 0 else None`;
 }
 
-of:Association (PlaceState -> Place) {
+pn_of:Association (PNPlaceState -> PNPlace) {
   # one-to-one
   source_lower_cardinality = 1;
   source_upper_cardinality = 1;

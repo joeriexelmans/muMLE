@@ -2,29 +2,29 @@
 #   http://msdl.uantwerpen.be/people/hv/teaching/MoSIS/lectures/presentation.PetriNets.pdf
 #   page 51
 
-general_1:Place
-general_2:Place
-critical_1:Place
-critical_2:Place
-semaphore:Place
+general_1:PNPlace
+general_2:PNPlace
+critical_1:PNPlace
+critical_2:PNPlace
+semaphore:PNPlace
 
-enterCritical_1:Transition
-leaveCritical_1:Transition
-enterCritical_2:Transition
-leaveCritical_2:Transition
+enterCritical_1:PNTransition
+leaveCritical_1:PNTransition
+enterCritical_2:PNTransition
+leaveCritical_2:PNTransition
 
-:arc (general_1 -> enterCritical_1)
-:arc (semaphore -> enterCritical_1)
-:arc (enterCritical_1 -> critical_1)
+:pn_arc (general_1 -> enterCritical_1)
+:pn_arc (semaphore -> enterCritical_1)
+:pn_arc (enterCritical_1 -> critical_1)
 
-:arc (critical_1 -> leaveCritical_1)
-:arc (leaveCritical_1 -> semaphore)
-:arc (leaveCritical_1 -> general_1)
+:pn_arc (critical_1 -> leaveCritical_1)
+:pn_arc (leaveCritical_1 -> semaphore)
+:pn_arc (leaveCritical_1 -> general_1)
 
-:arc (semaphore -> enterCritical_2)
-:arc (general_2 -> enterCritical_2)
-:arc (enterCritical_2 -> critical_2)
+:pn_arc (semaphore -> enterCritical_2)
+:pn_arc (general_2 -> enterCritical_2)
+:pn_arc (enterCritical_2 -> critical_2)
 
-:arc (leaveCritical_2 -> semaphore)
-:arc (leaveCritical_2 -> general_2)
-:arc (critical_2 -> leaveCritical_2)
+:pn_arc (leaveCritical_2 -> semaphore)
+:pn_arc (leaveCritical_2 -> general_2)
+:pn_arc (critical_2 -> leaveCritical_2)

@@ -1,19 +1,19 @@
-t:RAM_Transition {
+t:RAM_PNTransition {
   condition = ```
     # remove 1 token from every place connected with incoming arc
-    for incoming in get_incoming(this, "arc"):
+    for incoming in get_incoming(this, "pn_arc"):
       in_place = get_source(incoming)
-      in_place_state = get_source(get_incoming(in_place, "of")[0])
+      in_place_state = get_source(get_incoming(in_place, "pn_of")[0])
       in_num_tokens = get_slot_value(in_place_state, "numTokens")
       set_slot_value(in_place_state, "numTokens", in_num_tokens - 1)
-      print("place", get_name(in_place_state), "now has", in_num_tokens-1, "tokens")
+      print("PNPlace", get_name(in_place_state), "now has", in_num_tokens-1, "tokens")
 
     # add 1 token to every place connected with outgoing arc
-    for outgoing in get_outgoing(this, "arc"):
+    for outgoing in get_outgoing(this, "pn_arc"):
       out_place = get_target(outgoing)
-      out_place_state = get_source(get_incoming(out_place, "of")[0])
+      out_place_state = get_source(get_incoming(out_place, "pn_of")[0])
       out_num_tokens = get_slot_value(out_place_state, "numTokens")
       set_slot_value(out_place_state, "numTokens", out_num_tokens + 1)
-      print("place", get_name(out_place_state), "now has", out_num_tokens+1, "tokens")
+      print("PNPlace", get_name(out_place_state), "now has", out_num_tokens+1, "tokens")
   ```;
 }

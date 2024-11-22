@@ -1,25 +1,25 @@
-general_1_s:PlaceState {
+general_1_s:PNPlaceState {
   numTokens = 1;
 }
 
-general_2_s:PlaceState {
+general_2_s:PNPlaceState {
   numTokens = 1;
 }
 
-critical_1_s:PlaceState {
+critical_1_s:PNPlaceState {
   numTokens = 0;
 }
 
-critical_2_s:PlaceState {
+critical_2_s:PNPlaceState {
   numTokens = 0;
 }
 
-semaphore_s:PlaceState {
+semaphore_s:PNPlaceState {
   numTokens = 1;
 }
 
-:of (general_1_s -> general_1)
-:of (general_2_s -> general_2)
-:of (critical_1_s -> critical_1)
-:of (critical_2_s -> critical_2)
-:of (semaphore_s -> semaphore)
+:pn_of (general_1_s -> general_1)
+:pn_of (general_2_s -> general_2)
+:pn_of (critical_1_s -> critical_1)
+:pn_of (critical_2_s -> critical_2)
+:pn_of (semaphore_s -> semaphore)

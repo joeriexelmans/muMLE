@@ -24,18 +24,18 @@ def render_petri_net(od: ODAPI):
     dot += "node[fontname=Arial,fontsize=10];\n"
     dot += "subgraph places {"
     dot += "  node [shape=circle,fixedsize=true,label=\"\", height=.35,width=.35];"
-    for _, place_state in od.get_all_instances("PlaceState"):
-        place = od.get_target(od.get_outgoing(place_state, "of")[0])
+    for _, place_state in od.get_all_instances("PNPlaceState"):
+        place = od.get_target(od.get_outgoing(place_state, "pn_of")[0])
         place_name = od.get_name(place)
         num_tokens = od.get_slot_value(place_state, "numTokens")
         dot += f"  {place_name} [label=\"{place_name}\\n\\n{render_tokens(num_tokens)}\\n\\n­\"];\n"
     dot += "}\n"
     dot += "subgraph transitions {"
     dot += "  node [shape=rect,fixedsize=true,height=.3,width=.12,style=filled,fillcolor=black,color=white];\n"
-    for transition_name, _ in od.get_all_instances("Transition"):
+    for transition_name, _ in od.get_all_instances("PNTransition"):
         dot += f"  {transition_name} [label=\"{transition_name}\\n\\n\\n­\"];\n"
     dot += "}\n"
-    for _, arc in od.get_all_instances("arc"):
+    for _, arc in od.get_all_instances("pn_arc"):
         src_name = od.get_name(od.get_source(arc))
         tgt_name = od.get_name(od.get_target(arc))
         dot += f"{src_name} -> {tgt_name};"
