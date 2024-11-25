@@ -50,38 +50,36 @@ class RuleMatcherRewriter:
 
                     nac_matched = False
 
-                    try:
-                        for i_nac, nac in enumerate(nacs):
-                            # For every LHS-match, we see if there is a NAC-match:
-                            nac_matcher = match_od(self.state,
-                                host_m=m,
-                                host_mm=self.mm,
-                                pattern_m=nac,
-                                pattern_mm=self.mm_ramified,
-                                pivot=lhs_match) # try to "grow" LHS-match with NAC-match
+                    with Timer(f"MATCH NACs {rule_name}"):
+                        try:
+                            for i_nac, nac in enumerate(nacs):
+                                # For every LHS-match, we see if there is a NAC-match:
+                                nac_matcher = match_od(self.state,
+                                    host_m=m,
+                                    host_mm=self.mm,
+                                    pattern_m=nac,
+                                    pattern_mm=self.mm_ramified,
+                                    pivot=lhs_match) # try to "grow" LHS-match with NAC-match
 
-                            try:
-                                # for nac_match in nac_matcher:
-                                while True:
-                                    try:
-                                        with Timer(f"MATCH NAC{i_nac} {rule_name}"):
-                                            nac_match = nac_matcher.__next__()
+                                try:
+                                    # for nac_match in nac_matcher:
+                                    while True:
+                                        try:
+                                            with Timer(f"MATCH NAC{i_nac} {rule_name}"):
+                                                nac_match = nac_matcher.__next__()
+                                            # The NAC has at least one match
+                                            # (there could be more, but we know enough, so let's not waste CPU/MEM resources and proceed to next LHS match)
+                                            raise _NAC_MATCHED()
+                                        except StopIteration:
+                                            break # no more nac-matches
 
-                                        raise _NAC_MATCHED()
-                                    except StopIteration:
-                                        break # no more nac-matches
-
-                                    # The NAC has at least one match
-                                    # (there could be more, but we know enough, so let's not waste CPU/MEM resources and proceed to next LHS match)
-                                    nac_matched = True
-                                    break
-                            except Exception as e:
-                                # The exception may originate from eval'ed condition-code in LHS or NAC
-                                # Decorate exception with some context, to help with debugging
-                                e.add_note(f"while matching NAC of '{rule_name}'")
-                                raise
-                    except _NAC_MATCHED:
-                        continue # continue with next LHS-match
+                                except Exception as e:
+                                    # The exception may originate from eval'ed condition-code in LHS or NAC
+                                    # Decorate exception with some context, to help with debugging
+                                    e.add_note(f"while matching NAC of '{rule_name}'")
+                                    raise
+                        except _NAC_MATCHED:
+                            continue # continue with next LHS-match
 
                     # There were no NAC matches -> yield LHS-match!
                     yield lhs_match
