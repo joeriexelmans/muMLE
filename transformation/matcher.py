@@ -12,7 +12,7 @@ import itertools
 import re
 import functools
 
-from util.timer import Timer
+from util.timer import Timer, counted
 
 class _is_edge:
     def __repr__(self):
@@ -323,6 +323,27 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
     g_names, guest = model_to_graph(state, pattern_m, pattern_mm,
         _filter=is_matchable)
 
+    # precompute the candidates for every guest vertex:
+    guest_to_host_candidate_vtxs = {}
+    vtxs_of_host_type = {}
+
+    for g_vtx in guest.vtxs:
+        object_node = g_vtx.node_id
+        if hasattr(g_vtx, 'typ'):
+            orig_class_node = ramify.get_original_type(bottom, g_vtx.typ)
+            orig_class_name = odapi.get_name(orig_class_node)
+            if orig_class_name in vtxs_of_host_type:
+                cands = vtxs_of_host_type[orig_class_name]
+            else:
+                cands = vtxs_of_host_type[orig_class_name] = len(odapi.get_all_instances(orig_class_name, include_subtypes=True))
+        else:
+            cands = len(host.vtxs)
+        guest_to_host_candidate_vtxs[g_vtx] = cands
+
+    # print(guest_to_host_candidate_vtxs)
+
+
+    # transform 'pivot' into something VF2 understands
     graph_pivot = {
         g_names[guest_name] : h_names[host_name]
             for guest_name, host_name in pivot.items()
@@ -376,7 +397,7 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
 
 
     compare = RAMCompare(bottom, services_od.OD(host_mm, host_m, state))
-    matcher = MatcherVF2(host, guest, compare)
+    matcher = MatcherVF2(host, guest, compare, guest_to_host_candidate_vtxs)
     for m in matcher.match(graph_pivot):
         # Convert mapping
         name_mapping = {}
