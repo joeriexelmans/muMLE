@@ -87,23 +87,11 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID,
 
         mvs_edges = []
         modelrefs = {}
-        # constraints = {}
-
         names = {}
 
         def to_vtx(el, name):
             # print("name:", name)
             if bottom.is_edge(el):
-                # if filter_constraint:
-                #     try:
-                #         supposed_obj = bottom.read_edge_source(el)
-                #         slot_node = od.get_slot(supposed_obj, "constraint")
-                #         if el == slot_node:
-                #             # `el` is the constraint-slot
-                #             constraints[supposed_obj] = el
-                #             return
-                #     except:
-                #         pass
                 mvs_edges.append(el)
                 edge = MVSEdge(el, name)
                 names[name] = edge
@@ -138,49 +126,18 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID,
                     tgt=uuid_to_vtx[mvs_tgt],
                     label="tgt"))
 
-
         for node, (ref_m, name) in modelrefs.items():
             vtx = uuid_to_vtx[node]
-
             # Get MM of ref'ed model
             ref_mm, = bottom.read_outgoing_elements(node, "Morphism")
-            # print("modelref type node:", type_node)
-
-            # Recursively convert ref'ed model to graph
-            # ref_graph = model_to_graph(state, ref_m, ref_mm, prefix=name+'/')
-
             vtx.modelref = (ref_m, ref_mm)
-
-            # We no longer flatten:
-
-            # # Flatten and create link to ref'ed model
-            # graph.vtxs += ref_model.vtxs
-            # graph.edges += ref_model.edges
-            # graph.edges.append(Edge(
-            #     src=uuid_to_vtx[node],
-            #     tgt=ref_model.vtxs[0], # which node to link to?? dirty
-            #     label="modelref"))
 
         def add_types(node):
             vtx = uuid_to_vtx[node]
             type_node, = bottom.read_outgoing_elements(node, "Morphism")
-
             # Put the type straight into the Vertex-object
             # The benefit is that our Vertex-matching callback can then be coded cleverly, look at the types first, resulting in better performance
             vtx.typ = type_node
-
-            # The old approach (creating special vertices containing the types), commented out:
-
-            # print('node', node, 'has type', type_node)
-            # We create a Vertex storing the type
-            # type_vertex = Vertex(value=IS_TYPE(type_node))
-            # graph.vtxs.append(type_vertex)
-            # type_edge = Edge(
-            #     src=uuid_to_vtx[node],
-            #     tgt=type_vertex,
-            #     label="type")
-            # # print(type_edge)
-            # graph.edges.append(type_edge)
 
         # Add typing information for:
         #   - classes
@@ -188,7 +145,6 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID,
         #   - associations
         for class_name, class_node in scd_mm.get_classes().items():
             objects = scd.get_typed_by(class_node)
-            # print("typed by:", class_name, objects)
             for obj_name, obj_node in objects.items():
                 if _filter(obj_node):
                     add_types(obj_node)
@@ -199,7 +155,6 @@ def model_to_graph(state: State, model: UUID, metamodel: UUID,
                         add_types(slot_node)
         for assoc_name, assoc_node in scd_mm.get_associations().items():
             objects = scd.get_typed_by(assoc_node)
-            # print("typed by:", assoc_name, objects)
             for link_name, link_node in objects.items():
                 if _filter(link_node):
                     add_types(link_node)
@@ -248,9 +203,11 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
             except KeyError:
                 return False
 
-            return cdapi.is_subtype(
+            types_ok = cdapi.is_subtype(
                 super_type_name=guest_type_name_unramified,
                 sub_type_name=host_type_name)
+
+            return types_ok
 
         # Memoizing the result of comparison gives a huge performance boost!
         # Especially `is_subtype_of` is very slow, and will be performed many times over on the same pair of nodes during the matching process.
@@ -262,7 +219,8 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
                 if not hasattr(h_vtx, 'typ'):
                     # if guest has a type, host must have a type
                     return False
-                return self.match_types(g_vtx.typ, h_vtx.typ)
+                if not self.match_types(g_vtx.typ, h_vtx.typ):
+                    return False
 
             if hasattr(g_vtx, 'modelref'):
                 if not hasattr(h_vtx, 'modelref'):
@@ -271,7 +229,9 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
                 python_code = services_od.read_primitive_value(self.bottom, g_vtx.node_id, pattern_mm)[0]
 
                 try:
-                    # Try to execute code, but if the `matched` API-function is called, we fail.
+                    # Try to execute code, but the likelyhood of failing is high:
+                    #   - the `matched` API function is not yet available
+                    #   - incompatible slots may be matched (it is only when their AttributeLinks are matched, that we know the types will be compatible)
                     with Timer(f'EVAL condition {g_vtx.name}'):
                         ok = exec_then_eval(python_code,
                             _globals={
@@ -281,8 +241,7 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
                             _locals={'this': h_vtx.node_id})
                     self.conditions_to_check.pop(g_vtx.name, None)
                     return ok
-                except _No_Matched:
-                    # The code made a call to the `matched`-function.
+                except:
                     self.conditions_to_check[g_vtx.name] = python_code
                     return True # to be determined later, if it's actually a match
 
