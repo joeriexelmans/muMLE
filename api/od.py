@@ -118,22 +118,12 @@ class ODAPI:
         return types[0]
 
     def get_name(self, obj: UUID):
-        # with Timer("get_name"):
-            if obj in self.m_obj_to_name:
-                name = self.m_obj_to_name[obj]
-                # print(f"name {name} was found!")
-                return name
-            elif obj in self.mm_obj_to_name:
-                name = self.mm_obj_to_name[obj]
-                # print(f"name {name} was found!")
-                return name
-            else:
-                name = (
-                    [name for name in self.bottom.read_keys(self.m) if self.bottom.read_outgoing_elements(self.m, name)[0] == obj] +
-                    [name for name in self.bottom.read_keys(self.mm) if self.bottom.read_outgoing_elements(self.mm, name)[0] == obj]
-                )[0]
-                # print(f"warning: name {name} not found??!!")
-                return name
+        if obj in self.m_obj_to_name:
+            return self.m_obj_to_name[obj]
+        elif obj in self.mm_obj_to_name:
+            return self.mm_obj_to_name[obj]
+        else:
+            raise Exception(f"Couldn't find name of {obj} - are you sure it exists in the (meta-)model?")
 
     def get(self, name: str):
         results = self.bottom.read_outgoing_elements(self.m, name)
@@ -244,7 +234,9 @@ class ODAPI:
         return link_id
 
     def create_object(self, object_name: Optional[str], class_name: str):
-        return self.od.create_object(object_name, class_name)
+        obj = self.od.create_object(object_name, class_name)
+        self.__recompute_mappings()
+        return obj
 
 
 # internal use
