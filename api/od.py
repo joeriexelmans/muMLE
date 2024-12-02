@@ -118,10 +118,22 @@ class ODAPI:
         return types[0]
 
     def get_name(self, obj: UUID):
-        return (
-            [name for name in self.bottom.read_keys(self.m) if self.bottom.read_outgoing_elements(self.m, name)[0] == obj] +
-            [name for name in self.bottom.read_keys(self.mm) if self.bottom.read_outgoing_elements(self.mm, name)[0] == obj]
-        )[0]
+        # with Timer("get_name"):
+            if obj in self.m_obj_to_name:
+                name = self.m_obj_to_name[obj]
+                # print(f"name {name} was found!")
+                return name
+            elif obj in self.mm_obj_to_name:
+                name = self.mm_obj_to_name[obj]
+                # print(f"name {name} was found!")
+                return name
+            else:
+                name = (
+                    [name for name in self.bottom.read_keys(self.m) if self.bottom.read_outgoing_elements(self.m, name)[0] == obj] +
+                    [name for name in self.bottom.read_keys(self.mm) if self.bottom.read_outgoing_elements(self.mm, name)[0] == obj]
+                )[0]
+                # print(f"warning: name {name} not found??!!")
+                return name
 
     def get(self, name: str):
         results = self.bottom.read_outgoing_elements(self.m, name)
