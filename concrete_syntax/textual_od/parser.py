@@ -15,7 +15,7 @@ grammar = r"""
 ?start: object*
 
 IDENTIFIER: /[A-Za-z_][A-Za-z_0-9]*/
-COMMENT: /#[^\n]*\n/
+COMMENT: /#[^\n]*/
 
 literal: INT
        | STR
