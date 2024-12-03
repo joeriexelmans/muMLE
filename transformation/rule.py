@@ -50,6 +50,9 @@ class RuleMatcherRewriter:
                         lhs_match = lhs_matcher.__next__()
                     x += 1
 
+                    # Uncomment to see matches attempted - may give insight into why your rule is not matching
+                    # print("  lhs_match:", lhs_match)
+
                     nac_matched = False
 
                     with Timer(f"MATCH NACs {rule_name}"):
@@ -122,6 +125,11 @@ class RuleMatcherRewriter:
 
         return (cloned_m, rhs_match)
 
+    # This is often what you want: find a match, and execute the rule
+    def exec_on_first_match(self, host: UUID, rule: Rule, rule_name: str, in_place=False):
+        for lhs_match in self.match_rule(host, rule.lhs, rule.nacs, rule_name):
+            (rewritten_host, rhs_match) = self.exec_rule(host, rule.lhs, rule.rhs, lhs_match, rule_name, in_place)
+            return rewritten_host, lhs_match, rhs_match
 
 # Generator that yields actions in the format expected by 'Simulator' class
 class ActionGenerator:
