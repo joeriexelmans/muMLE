@@ -4,12 +4,13 @@ from concrete_syntax.textual_od import parser
 from transformation.rule import Rule
 
 # parse model and check conformance
-def parse_and_check(state, m_cs, mm, descr: str, check_conformance=True):
+def parse_and_check(state, m_cs, mm, descr: str, check_conformance=True, type_transform=lambda type_name: type_name):
     try:
         m = parser.parse_od(
             state,
             m_text=m_cs,
             mm=mm,
+            type_transform=type_transform,
         )
     except Exception as e:
         e.add_note("While parsing model " + descr)

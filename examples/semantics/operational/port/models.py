@@ -192,7 +192,7 @@ port_rt_mm_cs = port_mm_cs + """
 port_m_cs = """
     gen:Generator
 
-    # newly arrive ships collect here
+    # newly arrived ships collect here
     waiting:Place
     c1:connection (gen -> waiting)
 

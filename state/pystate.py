@@ -33,6 +33,7 @@ class PyState(State):
         return new_id
 
     def create_edge(self, source: Element, target: Element) -> Optional[Edge]:
+        # TODO: why does this call SILENTLY fail if source/target does not exist ???????????
         if source not in self.edges and source not in self.nodes:
             return None
         elif target not in self.edges and target not in self.nodes:

@@ -30,8 +30,10 @@ BOOL: "True" | "False"
 CODE: /`[^`]*`/
 INDENTED_CODE: /```[^`]*```/
 
+type_name: IDENTIFIER
+
 #        name (optional)      type        
-object: [IDENTIFIER]     ":"  IDENTIFIER [link_spec] ["{" slot* "}"]
+object: [IDENTIFIER]     ":"  type_name [link_spec] ["{" slot* "}"]
 
 link_spec: "(" IDENTIFIER "->" IDENTIFIER ")"
 
@@ -41,7 +43,8 @@ slot: IDENTIFIER "=" literal ";"
 parser = Lark(grammar, parser='lalr')
 
 # given a concrete syntax text string, and a meta-model, parses the CS
-def parse_od(state, m_text, mm):
+# Parameter 'type_transform' is useful for adding prefixes to the type names, when parsing a model and pretending it is an instance of a prefixed meta-model.
+def parse_od(state, m_text, mm, type_transform=lambda type_name: type_name):
     tree = parser.parse(m_text)
 
     m = state.create_node()
@@ -60,6 +63,13 @@ def parse_od(state, m_text, mm):
         def link_spec(self, el):
             [src, tgt] = el
             return (src, tgt)
+
+        def type_name(self, el):
+            type_name = el[0]
+            if type_name in primitive_types:
+                return type_name
+            else:
+                return type_transform(el[0])
         
         def slot(self, el):
             [attr_name, value] = el
@@ -69,7 +79,10 @@ def parse_od(state, m_text, mm):
             [obj_name, type_name, link] = el[0:3]
             slots = el[3:]
             if state.read_dict(m, obj_name) != None:
-                raise Exception(f"Element '{obj_name}:{type_name}': name '{obj_name}' already in use. Object names must be unique.")
+                msg = f"Element '{obj_name}:{type_name}': name '{obj_name}' already in use."
+                # raise Exception(msg + " Names must be unique")
+                print(msg + " Ignoring.")
+                return
             if obj_name == None:
                 # object/link names are optional
                 #  generate a unique name if no name given

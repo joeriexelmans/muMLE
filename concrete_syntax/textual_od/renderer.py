@@ -9,7 +9,7 @@ def render_od(state, m_id, mm_id, hide_names=True):
     
     m_od = od.OD(mm_id, m_id, state)
 
-    serialized = set()
+    serialized = set(["Integer", "String", "Boolean", "ActionCode"]) # assume these types always already exist
 
     def display_name(name: str):
         # object names that start with "__" are hidden
@@ -28,15 +28,17 @@ def render_od(state, m_id, mm_id, hide_names=True):
 
     for class_name, objects in m_od.get_all_objects().items():
         for object_name, object_node in objects.items():
+            if class_name == "ModelRef":
+                continue # skip modelrefs, they fuckin ma shit up
             output += f"\n{display_name(object_name)}:{class_name}"
             output += write_attributes(object_node)
             serialized.add(object_name)
 
-    links = m_od.get_all_links()
+    todo_links = m_od.get_all_links()
 
-    while len(links) != 0:
+    while len(todo_links) != 0:
         postponed = {}
-        for assoc_name, links in links.items():
+        for assoc_name, links in todo_links.items():
             for link_name, (link_edge, src_name, tgt_name) in links.items():
                 if link_name in serialized:
                     continue
@@ -47,6 +49,8 @@ def render_od(state, m_id, mm_id, hide_names=True):
                 # links can also have slots:
                 output += write_attributes(link_edge)
                 serialized.add(link_name)
-        links = postponed
+        if len(postponed) == len(todo_links):
+            raise Exception(f"We got stuck! Links = {postponed}")
+        todo_links = postponed
 
     return output

@@ -4,5 +4,8 @@
   condition = ```
     top = create_object("Top", "Class")
     set_slot_value(top, "abstract", True)
+    lnk = create_link("generic_link", "Association", top, top)
+    # lnk also inherits top:
+    create_link(None, "Inheritance", lnk, top)
   ```;
 }

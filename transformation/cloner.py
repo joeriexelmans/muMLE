@@ -6,5 +6,4 @@ from concrete_syntax.common import indent
 def clone_od(state, m: UUID, mm: UUID):
     # cheap-ass implementation: render and parse
     cs = renderer.render_od(state, m, mm, hide_names=False)
-    # print(indent(cs, 6))
     return parser.parse_od(state, cs, mm)

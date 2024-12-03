@@ -1,3 +1,5 @@
+from concrete_syntax.textual_od.renderer import render_od
+
 import pprint
 from typing import Generator, Callable
 from uuid import UUID
@@ -93,8 +95,18 @@ class RuleMatcherRewriter:
             e.add_note(f"while matching LHS of '{rule_name}'")
             raise
 
-    def exec_rule(self, m: UUID, lhs: UUID, rhs: UUID, lhs_match: dict, rule_name: str):
-        cloned_m = clone_od(self.state, m, self.mm)
+    def exec_rule(self, m: UUID, lhs: UUID, rhs: UUID, lhs_match: dict, rule_name: str, in_place=False):
+        if in_place:
+            # dangerous
+            cloned_m = m
+        else:
+            cloned_m = clone_od(self.state, m, self.mm)
+
+        # print('before clone:')
+        # print(render_od(self.state, m, self.mm))
+        # print('after clone:')
+        # print(render_od(self.state, cloned_m, self.mm))
+
         try:
             rhs_match = rewrite(self.state,
                 lhs_m=lhs,

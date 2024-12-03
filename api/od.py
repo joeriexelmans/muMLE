@@ -7,6 +7,7 @@ from services.primitives.string_type import String
 from services.primitives.actioncode_type import ActionCode
 from uuid import UUID
 from typing import Optional
+from util.timer import Timer
 
 NEXT_ID = 0
 
@@ -154,9 +155,18 @@ class ODAPI:
         class_name = self.get_name(self.get_type(obj))
         return self.od.get_attr_link_name(class_name, attr_name) != None
 
+    def get_slots(self, obj: UUID) -> list[str]:
+        return [attr_name for attr_name, _ in self.od.get_slots(obj)]
+
     def get_slot_value(self, obj: UUID, attr_name: str):
         slot = self.get_slot(obj, attr_name)
         return self.get_value(slot)
+
+    # does the given slot contain code?
+    # this complements `get_slot_value` which will return code as a string
+    def slot_has_code(self, obj: UUID, attr_name: str):
+        slot = self.get_slot(obj, attr_name)
+        return self.get_type_name(slot) == "ActionCode"
 
     # Returns the given default value if the slot does not exist on the object.
     # The attribute must exist in the object's class, or an exception will be thrown.
@@ -237,7 +247,6 @@ class ODAPI:
         obj = self.od.create_object(object_name, class_name)
         self.__recompute_mappings()
         return obj
-
 
 # internal use
 # Get API methods as bound functions, to pass as globals to 'eval'

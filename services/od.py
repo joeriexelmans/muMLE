@@ -59,7 +59,6 @@ class OD:
         object_node = self.bottom.create_node()
         self.bottom.create_edge(self.model, object_node, name) # attach to model
         self.bottom.create_edge(object_node, class_node, "Morphism") # typed-by link
-
         return object_node
 
     def get_class_of_object(self, object_name: str):
@@ -191,9 +190,15 @@ class OD:
     # used for attribute-links and association-links
     def _create_link(self, link_name: str, type_edge: UUID, src_obj_node: UUID, tgt_obj_node: UUID):
         # print('create_link', link_name, type_edge, src_obj_node, tgt_obj_node)
-
+        if not isinstance(src_obj_node, UUID):
+            raise Exception("Expected source object to be UUID")
+        if not isinstance(tgt_obj_node, UUID):
+            raise Exception("Expected target object to be UUID")
         # the link itself is unlabeled:
         link_edge = self.bottom.create_edge(src_obj_node, tgt_obj_node)
+        if link_edge == None:
+            # Why does the above call silently fail??????
+            raise Exception("Could not create link")
         # it is only in the context of the model, that the link has a name:
         self.bottom.create_edge(self.model, link_edge, link_name) # add to model
         self.bottom.create_edge(link_edge, type_edge, "Morphism")
