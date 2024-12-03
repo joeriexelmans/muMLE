@@ -3,7 +3,7 @@
 # Merged run-time meta-models of 'Petri Net' and 'Port' formalisms.
 # An abstract 'Top'-class (superclass of everything else), and a 'generic_link'-association (which can connect everything with everything) have also been added.
 
-# PlantUML visualization: https://deemz.org/plantuml/pdf/hPTDZzem48Rl-HKMnqgWa0sKeAg7tKFL2ui4KezeuXWs8jYHOofLxVxtZiE7s5KatY3dm8bvF3Flp7WSoOgQHWnUg2PPkZylHZVEKgcT60XgH7p-DXq__alZMIh-Ha8qRsLzWOYv-AcTsYaRlKVd0vQBPKLIhHmv1QFp5gsFXxNPAzrqSNyPkrTsfM1_i-G2FPbsKdkvcMLCV8yezvcJJjmojiSAnL3SZJ57As5VygA5N5IjZDoByMWq1iqBQfFZoeFgIikpikwjJsx6SN6g3hOv-aold2trhYFCjQbHPaAtCRPbXPgcNszDhxNJAwHKtJBQbA2caycjwG-bbILdB6mkFmI-M5lIJUbAer72zAcpnfOBxdkjfAEyWlCmfUvwBVKUHSm-o77sWSFffGUT1j31_5O5LzYpCPKY_Qb0-X6lSsV5KwrpG9p76KhCapRGwEu__HJuzcyulCzCPtGVvti5m_4S3ubZQKFYqcqCuBYxGUycav1Iy9q2u7WqWzwbGExyhGFYA0zQA5aM59SNGN55sAuWeExmGe6KxT5aKo3O7eMIAi2x6TnaKB0yQq5SZ1JA5C_TKzWc2pe-UVKDEb4cCcWP8-EpXnHvWjoChCLWB4OZmSliSFYThzu1jbNFXTbY_dfaYuxzELy0lhUQ2x98VldbSJrW31_0E-DSIDAljLyMWGxrPV508DpNVCvr1GFEuUTPVq7yAZGNjTv0cYGFQP9uJNP-koxbfk9z5DaTr2CdjUAKpKaR_x01ifO-KWLfgyxvVVsw_Gy=
+# PlantUML visualization: https://deemz.org/plantuml/pdf/hPTFYzim4CNl_XGYnqA27P8uDgM7tSEobsmWWHw3RCk9Y2CPMIcKThzxHyuViiMGPwCSzhJpqxoPfz4uo2lUD6pqockUI_lxLQl66YwLPIF66nPUVxkEF-ut2uk8_GaOQmwola5OojwL5NjXWi_WUi1wjQvuBZQMMm6ZborQdKzRVHIgwUB-rEOep4RW-POtw2MqazehJR4WucV0CrUvtB97HdckO4pHZT5dawEvH25l8RUkLZe_icWoYS3mQTmMnygJw2hBYp3sqASsqPnVt44nPrVfZJLIxJjaRdMDCkFuKMDhApGqcJs6thtJIrAIFJBQag2XVFeO-YQKCDng0uSdNuIljeQhHbgf5Kh8mawFhLTqxvN8BSygk0vPtErNgOueelZIZciE9ATNFyhB03hfNtI3KlQYTIMu-iyW_OZtkREXgTOv8AxZ32QMhT3WwN-wAV3zxtZyd3ahn7ESkoiOZkQuJnorrYTkFaDmTBl1xFZKPoleJG6oez4CPfS0Ojsh0-BAfLUZY8LNeuJSAsuQ-nLR-3GArDaUOZD0R0-Z91cGNG5VCaWipLeGDqUCak6r2_rUCg_ZarPVhnE59rvjZ8pF7gqeI-XbNB1Hn2OJHiliUFo3djuHjbMdJ2FpcV9ro1OTkdE-0NmNbJ9kSa00VNdS3uZW0sXdJ5dErKVjbaNapI_BGK92EaUgmmuIuxmtu10Q7YJclkSXHLiEwBehGSfgjOCQ7mzgVEmQltShlCnt5Iszo8AI3JcfTO1iBWPmNqz0rQ8XLalQxbm_uZ_AVm==
 
 
 CapacityConstraint:Class
@@ -17,8 +17,8 @@ Source:Class {
     abstract = True;
 }
 Clock:Class {
-    upper_cardinality = 1;
     lower_cardinality = 1;
+    upper_cardinality = 1;
 }
 BerthState:Class {
     constraint = ```
@@ -77,14 +77,14 @@ operatingCapacities:GlobalConstraint {
     ```;
 }
 WorkerSet_numWorkers:AttributeLink (WorkerSet -> Integer) {
+    name = "numWorkers";
     constraint = `get_value(get_target(this)) >= 0`;
     optional = False;
-    name = "numWorkers";
 }
 PlaceState_numShips:AttributeLink (PlaceState -> Integer) {
+    constraint = `get_value(get_target(this)) >= 0`;
     optional = False;
     name = "numShips";
-    constraint = `get_value(get_target(this)) >= 0`;
 }
 ConnectionState_moved:AttributeLink (ConnectionState -> Boolean) {
     name = "moved";
@@ -107,28 +107,28 @@ ConnectionState_moved:AttributeLink (ConnectionState -> Boolean) {
     optional = False;
 }
 BerthState_status:AttributeLink (BerthState -> String) {
+    optional = False;
     name = "status";
     constraint = ```
         (
                     get_value(get_target(this)) in { "empty", "unserved", "served" }
                 )
     ```;
-    optional = False;
 }
 PNPlaceState_numTokens:AttributeLink (PNPlaceState -> Integer) {
-    optional = False;
     name = "numTokens";
     constraint = `"numTokens cannot be negative" if get_value(get_target(this)) < 0 else None`;
+    optional = False;
 }
 Clock_time:AttributeLink (Clock -> Integer) {
+    optional = False;
     name = "time";
     constraint = `get_value(get_target(this)) >= 0`;
-    optional = False;
 }
 CapacityConstraint_shipCapacity:AttributeLink (CapacityConstraint -> Integer) {
-    constraint = `get_value(get_target(this)) >= 0`;
     optional = False;
     name = "shipCapacity";
+    constraint = `get_value(get_target(this)) >= 0`;
 }
 of:Association (State -> Stateful) {
     target_lower_cardinality = 1;
@@ -140,12 +140,13 @@ arc:Association (PNConnectable -> PNConnectable)
 canOperate:Association (WorkerSet -> Berth) {
     target_lower_cardinality = 1;
 }
+inh_arc:Association (PNPlace -> PNTransition)
 connection:Association (Source -> Sink)
 pn_of:Association (PNPlaceState -> PNPlace) {
-    target_upper_cardinality = 1;
-    target_lower_cardinality = 1;
     source_upper_cardinality = 1;
     source_lower_cardinality = 1;
+    target_upper_cardinality = 1;
+    target_lower_cardinality = 1;
 }
 generic_link:Association (Top -> Top)
 isOperating:Association (WorkerSetState -> Berth) {

@@ -1,0 +1,13 @@
+# A place with tokens:
+
+p:RAM_PNPlace
+ps:RAM_PNPlaceState {
+  RAM_numTokens = `get_value(this) > 0`;
+}
+:RAM_pn_of (ps -> p)
+
+# An incoming inhibitor arc from that place to our transition:
+
+t:RAM_PNTransition
+
+:RAM_inh_arc (p -> t)

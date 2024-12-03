@@ -61,7 +61,8 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_match: dict, 
         if "GlobalCondition" not in k and not k.endswith("_condition") and not k.endswith(".condition")
         and (not k.endswith("_name") or k.endswith("RAM_name")) and (not k.endswith(".name")))
 
-    print('filtered out:', set(k for k in bottom.read_keys(rhs_m) if k.endswith(".name") or k.endswith("_name")))
+    # See which keys were ignored by the rewriter:
+    # print('filtered out:', set(k for k in bottom.read_keys(rhs_m) if k.endswith(".name") or k.endswith("_name")))
 
     common = lhs_keys & rhs_keys
     to_delete = lhs_keys - common

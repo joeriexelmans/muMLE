@@ -42,5 +42,5 @@ def render_petri_net(od: ODAPI):
         src_name = od.get_name(od.get_source(arc))
         tgt_name = od.get_name(od.get_target(arc))
         dot += f"{src_name} -> {tgt_name};"
-    show_graphviz(dot, engine="dot")
+    show_graphviz(dot, engine="neato")
     return ""
