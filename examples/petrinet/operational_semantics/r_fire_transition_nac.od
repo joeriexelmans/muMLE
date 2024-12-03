@@ -10,4 +10,4 @@ ps:RAM_PNPlaceState {
 
 t:RAM_PNTransition
 
-:RAM_pn_arc (p -> t)
+:RAM_arc (p -> t)

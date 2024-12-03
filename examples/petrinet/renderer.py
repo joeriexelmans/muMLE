@@ -35,7 +35,7 @@ def render_petri_net(od: ODAPI):
     for transition_name, _ in od.get_all_instances("PNTransition"):
         dot += f"  {transition_name} [label=\"{transition_name}\\n\\n\\n­\"];\n"
     dot += "}\n"
-    for _, arc in od.get_all_instances("pn_arc"):
+    for _, arc in od.get_all_instances("arc"):
         src_name = od.get_name(od.get_source(arc))
         tgt_name = od.get_name(od.get_target(arc))
         dot += f"{src_name} -> {tgt_name};"

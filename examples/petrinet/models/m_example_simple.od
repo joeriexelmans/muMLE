@@ -2,9 +2,9 @@ p0:PNPlace
 p1:PNPlace
 
 t0:PNTransition
-:pn_arc (p0 -> t0)
-:pn_arc (t0 -> p1)
+:arc (p0 -> t0)
+:arc (t0 -> p1)
 
 t1:PNTransition
-:pn_arc (p1 -> t1)
-:pn_arc (t1 -> p0)
+:arc (p1 -> t1)
+:arc (t1 -> p0)

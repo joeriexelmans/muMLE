@@ -2,7 +2,7 @@
 
 PNConnectable:Class { abstract = True; }
 
-pn_arc:Association (PNConnectable -> PNConnectable)
+arc:Association (PNConnectable -> PNConnectable)
 
 PNPlace:Class
 PNTransition:Class

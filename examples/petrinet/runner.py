@@ -25,17 +25,16 @@ if __name__ == "__main__":
     # Read models from their files
     mm_cs           =         read_file('metamodels/mm_design.od')
     mm_rt_cs        = mm_cs + read_file('metamodels/mm_runtime.od')
-    m_cs            =         read_file('models/m_example_simple.od')
-    m_rt_initial_cs = m_cs +  read_file('models/m_example_simple_rt_initial.od')
-    # m_cs            =         read_file('models/m_example_mutex.od')
-    # m_rt_initial_cs = m_cs +  read_file('models/m_example_mutex_rt_initial.od')
+    # m_cs            =         read_file('models/m_example_simple.od')
+    # m_rt_initial_cs = m_cs +  read_file('models/m_example_simple_rt_initial.od')
+    m_cs            =         read_file('models/m_example_mutex.od')
+    m_rt_initial_cs = m_cs +  read_file('models/m_example_mutex_rt_initial.od')
 
     # Parse them
     mm           = loader.parse_and_check(state, mm_cs,           scd_mmm, "Petri-Net Design meta-model")
     mm_rt        = loader.parse_and_check(state, mm_rt_cs,        scd_mmm, "Petri-Net Runtime meta-model")
     m            = loader.parse_and_check(state, m_cs,            mm,      "Example model")
     m_rt_initial = loader.parse_and_check(state, m_rt_initial_cs, mm_rt,   "Example model initial state")
-
 
     mm_rt_ramified = ramify(state, mm_rt)
 
@@ -52,6 +51,7 @@ if __name__ == "__main__":
         decision_maker=simulator.InteractiveDecisionMaker(auto_proceed=False),
         # decision_maker=simulator.RandomDecisionMaker(seed=0),
         renderer=lambda od: render_petri_net(od) + render_od(state, od.m, od.mm),
+        # renderer=lambda od: render_od(state, od.m, od.mm),
     )
 
     sim.run(ODAPI(state, m_rt_initial, mm_rt))
