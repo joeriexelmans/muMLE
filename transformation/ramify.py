@@ -56,6 +56,9 @@ def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
         # In RHS, this is just a piece of action code
         ramified_scd._create_attribute_link(prefix+class_name, actioncode_modelref, "condition", optional=True)
 
+        # Optional: specify name of object to create
+        ramified_scd._create_attribute_link(prefix+class_name, actioncode_modelref, "name", optional=True)
+
         already_ramified.add(class_name)
 
     glob_cond = ramified_scd.create_class("GlobalCondition", abstract=None)
@@ -96,6 +99,9 @@ def ramify(state: State, model: UUID, prefix = "RAM_") -> UUID:
 
             # Additional constraint that can be specified
             ramified_scd._create_attribute_link(prefix+assoc_name, actioncode_modelref, "condition", optional=True)
+
+            # Optional: specify name of link to create
+            ramified_scd._create_attribute_link(prefix+assoc_name, actioncode_modelref, "name", optional=True)
 
             already_ramified.add(assoc_name)
 

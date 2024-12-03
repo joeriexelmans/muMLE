@@ -24,10 +24,13 @@ def render_petri_net(od: ODAPI):
     dot += "node[fontname=Arial,fontsize=10];\n"
     dot += "subgraph places {"
     dot += "  node [shape=circle,fixedsize=true,label=\"\", height=.35,width=.35];"
-    for _, place_state in od.get_all_instances("PNPlaceState"):
-        place = od.get_target(od.get_outgoing(place_state, "pn_of")[0])
+    for _, place in od.get_all_instances("PNPlace"):
         place_name = od.get_name(place)
-        num_tokens = od.get_slot_value(place_state, "numTokens")
+        try:
+            place_state = od.get_source(od.get_incoming(place, "pn_of")[0])
+            num_tokens = od.get_slot_value(place_state, "numTokens")
+        except IndexError:
+            num_tokens = 0
         dot += f"  {place_name} [label=\"{place_name}\\n\\n{render_tokens(num_tokens)}\\n\\n­\"];\n"
     dot += "}\n"
     dot += "subgraph transitions {"

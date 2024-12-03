@@ -22,10 +22,12 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_match: dict, 
     bottom = Bottom(state)
 
     # Need to come up with a new, unique name when creating new element in host-model:
-    def first_available_name(prefix: str):
+    def first_available_name(suggested_name: str):
+        if len(bottom.read_outgoing_elements(host_m, suggested_name)) == 0:
+            return suggested_name # already unique :)
         i = 0
         while True:
-            name = prefix + str(i)
+            name = suggested_name + str(i)
             if len(bottom.read_outgoing_elements(host_m, name)) == 0:
                 return name # found unique name
             i += 1
@@ -56,7 +58,10 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_match: dict, 
     lhs_keys = lhs_match.keys()
     rhs_keys = set(k for k in bottom.read_keys(rhs_m)
         # extremely dirty - should think of a better way
-        if "GlobalCondition" not in k and not k.endswith("_condition") and not k.endswith(".condition"))
+        if "GlobalCondition" not in k and not k.endswith("_condition") and not k.endswith(".condition")
+        and (not k.endswith("_name") or k.endswith("RAM_name")) and (not k.endswith(".name")))
+
+    print('filtered out:', set(k for k in bottom.read_keys(rhs_m) if k.endswith(".name") or k.endswith("_name")))
 
     common = lhs_keys & rhs_keys
     to_delete = lhs_keys - common
@@ -75,6 +80,16 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_match: dict, 
         for rhs_name in remaining_to_create:
             # Determine the type of the thing to create
             rhs_obj = rhs_odapi.get(rhs_name)
+            # what to name our new object?
+            try:
+                name_expr = rhs_odapi.get_slot_value(rhs_obj, "name")
+            except:
+                name_expr = f'"{rhs_name}"' # <- if the 'name' slot doesnt exist, use the pattern element name
+            suggested_name = exec_then_eval(name_expr,
+                _globals={
+                    **bind_api(host_odapi),
+                    'matched': matched_callback,
+                })
             rhs_type = rhs_odapi.get_type(rhs_obj)
             host_type = ramify.get_original_type(bottom, rhs_type)
             # for debugging:
@@ -100,13 +115,13 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_match: dict, 
 
             try:
                 if od.is_typed_by(bottom, rhs_type, class_type):
-                    obj_name = first_available_name(rhs_name)
+                    obj_name = first_available_name(suggested_name)
                     host_od._create_object(obj_name, host_type)
                     host_odapi._ODAPI__recompute_mappings()
                     rhs_match[rhs_name] = obj_name
                 elif od.is_typed_by(bottom, rhs_type, assoc_type):
                     _, _, host_src, host_tgt = get_src_tgt()
-                    link_name = first_available_name(rhs_name)
+                    link_name = first_available_name(suggested_name)
                     host_od._create_link(link_name, host_type, host_src, host_tgt)
                     host_odapi._ODAPI__recompute_mappings()
                     rhs_match[rhs_name] = link_name

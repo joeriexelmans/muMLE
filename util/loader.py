@@ -1,6 +1,7 @@
 import os.path
 from framework.conformance import Conformance, render_conformance_check_result
 from concrete_syntax.textual_od import parser
+from concrete_syntax.common import indent
 from transformation.rule import Rule
 
 # parse model and check conformance
@@ -77,6 +78,6 @@ def load_rules(state, get_filename, rt_mm_ramified, rule_names, check_conformanc
 
         rules[rule_name] = Rule(*(parse(kind) for kind in KINDS))
 
-    print("Rules loaded:\n" + '\n'.join(files_read))
+    print("Rules loaded:\n" + indent('\n'.join(files_read), 4))
 
     return rules

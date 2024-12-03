@@ -273,11 +273,15 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
         if pattern_odapi.get_type_name(pattern_el) == "GlobalCondition":
             return False
         # Super-cheap and unreliable way of filtering out the 'condition'-attribute, added to every class:
-        return not (pattern_el_name.endswith("condition")
+        return ((not pattern_el_name.endswith("condition")
             # as an extra safety measure, if the user defined her own 'condition' attribute, RAMification turned this into 'RAM_condition', and we can detect this
             # of course this breaks if the class name already ended with 'RAM', but let's hope that never happens
             # also, we are assuming the default "RAM_" prefix is used, but the user can change this...
-            and not pattern_el_name.endswith("RAM_condition"))
+            or pattern_el_name.endswith("RAM_condition"))
+        and (
+                not pattern_el_name.endswith("name")
+                or pattern_el_name.endswith("RAM_name") # same thing here as with the condition, explained above.
+            ))
 
     g_names, guest = model_to_graph(state, pattern_m, pattern_mm,
         _filter=is_matchable)
