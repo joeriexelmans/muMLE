@@ -1,0 +1,22 @@
+# Our entire LHS:
+
+  port_place:RAM_Place
+  port_place_state:RAM_PlaceState
+  port_of:RAM_of (port_place_state -> port_place)
+
+
+# To create: a Petri Net-place, and link it to our Port-place
+
+  pn_place:RAM_PNPlace {
+    # new feature: you can control the name of the object to be created:
+    name = `f"pn_{get_name(matched("port_place"))}"`;
+  }
+  place2place:RAM_generic_link (pn_place -> port_place)
+
+
+# And also create: a Petri Net-PlaceState (indicating the amount of tokens in our newly created place)
+
+  pn_place_state:RAM_PNPlaceState {
+    RAM_numTokens = `get_slot_value(matched('port_place_state'), "numShips")`;
+  }
+  :RAM_pn_of(pn_place_state -> pn_place)

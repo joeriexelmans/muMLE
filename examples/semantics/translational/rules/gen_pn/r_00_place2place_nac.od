@@ -1,0 +1,14 @@
+# Our LHS:
+
+  port_place:RAM_Place
+  port_place_state:RAM_PlaceState
+  port_of:RAM_of (port_place_state -> port_place)
+
+
+# The elements from our RHS (this prevents the rule from firing forever):
+
+  pn_place:RAM_PNPlace
+  place2place:RAM_generic_link (pn_place -> port_place)
+
+  pn_place_state:RAM_PNPlaceState
+  :RAM_pn_of(pn_place_state -> pn_place)

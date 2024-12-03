@@ -1,0 +1,5 @@
+# Look for a Place and its PlaceState:
+
+port_place:RAM_Place
+port_place_state:RAM_PlaceState
+port_of:RAM_of (port_place_state -> port_place)

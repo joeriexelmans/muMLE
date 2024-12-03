@@ -1,0 +1,10 @@
+# Our LHS:
+
+port_src:RAM_Source
+port_snk:RAM_Sink
+port_conn:RAM_connection (port_src -> port_snk)
+
+# There should not yet be a Petri Net transition linked to the connection:
+
+pn_transition:RAM_PNTransition
+:RAM_generic_link (pn_transition -> port_conn)

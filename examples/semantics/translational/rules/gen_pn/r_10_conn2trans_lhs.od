@@ -1,0 +1,5 @@
+# Just look for a connection:
+
+port_src:RAM_Source
+port_snk:RAM_Sink
+port_conn:RAM_connection (port_src -> port_snk)
