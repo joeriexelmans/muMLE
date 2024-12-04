@@ -298,3 +298,103 @@ port_rt_m_cs = port_m_cs + """
     c10S:ConnectionState { moved = False; }   :of (c10S -> c10)
     c11S:ConnectionState { moved = False; }   :of (c11S -> c11)
 """
+
+###################################################
+
+#                        ┌─────────────────┐            
+#                        │ shipCapacity=3  │            
+# ┌───┐     ┌───────┐    │┌──────────────┐ │  ┌───────┐ 
+# │gen├────►│waiting├────►│inboundPassage├───►│turning│ 
+# └───┘     └───────┘    │└──────────────┘ │  └───┬───┘ 
+#                        │                 │      │     
+#            ┌──────┐    │┌───────────────┐│      │     
+#            │served│◄────┼outboundPassage│◄──────┘     
+#            └──────┘    │└───────────────┘│            
+#                        └─────────────────┘            
+smaller_model_cs = """
+    gen:Generator
+    waiting:Place
+    inboundPassage:Place
+    turning:Place
+    outboundPassage:Place
+    served:Place
+
+    gen2wait:connection (gen -> waiting)
+    wait2inbound:connection (waiting -> inboundPassage)
+    inbound2turning:connection (inboundPassage -> turning)
+    turning2outbound:connection (turning -> outboundPassage)
+    outbound2served:connection (outboundPassage -> served)
+
+    # inboundPassage and outboundPassage cannot have more than 3 ships total
+    passageCap:CapacityConstraint {
+        shipCapacity = 3;
+    }
+    :capacityOf (passageCap -> inboundPassage)
+    :capacityOf (passageCap -> outboundPassage)
+"""
+
+smaller_model_rt_cs = smaller_model_cs + """
+    clock:Clock {
+        time = 0;
+    }
+
+    waitingState:PlaceState { numShips = 1; }  :of (waitingState -> waiting)
+    inboundPassageState:PlaceState { numShips = 1; }  :of (inboundPassageState -> inboundPassage)
+    turningState:PlaceState { numShips = 1; }  :of (turningState -> turning)
+    outboundPassageState:PlaceState { numShips = 1; }  :of (outboundPassageState -> outboundPassage)
+    servedState:PlaceState { numShips = 0; }  :of (servedState -> served)
+
+    gen2waitState:ConnectionState { moved = False; }  :of (gen2waitState -> gen2wait)
+    wait2inboundState:ConnectionState { moved = False; }  :of (wait2inboundState -> wait2inbound)
+    inbound2turningState:ConnectionState { moved = False; }  :of (inbound2turningState -> inbound2turning)
+    turning2outboundState:ConnectionState { moved = False; }  :of (turning2outboundState -> turning2outbound)
+    outbound2servedState:ConnectionState { moved = False; }  :of (outbound2servedState -> outbound2served)
+"""
+
+###################################################
+
+#                     ┌────────────┐           
+#                     │ workerset  │           
+#                     │            │           
+#                     │numWorkers=1│           
+#                     └──────┬─────┘           
+#                            │canOperate       
+#                            │                 
+#                        ┌───▼────┐            
+# ┌───┐     ┌───────┐    │┌─────┐ │    ┌──────┐
+# │gen├────►│waiting├────││berth├─┼───►│served│
+# └───┘     └───────┘    │└─────┘ │    └──────┘
+#                        │ship-   │            
+#                        │Capacity│            
+#                        │ =1     │            
+#                        └────────┘            
+smaller_model2_cs = """
+    gen:Generator
+    waiting:Place
+    berth:Berth
+    served:Place
+
+    gen2wait:connection (gen -> waiting)
+    wait2berth:connection (waiting -> berth)
+    berth2served:connection (berth -> served)
+
+    # berth can only hold 1 ship
+    passageCap:CapacityConstraint {
+        shipCapacity = 1;
+    }
+    :capacityOf (passageCap -> berth)
+"""
+
+smaller_model2_rt_cs = smaller_model2_cs + """
+    clock:Clock {
+        time = 0;
+    }
+
+    waitingState:PlaceState { numShips = 1; }  :of (waitingState -> waiting)
+    berthState:BerthState { numShips = 0; status = "empty"; }  :of (berthState -> berth)
+    servedState:PlaceState { numShips = 0; }  :of (servedState -> served)
+
+    gen2waitState:ConnectionState { moved = False; }  :of (gen2waitState -> gen2wait)
+    wait2berthState:ConnectionState { moved = False; }  :of (wait2berthState -> wait2berth)
+    berth2servedState:ConnectionState { moved = False; }  :of (berth2servedState -> berth2served)
+"""

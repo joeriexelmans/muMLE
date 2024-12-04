@@ -44,7 +44,7 @@ if __name__ == "__main__":
     #  |   |   |
     #  V   V   V
     rule_names = [
-        # high to low priority:
+        # high to low priority (the list-order here matters, the alphabetic-order of the names does not):
         "00_place2place",
         "10_conn2trans",
 
@@ -64,7 +64,12 @@ if __name__ == "__main__":
         rule_names)
 
     print('loading model...')
-    port_m_rt_initial = loader.parse_and_check(state, models.port_rt_m_cs, merged_mm, "Port-M-RT-initial",
+    port_m_rt_initial = loader.parse_and_check(state,
+        m_cs=models.port_rt_m_cs, # <-- your final solution should work with the full model
+        # m_cs=models.smaller_model_rt_cs, # <-- simpler model to try first
+        # m_cs=models.smaller_model2_rt_cs, # <-- simpler model to try first
+        mm=merged_mm,
+        descr="initial model",
         check_conformance=False, # no need to check conformance every time
     )
 
