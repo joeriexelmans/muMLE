@@ -22,6 +22,7 @@ def parse_and_check(state, m_cs, mm, descr: str, check_conformance=True, type_tr
             errors = conf.check_nominal()
             if len(errors) > 0:
                 print(render_conformance_check_result(errors))
+                print("  model: " + descr)
     except Exception as e:
         e.add_note("In model " + descr)
         raise
