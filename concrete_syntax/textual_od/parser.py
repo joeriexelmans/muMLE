@@ -33,9 +33,10 @@ INDENTED_CODE: /```[^`]*```/
 type_name: IDENTIFIER
 
 #        name (optional)      type        
-object: [IDENTIFIER]     ":"  type_name [link_spec] ["{" slot* "}"]
+object: [IDENTIFIER]     ":"  type_name [link_spec | rev_link_spec] ["{" slot* "}"]
 
-link_spec: "(" IDENTIFIER "->" IDENTIFIER ")"
+link_spec:     "(" IDENTIFIER "->" IDENTIFIER ")"
+rev_link_spec: "(" IDENTIFIER "<-" IDENTIFIER ")"
 
 slot: IDENTIFIER "=" literal ";"
 """
@@ -62,6 +63,10 @@ def parse_od(state, m_text, mm, type_transform=lambda type_name: type_name):
 
         def link_spec(self, el):
             [src, tgt] = el
+            return (src, tgt)
+
+        def rev_link_spec(self, el):
+            [tgt, src] = el # <-- reversed :)
             return (src, tgt)
 
         def type_name(self, el):
