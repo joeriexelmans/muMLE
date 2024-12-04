@@ -383,6 +383,11 @@ smaller_model2_cs = """
         shipCapacity = 1;
     }
     :capacityOf (passageCap -> berth)
+
+    workers:WorkerSet {
+        numWorkers = 1;
+    }
+    :canOperate (workers -> berth)
 """
 
 smaller_model2_rt_cs = smaller_model2_cs + """
@@ -397,4 +402,6 @@ smaller_model2_rt_cs = smaller_model2_cs + """
     gen2waitState:ConnectionState { moved = False; }  :of (gen2waitState -> gen2wait)
     wait2berthState:ConnectionState { moved = False; }  :of (wait2berthState -> wait2berth)
     berth2servedState:ConnectionState { moved = False; }  :of (berth2servedState -> berth2served)
+
+    workersState:WorkerSetState  :of (workersState -> workers)
 """
