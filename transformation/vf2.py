@@ -255,8 +255,10 @@ class MatcherVF2:
         else:
             guest_components_to_try = self.guest_component_to_vtxs
 
-        for g_candidate_vtxs in guest_components_to_try:
-            for g_candidate_vtx in g_candidate_vtxs:
+        for g_component in guest_components_to_try:
+                # we only need to pick ONE vertex from the component
+                # in the future, this can be optimized further by picking the vertex of the type with the fewest instances
+                g_candidate_vtx = g_component[0]
                 if g_candidate_vtx in state.mapping_vtxs:
                     print_debug("skip (already matched)", g_candidate_vtx)
                     continue
