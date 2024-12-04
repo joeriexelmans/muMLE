@@ -211,9 +211,17 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_match: dict, 
         model_el_name_to_delete = lhs_match[pattern_name_to_delete]
         # print('deleting', model_el_name_to_delete)
         # Look up the matched element in the host graph
-        el_to_delete, = bottom.read_outgoing_elements(host_m, model_el_name_to_delete)
-        # Delete
-        bottom.delete_element(el_to_delete)
+        els_to_delete = bottom.read_outgoing_elements(host_m, model_el_name_to_delete)
+        if len(els_to_delete) == 0:
+            # This can happen: if the SRC/TGT of a link was deleted, the link itself is also immediately deleted.
+            # If we then try to delete the link, it is not found (already gone).
+            # The most accurate way of handling this, would be to perform deletions in opposite order of creations (see the whole TryNextRound-mechanism above)
+            # However I *think* it is also OK to simply ignore this case.
+            pass
+        elif len(els_to_delete) == 1:
+            bottom.delete_element(els_to_delete[0])
+        else:
+            raise Exception("This should never happen!")
 
     # 4. Object-level actions
     # Iterate over the (now complete) mapping RHS -> Host
