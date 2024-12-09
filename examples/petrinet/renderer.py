@@ -30,7 +30,6 @@ def render_petri_net_to_dot(od: ODAPI) -> str:
             num_tokens = od.get_slot_value(place_state, "numTokens")
         except IndexError:
             num_tokens = 0
-        print("PLACE", place)
         dot += f"  {make_graphviz_id(place)} [label=\"{place_name}\\n\\n{render_tokens(num_tokens)}\\n\\n­\"];\n"
     dot += "}\n"
     dot += "subgraph transitions {\n"
