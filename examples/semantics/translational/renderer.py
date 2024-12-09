@@ -3,6 +3,7 @@ from concrete_syntax.graphviz.renderer import render_object_diagram, make_graphv
 from concrete_syntax.graphviz.make_url import show_graphviz
 from examples.petrinet.renderer import render_petri_net_to_dot
 from examples.semantics.operational.port.renderer import render_port_to_dot
+from examples.semantics.operational.port import helpers
 
 # COLORS
 PLACE_BG = "#DAE8FC" # fill color
@@ -31,6 +32,7 @@ def render_port(state, m, mm):
             # Petri Net types not included (they are already rendered by other function)
             # Port-State-types not included to avoid cluttering the diagram, but if you need them, feel free to add them.
         ],
+        # We can style nodes/edges according to their type:
         type_to_style={
             "Place": graphviz_style_fg_bg(PLACE_FG, PLACE_BG),
             "Berth": graphviz_style_fg_bg(BERTH_FG, BERTH_BG),
@@ -50,7 +52,27 @@ def render_port(state, m, mm):
 
             # purple line
             "generic_link": "color=purple,fontcolor=purple,arrowhead=onormal",
-        }
+        },
+        # We have control over the node/edge labels that are rendered:
+        type_to_label={
+            "CapacityConstraint": lambda capconstr_name, capconstr, odapi: f"{capconstr_name}\\nshipCapacity={odapi.get_slot_value(capconstr, "shipCapacity")}",
+
+            "Place": lambda place_name, place, odapi: f"{place_name}\\nnumShips={helpers.get_num_ships(odapi, place)}",
+
+            "Berth": lambda berth_name, berth, odapi: f"{berth_name}\\nnumShips={helpers.get_num_ships(odapi, berth)}\\nstatus={odapi.get_slot_value(helpers.design_to_state(odapi, berth), "status")}",
+
+            "Clock": lambda _, clock, odapi: f"Clock\\ntime={odapi.get_slot_value(clock, "time")}",
+
+            "connection": lambda conn_name, conn, odapi: f"{conn_name}\\nmoved={odapi.get_slot_value(helpers.design_to_state(odapi, conn), "moved")}",
+
+            # hide generic link labels
+            "generic_link": lambda lnk_name, lnk, odapi: "",
+
+            "WorkerSet": lambda ws_name, ws, odapi: f"{ws_name}\\nnumWorkers={odapi.get_slot_value(ws, "numWorkers")}",
+
+            # hide the type (it's already clear enough)
+            "Generator": lambda gen_name, gen, odapi: gen_name,
+        },
     )
     return dot
 
