@@ -104,6 +104,7 @@ class ODAPI:
                     result.append(i)
         return result
 
+    # Returns list of tuples (name, obj)
     def get_all_instances(self, type_name: str, include_subtypes=True):
         if include_subtypes:
             all_types = self.cdapi.transitive_sub_types[type_name]

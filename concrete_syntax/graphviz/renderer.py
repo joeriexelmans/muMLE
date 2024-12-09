@@ -1,26 +1,45 @@
+import functools
 from uuid import UUID
 from services import scd, od
 from services.bottom.V0 import Bottom
 from concrete_syntax.common import display_value, display_name, indent
 
+# Turn ModelVerse/muMLE ID into GraphViz ID
+def make_graphviz_id(uuid, prefix="") -> str:
+    result = 'n'+(prefix+str(uuid).replace('-',''))[24:] # we assume that the first 24 characters are always zero...
+    return result
 
-def render_object_diagram(state, m, mm, render_attributes=True, prefix_ids=""):
+# Parameter 'reify': If true, will create a node in the middle of every link. This allows links to be the src/tgt of other links (which muMLE supports), at the cost of a larger diagram.
+# Parameter 'only_render': if specified, only render instances of these types. E.g., ["Place", "connection"]
+# Parameter 'type_to_style': mapping from type-name to graphviz style. E.g., { "generic_link": ",color=purple" }
+def render_object_diagram(state, m, mm, render_attributes=True, prefix_ids="", reify=False, only_render=None, type_to_style={}):
     bottom = Bottom(state)
     mm_scd = scd.SCD(mm, state)
     m_od = od.OD(mm, m, state)
 
-    def make_id(uuid) -> str:
-        return 'n'+(prefix_ids+str(uuid).replace('-',''))[24:]
+    make_id = functools.partial(make_graphviz_id, prefix=prefix_ids)
 
     output = ""
 
     # Render objects
     for class_name, class_node in mm_scd.get_classes().items():
+        if only_render != None and class_name not in only_render:
+            continue
+
+        output += f"\nsubgraph {class_name} {{"
+
         if render_attributes:
             attributes = od.get_attributes(bottom, class_node)
 
+
+        custom_style = type_to_style.get(class_name, "")
+        if custom_style == "":
+            output += f"\nnode [shape=rect]"
+        else:
+            output += f"\nnode [shape=rect,{custom_style}]"
+
         for obj_name, obj_node in m_od.get_objects(class_node).items():
-            output += f"\n{make_id(obj_node)} [label=\"{display_name(obj_name)} : {class_name}\", shape=rect] ;"
+            output += f"\n{make_id(obj_node)} [label=\"{display_name(obj_name)} : {class_name}\"] ;"
             #" {{"
 
             # if render_attributes:
@@ -31,17 +50,42 @@ def render_object_diagram(state, m, mm, render_attributes=True, prefix_ids=""):
             #             output += f"\n{attr_name} => {display_value(val, type_name)}"
             # output += '\n}'
 
+        output += '\n}'
+
     output += '\n'
 
     # Render links
     for assoc_name, assoc_edge in mm_scd.get_associations().items():
+        if only_render != None and assoc_name not in only_render:
+            continue
+
+        output += f"\nsubgraph {assoc_name} {{"
+
+        custom_style = type_to_style.get(assoc_name, "")
+        if custom_style != "":
+            output += f"\nedge [{custom_style}]"
+        if reify:
+            if custom_style != "":
+                # created nodes will be points of matching style:
+                output += f"\nnode [{custom_style},shape=point]"
+            else:
+                output += "\nnode [shape=point]"
+
         for link_name, link_edge in m_od.get_objects(assoc_edge).items():
             src_obj = bottom.read_edge_source(link_edge)
             tgt_obj = bottom.read_edge_target(link_edge)
             src_name = m_od.get_object_name(src_obj)
             tgt_name = m_od.get_object_name(tgt_obj)
 
-            output += f"\n{make_id(src_obj)} -> {make_id(tgt_obj)} [label=\"{display_name(link_name)}:{assoc_name}\"] ;"
+            if reify:
+                # intermediary node:
+                output += f"\n{make_id(src_obj)} -> {make_id(link_edge)} [arrowhead=none]"
+                output += f"\n{make_id(link_edge)} -> {make_id(tgt_obj)}"
+                output += f"\n{make_id(link_edge)} [xlabel=\"{display_name(link_name)} : {assoc_name}\"]"
+            else:
+                output += f"\n{make_id(src_obj)} -> {make_id(tgt_obj)} [label=\"{display_name(link_name)}:{assoc_name}\", {custom_style}] ;"
+
+        output += '\n}'
 
     return output
 
@@ -50,10 +94,8 @@ def render_trace_match(state, name_mapping: dict, pattern_m: UUID, host_m: UUID,
     class_type = od.get_scd_mm_class_node(bottom)
     attr_link_type = od.get_scd_mm_attributelink_node(bottom)
 
-    def make_pattern_id(uuid) -> str:
-        return 'n'+(prefix_pattern_ids+str(uuid).replace('-',''))[24:]
-    def make_host_id(uuid) -> str:
-        return 'n'+(prefix_host_ids+str(uuid).replace('-',''))[24:]
+    make_pattern_id = functools.partial(make_graphviz_id, prefix=prefix_pattern_ids)
+    make_host_id = functools.partial(make_graphviz_id, prefix=prefix_host_ids)
 
     output = ""
 
