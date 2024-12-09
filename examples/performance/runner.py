@@ -1,3 +1,4 @@
+# Artificial model transformation thingy to measure performance
 # Model transformation experiment
 
 from state.devstate import DevState
@@ -31,48 +32,77 @@ if __name__ == "__main__":
         Many:Class
         ManyB:Class
         Other:Class
-        OtherB:Class
-        OtherC:Class
         ass:Association(Many->ManyB)
+        ass2:Association(Rare->Many)
     """
     dsl_mm_id = parser.parse_od(state, dsl_mm_cs, mm=scd_mmm_id)
     
     dsl_m_cs = """
         rare:Rare
+
         many0:Many
+        many0B:Many
         many1:Many
+        many1B:Many
         many2:Many
+        many2B:Many
         many3:Many
+        many3B:Many
         many4:Many
+        many4B:Many
+
         many5:ManyB
         many6:ManyB
         many7:ManyB
         many8:ManyB
+        many50:ManyB
+        many60:ManyB
+        many70:ManyB
+        many80:ManyB
+        many51:ManyB
+        many61:ManyB
+        many71:ManyB
+        many81:ManyB
+        many501:ManyB
+        many601:ManyB
+        many701:ManyB
+        many801:ManyB
+        many5Z:ManyB
+        many6Z:ManyB
+        many7Z:ManyB
+        many8Z:ManyB
+        many50Z:ManyB
+        many60Z:ManyB
+        many70Z:ManyB
+        many80Z:ManyB
+        many51Z:ManyB
+        many61Z:ManyB
+        many71Z:ManyB
+        many81Z:ManyB
+        many501Z:ManyB
+        many601Z:ManyB
+        many701Z:ManyB
+        many801Z:ManyB
+
+        Other0:Other
+        Other1:Other
+        Other2:Other
+        Other3:Other
+        Other0B:Other
+        Other1B:Other
+        Other2B:Other
+        Other3B:Other
+        Other0C:Other
+        Other1C:Other
+        Other2C:Other
+        Other3C:Other
 
         :ass (many2->many6)
         :ass (many3->many8)
 
-        # other0:Other
-        # other1:OtherC
-        # other2:Other
-        # other3:Other
-        # other4:Other
-        # other5:OtherB
-        # other6:OtherB
-        # other7:OtherB
-        # other8:OtherB
-        # other9:OtherB
-        # other10:OtherB
-        # other11:OtherC
-        # other12:OtherC
-        # other13:OtherC
-        # other14:OtherC
-
-        # other1099:OtherB
-        # other1199:OtherC
-        # other1299:OtherC
-        # other1399:OtherC
-        # other1499:OtherC
+        :ass2 (rare -> many0)
+        :ass2 (rare -> many1)
+        :ass2 (rare -> many2)
     """
     dsl_m_id = parser.parse_od(state, dsl_m_cs, mm=dsl_mm_id)
 
@@ -86,17 +116,22 @@ if __name__ == "__main__":
     # TODO: enable more powerful constraints
     pattern_cs = f"""
         # object to match
-        rare:{prefix}Rare {{
+        rare:RAM_Rare {{
         }}
 
-        many:{prefix}Many
-        manyB:{prefix}ManyB
-        manyB2:{prefix}ManyB
+        many:RAM_Many
+        manyB:RAM_ManyB
+        manyB2:RAM_ManyB
+
+        :RAM_ass (many -> manyB)
+        :RAM_ass (many -> manyB2)
+        :RAM_ass2 (rare -> many)
     """
     pattern_id = parser.parse_od(state, pattern_cs, mm=ramified_mm_id)
 
     with Timer("find all matches"):
-        matches = list(match_od(state, dsl_m_id, dsl_mm_id, pattern_id, ramified_mm_id))
+        for i in range(100):
+            matches = list(match_od(state, dsl_m_id, dsl_mm_id, pattern_id, ramified_mm_id))
 
 
     for match in matches:
