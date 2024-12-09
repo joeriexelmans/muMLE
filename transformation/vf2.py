@@ -294,7 +294,7 @@ class MatcherVF2:
                         g_vtx_matches += N > 0
                         num_matches += N
                         if g_vtx_matches == g_vtx_max:
-                            print("EARLY STOP")
+                            # print("EARLY STOP")
                             break # found all matches
 
         return num_matches
