@@ -1,0 +1,11 @@
+p0s:PNPlaceState {
+  numTokens = 1;
+}
+
+:pn_of (p0s -> p0)
+
+p1s:PNPlaceState {
+  numTokens = 0;
+}
+
+:pn_of (p1s -> p1)
