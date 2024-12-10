@@ -168,7 +168,14 @@ def _cannot_call_matched(_):
 
 # This function returns a Generator of matches.
 # The idea is that the user can iterate over the match set, lazily generating it: if only interested in the first match, the entire match set doesn't have to be generated.
-def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
+def match_od(state,
+    host_m, # the host graph, in which to search for matches
+    host_mm, # meta-model of the host graph
+    pattern_m, # the pattern to look for
+    pattern_mm, # the meta-model of the pattern (typically the RAMified version of host_mm)
+    pivot={}, # optional: a partial match (restricts possible matches, and speeds up the match process)
+    eval_context={}, # optional: additional variables, functions, ... to be available while evaluating condition-code in the pattern. Will be available as global variables in the condition-code.
+):
     bottom = Bottom(state)
 
     # compute subtype relations and such:
@@ -176,6 +183,21 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
     odapi = ODAPI(state, host_m, host_mm)
     pattern_odapi = ODAPI(state, pattern_m, pattern_mm)
     pattern_mm_odapi = ODAPI(state, pattern_mm, cdapi.mm)
+
+    # 'globals'-dict used when eval'ing conditions
+    bound_api = bind_api_readonly(odapi)
+    builtin = {
+        **bound_api,
+        'matched': _cannot_call_matched,
+        'odapi': odapi,
+    }
+    for key in eval_context:
+        if key in builtin:
+            print(f"WARNING: custom global '{key}' overrides pre-defined API function. Consider renaming it.")
+    eval_globals = {
+        **builtin,
+        **eval_context,
+    }
 
     # Function object for pattern matching. Decides whether to match host and guest vertices, where guest is a RAMified instance (e.g., the attributes are all strings with Python expressions), and the host is an instance (=object diagram) of the original model (=class diagram)
     class RAMCompare:
@@ -234,10 +256,7 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
                     #   - incompatible slots may be matched (it is only when their AttributeLinks are matched, that we know the types will be compatible)
                     with Timer(f'EVAL condition {g_vtx.name}'):
                         ok = exec_then_eval(python_code,
-                            _globals={
-                                **bind_api_readonly(odapi),
-                                'matched': _cannot_call_matched,
-                            },
+                            _globals=eval_globals,
                             _locals={'this': h_vtx.node_id})
                     self.conditions_to_check.pop(g_vtx.name, None)
                     return ok
@@ -324,13 +343,14 @@ def match_od(state, host_m, host_mm, pattern_m, pattern_mm, pivot={}):
 
 
     def check_conditions(name_mapping):
+        eval_globals = {
+            **bound_api,
+            # this time, the real 'matched'-function can be used:
+            'matched': lambda name: bottom.read_outgoing_elements(host_m, name_mapping[name])[0],
+            **eval_context,
+        }
         def check(python_code: str, loc):
-            return exec_then_eval(python_code,
-                _globals={
-                    **bind_api_readonly(odapi),
-                    'matched': lambda name: bottom.read_outgoing_elements(host_m, name_mapping[name])[0],
-                },
-                _locals=loc)
+            return exec_then_eval(python_code, _globals=eval_globals, _locals=loc)
 
         # Attribute conditions
         for pattern_name, host_name in name_mapping.items():

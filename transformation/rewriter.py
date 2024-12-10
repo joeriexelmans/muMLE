@@ -18,7 +18,15 @@ class TryAgainNextRound(Exception):
     pass
 
 # Rewrite is performed in-place (modifying `host_m`)
-def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_match: dict, host_m: UUID, host_mm: UUID):
+def rewrite(state,
+    lhs_m: UUID, # LHS-pattern
+    rhs_m: UUID, # RHS-pattern
+    pattern_mm: UUID, # meta-model of both patterns (typically the RAMified host_mm)
+    lhs_match: dict, # a match, morphism, from lhs_m to host_m (mapping pattern name -> host name), typically found by the 'match_od'-function.
+    host_m: UUID, # host model
+    host_mm: UUID, # host meta-model
+    eval_context={}, # optional: additional variables/functions to be available while executing condition-code. These will be seen as global variables.
+):
     bottom = Bottom(state)
 
     # Need to come up with a new, unique name when creating new element in host-model:
@@ -74,6 +82,19 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_match: dict, 
     # to be grown
     rhs_match = { name : lhs_match[name] for name in common }
 
+    builtin = {
+        **bind_api(host_odapi),
+        'matched': matched_callback,
+        'odapi': host_odapi,
+    }
+    for key in eval_context:
+        if key in builtin:
+            print(f"WARNING: custom global '{key}' overrides pre-defined API function. Consider renaming it.")
+    eval_globals = {
+        **builtin,
+        **eval_context,
+    }
+
     # 1. Perform creations - in the right order!
     remaining_to_create = list(to_create)
     while len(remaining_to_create) > 0:
@@ -86,11 +107,7 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_match: dict, 
                 name_expr = rhs_odapi.get_slot_value(rhs_obj, "name")
             except:
                 name_expr = f'"{rhs_name}"' # <- if the 'name' slot doesnt exist, use the pattern element name
-            suggested_name = exec_then_eval(name_expr,
-                _globals={
-                    **bind_api(host_odapi),
-                    'matched': matched_callback,
-                })
+            suggested_name = exec_then_eval(name_expr, _globals=eval_globals)
             rhs_type = rhs_odapi.get_type(rhs_obj)
             host_type = ramify.get_original_type(bottom, rhs_type)
             # for debugging:
@@ -157,10 +174,7 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_match: dict, 
                     host_attr_name = host_mm_odapi.get_slot_value(host_attr_link, "name")
                     val_name = f"{host_src_name}.{host_attr_name}"
                     python_expr = ActionCode(UUID(bottom.read_value(rhs_obj)), bottom.state).read()
-                    result = exec_then_eval(python_expr, _globals={
-                        **bind_api(host_odapi),
-                        'matched': matched_callback,
-                    })
+                    result = exec_then_eval(python_expr, _globals=eval_globals)
                     host_odapi.create_primitive_value(val_name, result, is_code=False)
                     rhs_match[rhs_name] = val_name
                 else:
@@ -192,10 +206,7 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_match: dict, 
             rhs_obj = rhs_odapi.get(common_name)
             python_expr = ActionCode(UUID(bottom.read_value(rhs_obj)), bottom.state).read()
             result = exec_then_eval(python_expr,
-                _globals={
-                    **bind_api(host_odapi),
-                    'matched': matched_callback,
-                },
+                _globals=eval_globals,
                 _locals={'this': host_obj}) # 'this' can be used to read the previous value of the slot
             host_odapi.overwrite_primitive_value(host_obj_name, result, is_code=False)
         else:
@@ -235,18 +246,12 @@ def rewrite(state, lhs_m: UUID, rhs_m: UUID, pattern_mm: UUID, lhs_match: dict, 
             # rhs_obj is an object or link (because association is subtype of class)
             python_code = rhs_odapi.get_slot_value_default(rhs_obj, "condition", default="")
             simply_exec(python_code,
-                _globals={
-                    **bind_api(host_odapi),
-                    'matched': matched_callback,
-                },
+                _globals=eval_globals,
                 _locals={'this': host_obj})
 
     # 5. Execute global actions
     for cond_name, cond in rhs_odapi.get_all_instances("GlobalCondition"):
         python_code = rhs_odapi.get_slot_value(cond, "condition")
-        simply_exec(python_code, _globals={
-            **bind_api(host_odapi),
-            'matched': matched_callback,
-        })
+        simply_exec(python_code, _globals=eval_globals)
 
     return rhs_match

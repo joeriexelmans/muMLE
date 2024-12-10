@@ -26,10 +26,11 @@ class _NAC_MATCHED(Exception):
 
 # Helper for executing NAC/LHS/RHS-type rules
 class RuleMatcherRewriter:
-    def __init__(self, state, mm: UUID, mm_ramified: UUID):
+    def __init__(self, state, mm: UUID, mm_ramified: UUID, eval_context={}):
         self.state = state
         self.mm = mm
         self.mm_ramified = mm_ramified
+        self.eval_context = eval_context
 
     # Generates matches.
     # Every match is a dictionary with entries LHS_element_name -> model_element_name
@@ -38,7 +39,9 @@ class RuleMatcherRewriter:
             host_m=m,
             host_mm=self.mm,
             pattern_m=lhs,
-            pattern_mm=self.mm_ramified)
+            pattern_mm=self.mm_ramified,
+            eval_context=self.eval_context,
+        )
 
         try:
             # First we iterate over LHS-matches:
@@ -64,7 +67,9 @@ class RuleMatcherRewriter:
                                     host_mm=self.mm,
                                     pattern_m=nac,
                                     pattern_mm=self.mm_ramified,
-                                    pivot=lhs_match) # try to "grow" LHS-match with NAC-match
+                                    pivot=lhs_match, # try to "grow" LHS-match with NAC-match
+                                    eval_context=self.eval_context,
+                                )
 
                                 try:
                                     # for nac_match in nac_matcher:
@@ -117,7 +122,9 @@ class RuleMatcherRewriter:
                 pattern_mm=self.mm_ramified,
                 lhs_match=lhs_match,
                 host_m=cloned_m,
-                host_mm=self.mm)
+                host_mm=self.mm,
+                eval_context=self.eval_context,
+            )
         except Exception as e:
             # Make exceptions raised in eval'ed code easier to trace:
             e.add_note(f"while executing RHS of '{rule_name}'")

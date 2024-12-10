@@ -6,17 +6,14 @@ from concrete_syntax.plantuml.make_url import make_url
 from api.od import ODAPI
 
 from transformation.ramify import ramify
-from transformation.topify.topify import Topifier
-from transformation.merger import merge_models
-from transformation.ramify import ramify
 from transformation.rule import RuleMatcherRewriter
 
 from util import loader
+from util.module_to_dict import module_to_dict
 
-from examples.semantics.operational.simulator import Simulator, RandomDecisionMaker, InteractiveDecisionMaker
-from examples.semantics.operational.port import models
-from examples.semantics.operational.port.helpers import design_to_state, state_to_design, get_time
+from examples.semantics.operational.port import models, helpers
 from examples.semantics.operational.port.renderer import render_port_textual, render_port_graphviz
+from examples.semantics.translational.renderer import show_port_and_petri_net
 from examples.petrinet.renderer import render_petri_net
 
 import os
@@ -76,7 +73,14 @@ if __name__ == "__main__":
     print('ready!')
 
     port_m_rt = port_m_rt_initial
-    matcher_rewriter = RuleMatcherRewriter(state, merged_mm, ramified_merged_mm)
+    eval_context = {
+        # make all the functions defined in 'helpers' module available to 'condition'-code in LHS/NAC/RHS:
+        **module_to_dict(helpers),
+        # another example: in all 'condition'-code, there will be a global variable 'meaning_of_life', equal to 42:
+        'meaning_of_life': 42, # just to demonstrate - feel free to remove this
+    }
+    print('The following additional globals are available:', ', '.join(list(eval_context.keys())))
+    matcher_rewriter = RuleMatcherRewriter(state, merged_mm, ramified_merged_mm, eval_context=eval_context)
 
     ###################################
     # Because the matching of many different rules can be slow,
@@ -104,7 +108,7 @@ if __name__ == "__main__":
         try:
             with open(filename, "r") as file:
                 port_m_rt = parser.parse_od(state, file.read(), merged_mm)
-                print('loaded', filename)
+            print(f'skip rule (found {filename})')
         except FileNotFoundError:
             # Fire every rule until it cannot match any longer:
             while True:
@@ -122,6 +126,12 @@ if __name__ == "__main__":
                 file.write(txt)
                 print('wrote', filename)
                 render_petri_net(ODAPI(state, port_m_rt, merged_mm))
+
+                # Uncomment to show also the port model:
+                # show_port_and_petri_net(state, port_m_rt, merged_mm)
+
+                # Uncomment to pause after each rendering:
+                # input()
 
     ###################################
     # Once you have generated a Petri Net, you can execute the petri net:
