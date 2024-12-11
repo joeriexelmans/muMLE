@@ -82,8 +82,18 @@ def rewrite(state,
     # to be grown
     rhs_match = { name : lhs_match[name] for name in common }
 
+
+    bound_api = bind_api(host_odapi)
+    original_delete = bound_api["delete"]
+    def wrapped_delete(obj):
+        not_allowed_to_delete = { host_odapi.get(host_name): pattern_name  for pattern_name, host_name in rhs_match.items() }
+        if obj in not_allowed_to_delete:
+            pattern_name = not_allowed_to_delete[obj]
+            raise Exception(f"\n\nYou're trying to delete the element that was matched with the RHS-element '{pattern_name}'. This is not allowed! You're allowed to delete anything BUT NOT elements matched with your RHS-pattern. Instead, simply remove the element '{pattern_name}' from your RHS, if you want to delete it.")
+        return original_delete(obj)
+    bound_api["delete"] = wrapped_delete
     builtin = {
-        **bind_api(host_odapi),
+        **bound_api,
         'matched': matched_callback,
         'odapi': host_odapi,
     }
