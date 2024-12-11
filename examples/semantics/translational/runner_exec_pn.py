@@ -17,7 +17,7 @@ from examples.semantics.operational.simulator import Simulator, RandomDecisionMa
 from examples.semantics.operational.port import models
 from examples.semantics.operational.port.helpers import design_to_state, state_to_design, get_time
 from examples.semantics.operational.port.renderer import render_port_textual, render_port_graphviz
-from examples.petrinet.renderer import render_petri_net
+from examples.petrinet.renderer import show_petri_net
 from examples.semantics.operational import simulator
 
 import os
@@ -68,12 +68,15 @@ if __name__ == "__main__":
     matcher_rewriter = RuleMatcherRewriter(state, merged_mm, ramified_merged_mm)
     action_generator = ActionGenerator(matcher_rewriter, rules)
 
+    def render(od):
+        show_petri_net(od) # graphviz in web browser
+        return renderer.render_od(state, od.m, od.mm) # text in terminal
+
     sim = simulator.Simulator(
         action_generator=action_generator,
         decision_maker=simulator.InteractiveDecisionMaker(auto_proceed=False),
         # decision_maker=simulator.RandomDecisionMaker(seed=0),
-        renderer=lambda od: render_petri_net(od) + renderer.render_od(state, od.m, od.mm),
-        # renderer=lambda od: render_od(state, od.m, od.mm),
+        renderer=render,
     )
 
     sim.run(ODAPI(state, model, merged_mm))
