@@ -3,6 +3,7 @@
 #   - Change attribute values
 #   - ? that's it?
 
+import re
 from uuid import UUID
 from api.od import ODAPI, bind_api
 from services.bottom.V0 import Bottom
@@ -13,6 +14,8 @@ from services.primitives.actioncode_type import ActionCode
 from services.primitives.integer_type import Integer
 from util.eval import exec_then_eval, simply_exec
 
+identifier_regex_pattern = '[_A-Za-z][._A-Za-z0-9]*'
+identifier_regex = re.compile(identifier_regex_pattern)
 
 class TryAgainNextRound(Exception):
     pass
@@ -118,6 +121,8 @@ def rewrite(state,
             except:
                 name_expr = f'"{rhs_name}"' # <- if the 'name' slot doesnt exist, use the pattern element name
             suggested_name = exec_then_eval(name_expr, _globals=eval_globals)
+            if not identifier_regex.match(suggested_name):
+                raise Exception(f"In the RHS pattern element '{rhs_name}', the following name-expression:\n  {name_expr}\nproduced the name:\n  '{suggested_name}'\nwhich contains illegal characters.\nNames should match the following regex: {identifier_regex_pattern}")
             rhs_type = rhs_odapi.get_type(rhs_obj)
             host_type = ramify.get_original_type(bottom, rhs_type)
             # for debugging:
