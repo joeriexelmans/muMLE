@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<pnml xmlns="http://www.informatik.hu-berlin.de/top/pnml/ptNetb">
+  <net active="true" id="PN" type="P/T net">
+
+  {% for i, (place_name, place) in enumerate(odapi.get_all_instances("PNPlace")) %}
+    <place id="{{ place_name }}"
+        name="{{ place_name }}"
+        initialMarking="{{ get_num_tokens(odapi, place) }}"
+        invariant="&lt; inf"
+        displayName="true"
+        nameOffsetX="0"
+        nameOffsetY="0"
+        positionX="{{ i * 100 + 100 }}"
+        positionY="100"
+    />
+  {% endfor %}
+
+  {% for i, (transition_name, transition) in enumerate(odapi.get_all_instances("PNTransition")) %}
+    <transition angle="0" displayName="true" id="{{ transition_name }}" infiniteServer="false" name="{{ transition_name }}" nameOffsetX="0" nameOffsetY="0" player="0" positionX="{{ i * 100 + 100 }}" positionY="300" priority="0" urgent="false"/>
+  {% endfor %}
+
+  {% for arc_name, arc in odapi.get_all_instances("arc") %}
+    <arc id="{{ arc_name }}"
+        inscription="{{ '[0,inf)' if odapi.get_type_name(odapi.get_source(arc)) == 'PNPlace' else '1' }}"
+        nameOffsetX="0"
+        nameOffsetY="0"
+        weight="1"
+        type="{{ 'timed' if odapi.get_type_name(odapi.get_source(arc)) == 'PNPlace' else 'normal' }}"
+        source="{{ odapi.get_name(odapi.get_source(arc)) }}"
+        target="{{ odapi.get_name(odapi.get_target(arc)) }}">
+      <arcpath arcPointType="false" id="0" xCoord="0" yCoord="0"/>
+      <arcpath arcPointType="false" id="1" xCoord="0" yCoord="0"/>
+    </arc>
+  {% endfor %}
+
+  {% for inh_arc_name, inh_arc in odapi.get_all_instances("inh_arc") %}
+    <arc id="{{ inh_arc_name }}"
+        inscription="[0,inf)"
+        nameOffsetX="0"
+        nameOffsetY="0"
+        type="tapnInhibitor"
+        weight="1"
+        source="{{ odapi.get_name(odapi.get_source(inh_arc)) }}"
+        target="{{ odapi.get_name(odapi.get_target(inh_arc)) }}">
+      <arcpath arcPointType="false" id="0" xCoord="0" yCoord="0"/>
+      <arcpath arcPointType="false" id="1" xCoord="0" yCoord="0"/>
+    </arc>
+  {% endfor %}
+
+  </net>
+  <feature isGame="false" isTimed="false"/>
+</pnml>
