@@ -1,12 +1,13 @@
 from state.devstate import DevState
 from api.od import ODAPI
 from concrete_syntax.textual_od.renderer import render_od
+# from concrete_syntax.textual_od.renderer_jinja2 import render_od_jinja2
 from bootstrap.scd import bootstrap_scd
 from util import loader
 from transformation.rule import RuleMatcherRewriter, ActionGenerator
 from transformation.ramify import ramify
 from examples.semantics.operational import simulator
-from examples.petrinet.renderer import render_petri_net
+from examples.petrinet.renderer import show_petri_net
 
 
 if __name__ == "__main__":
@@ -48,11 +49,15 @@ if __name__ == "__main__":
     matcher_rewriter = RuleMatcherRewriter(state, mm_rt, mm_rt_ramified)
     action_generator = ActionGenerator(matcher_rewriter, rules)
 
+    def render_callback(od):
+        show_petri_net(od)
+        return render_od(state, od.m, od.mm)
+
     sim = simulator.Simulator(
         action_generator=action_generator,
         decision_maker=simulator.InteractiveDecisionMaker(auto_proceed=False),
         # decision_maker=simulator.RandomDecisionMaker(seed=0),
-        renderer=lambda od: render_petri_net(od) + render_od(state, od.m, od.mm),
+        renderer=render_callback,
         # renderer=lambda od: render_od(state, od.m, od.mm),
     )
 
