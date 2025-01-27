@@ -1,11 +1,22 @@
-# MV2
+# muMLE
 
-This repository contains the code for my take on (a part of) the [Modelverse](https://msdl.uantwerpen.be/git/yentl/modelverse) for my Master's thesis.
+Tiny (meta-)modeling framework.
 
-## Development packages
+Features:
 
-Some packages were used during development, but are not needed for succesful runtime (e.g. linter, autoformatter). These can be found under `requirements_dev.txt`.
+ * mostly textual concrete syntax
+ * meta-modeling & constraint writing
+ * conformance checking
+ * model transformation primitives (match and rewrite)
+ * rule-based model transformation
+ * examples included:
+    - Class Diagrams (self-conforming)
+    - Causal Block Diagrams language
+    - Petri Net language
 
-## Mandatory packages
+## Dependencies
 
-Python packages required to succesfully run/test the code in this repository can be found under `requirements.txt`.
+ * Python 3.?
+ * Python libraries:
+    - Lark (for textual parsing)
+    - Jinja2 (not a hard requirement, only for model-to-text transformation)
