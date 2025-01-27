@@ -113,9 +113,7 @@ def main():
         # object to match
         man:{prefix}Man {{
             # match only men heavy enough
-            {prefix}weight = ```
-                get_value(this) > 60
-            ```;
+            {prefix}weight = `get_value(this) > 60`;
         }}
 
         # object to delete
@@ -142,6 +140,7 @@ def main():
 
         # object to create
         bill:{prefix}Man {{
+            # name = `"billie"+str(get_slot_value(matched("man"), "weight"))`;
             {prefix}weight = `100`;
         }}
 
@@ -208,6 +207,7 @@ def main():
 
         generator = match_od(state, dsl_m_id, dsl_mm_id, lhs_id, ramified_mm_id)
         for i, (match, color) in enumerate(zip(generator, ["red", "orange"])):
+            print("\nMATCH:\n", match)
             uml += plantuml.render_trace_match(state, match, lhs_id, dsl_m_id, color)
 
             # rewrite happens in-place (which sucks), so we will only modify a clone:

@@ -1,18 +1,23 @@
 {% macro render_name(name) %}{{ name if not hide_names or name.startswith("__") else "" }}{% endmacro %}
 
-{% macro render_attributes(obj) %} {
+{% macro render_attributes(obj) %}
+{% if len(odapi.get_slots(obj)) > 0 %} {
   {% for attr_name in odapi.get_slots(obj) %}
     {{ attr_name}} = {{ display_value(
       val=odapi.get_slot_value(obj, attr_name),
       type_name=odapi.get_type_name(odapi.get_slot(obj, attr_name)),
       indentation=4) }};
-  {% endfor %}
-}{% endmacro %}
+  {% endfor -%}
+}
+{% endif -%}
+{%- endmacro %}
 
-{% for obj_name, obj in objects %}
-{{ render_name(obj_name) }}:{{ odapi.get_type_name(obj) }}{{ render_attributes(obj) }}
-{% endfor %}
+{%- for obj_name, obj in objects %}
+{{ render_name(obj_name) }}:{{ odapi.get_type_name(obj) }}
+{{- render_attributes(obj) }}
+{% endfor -%}
 
-{% for lnk_name, lnk in links %}
-{{ render_name(obj_name) }}:{{ odapi.get_type_name(lnk) }} ({{odapi.get_name(odapi.get_source(lnk))}} -> {{odapi.get_name(odapi.get_target(lnk))}}){{ render_attributes(lnk) }}
-{% endfor %}
+{%- for lnk_name, lnk in links %}
+{{ render_name(obj_name) }}:{{ odapi.get_type_name(lnk) }} ({{odapi.get_name(odapi.get_source(lnk))}} -> {{odapi.get_name(odapi.get_target(lnk))}})
+{{- render_attributes(lnk) }}
+{% endfor -%}

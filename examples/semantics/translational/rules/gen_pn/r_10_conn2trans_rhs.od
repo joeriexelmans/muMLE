@@ -3,12 +3,26 @@
 port_src:RAM_Source
 port_snk:RAM_Sink
 port_conn:RAM_connection (port_src -> port_snk)
+port_conn_state:RAM_ConnectionState
+port_of:RAM_of (port_conn_state -> port_conn)
 
 # Create a Petri Net transition, and link it to our port-connection:
 
-pn_transition:RAM_PNTransition {
-  name = `f"pn_{get_name(matched("port_conn"))}"`;
+move_transition:RAM_PNTransition {
+  name = `f"move_{get_name(matched("port_conn"))}"`;
 }
-trans2conn:RAM_generic_link (pn_transition -> port_conn)
+
+moved_place:RAM_PNPlace {
+  name = `f"  moved_{get_name(matched("port_conn"))}"`;
+}
+moved_place_state:RAM_PNPlaceState {
+  RAM_numTokens = `1 if get_slot_value(matched('port_conn_state'), "moved") else 0`;
+}
+:RAM_pn_of (moved_place_state -> moved_place)
+# when firing a 'move', put a token in the 'moved'-place
+:RAM_arc (move_transition -> moved_place)
+
+trans2conn:RAM_generic_link (move_transition -> port_conn)
+moved2conn:RAM_generic_link (moved_place -> port_conn)
 
 # Note that we are not yet creating any incoming/outgoing petri net arcs! This will be done in another rule.

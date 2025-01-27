@@ -1,0 +1,44 @@
+Things that need to be cleaned up:
+
+  - At several places in the code, it is assumed that from the root node, there is an edge labeled 'SCD' containing the self-conforming meta-meta-model. It would be better for parts of the code that need the meta-meta-model to receive this model as a (function) parameter.
+
+  - The whole 'ModelRef'-construct does not work as originally foreseen. It is currently only used for attributes of primitive types, where it unnecessarily complicates things. Better to get rid of it.
+
+
+Known bugs:
+  - Cannot parse negative numbers
+
+
+  - When merging models, the model element names must not overlap. Maybe allow some kind of prefixing of the overlapping names? Difficulty porting existing models to the merged models if the type names have changed...
+
+
+
+Merging (meta-)models is a nightmare:
+
+  - Prefixing the type names (to avoid naming collisions) is not an option:
+      (*) constraints (and transformation rules) already contain API calls that mention type names -> all of these would break
+      (*) don't want to prefix primitive types like "Integer", "String", ... because the existing code already assumes these exact names
+
+  - Not prefixing the type names leads to naming collisions, even if names are carefully chosen:
+      (*) anonymous names, e.g., Inheritance-links still result in naming collisions (requiring auto-renaming?)
+
+
+Feature requests:
+
+  - Support custom functions in 'conditions'
+
+  - When matching edge, match 'any' src/tgt
+
+  - Support 'return'-statement in conditions?
+
+  - Separate script for running LHS (+NAC) on any model, and visualizing the match.
+
+  - Syntax highlighting:
+      most students use:
+        - VS Code
+        - PyCharm
+      i use:
+        - Sublime Text
+      nobody uses:
+        - Eclipse
+

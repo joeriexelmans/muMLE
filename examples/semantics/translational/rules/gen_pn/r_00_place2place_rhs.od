@@ -9,7 +9,7 @@
 
   pn_place:RAM_PNPlace {
     # new feature: you can control the name of the object to be created:
-    name = `f"pn_{get_name(matched("port_place"))}"`;
+    name = `f"ships_{get_name(matched("port_place"))}"`;
   }
   place2place:RAM_generic_link (pn_place -> port_place)
 

@@ -1,5 +1,7 @@
-# Just look for a connection:
+# Just look for a connection and its state:
 
 port_src:RAM_Source
 port_snk:RAM_Sink
 port_conn:RAM_connection (port_src -> port_snk)
+port_conn_state:RAM_ConnectionState
+port_of:RAM_of (port_conn_state -> port_conn)

@@ -12,11 +12,22 @@
         nameOffsetY="0"
         positionX="{{ i * 100 + 100 }}"
         positionY="100"
-    />
+    /> 
   {% endfor %}
 
   {% for i, (transition_name, transition) in enumerate(odapi.get_all_instances("PNTransition")) %}
-    <transition angle="0" displayName="true" id="{{ transition_name }}" infiniteServer="false" name="{{ transition_name }}" nameOffsetX="0" nameOffsetY="0" player="0" positionX="{{ i * 100 + 100 }}" positionY="300" priority="0" urgent="false"/>
+    <transition angle="0"
+        displayName="true"
+        id="{{ transition_name }}"
+        infiniteServer="false"
+        name="{{ transition_name }}"
+        nameOffsetX="0"
+        nameOffsetY="0"
+        player="0"
+        positionX="{{ i * 100 + 100 }}"
+        positionY="300"
+        priority="0"
+        urgent="false"/>
   {% endfor %}
 
   {% for arc_name, arc in odapi.get_all_instances("arc") %}

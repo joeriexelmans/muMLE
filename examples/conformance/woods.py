@@ -4,6 +4,7 @@ from framework.conformance import Conformance, render_conformance_check_result
 from concrete_syntax.textual_od import parser, renderer
 from concrete_syntax.common import indent
 from concrete_syntax.plantuml import renderer as plantuml
+from concrete_syntax.plantuml.make_url import make_url
 from util.prompt import yes_no, pause
 
 state = DevState()
@@ -153,6 +154,7 @@ woods_m_cs = """
     bear2:Bear
     :afraidOf (george -> bear1)
     :afraidOf (george -> bear2)
+    :afraidOf (billy -> george)
 """
 
 print()
@@ -194,7 +196,7 @@ if yes_no("Print PlantUML?"):
         uml += plantuml.render_trace_conformance(state, woods_m, woods_mm)
 
     print("==================================")
-    print(uml)
+    print(make_url(uml))
     print("==================================")
     print("Go to either:")
     print("  ▸ https://www.plantuml.com/plantuml/uml")
