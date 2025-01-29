@@ -29,7 +29,9 @@ Feature requests:
 
   - When matching edge, match 'any' src/tgt
 
-  - Support 'return'-statement in conditions?
+  - Support 'return'-statement in conditions? (just makes syntax nicer)
+
+  - RAMification / matching: add `match_subtypes` attribute to each RAMified class.
 
   - Separate script for running LHS (+NAC) on any model, and visualizing the match.
 
