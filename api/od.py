@@ -215,16 +215,25 @@ class ODAPI:
 
     def overwrite_primitive_value(self, name: str, value: any, is_code=False):
         referred_model = UUID(self.bottom.read_value(self.get(name)))
+        to_overwrite_type = self.get_type_name(self.get(name))
         # watch out: in Python, 'bool' is subtype of 'int'
         #  so we must check for 'bool' first
         if isinstance(value, bool):
+            if to_overwrite_type != "Boolean":
+                raise Exception(f"Cannot assign boolean value '{value}' to value of type {to_overwrite_type}.")
             Boolean(referred_model, self.state).create(value)
         elif isinstance(value, int):
+            if to_overwrite_type != "Integer":
+                raise Exception(f"Cannot assign integer value '{value}' to value of type {to_overwrite_type}.")
             Integer(referred_model, self.state).create(value)
         elif isinstance(value, str):
             if is_code:
+                if to_overwrite_type != "ActionCode":
+                    raise Exception(f"Cannot assign code to value of type {to_overwrite_type}.")
                 ActionCode(referred_model, self.state).create(value)
             else:
+                if to_overwrite_type != "String":
+                    raise Exception(f"Cannot assign string value '{value}' to value of type {to_overwrite_type}.")
                 String(referred_model, self.state).create(value)
         else:
             raise Exception("Unimplemented type "+value)
