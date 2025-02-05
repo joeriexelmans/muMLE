@@ -2,15 +2,7 @@ from state.base import State, UUID
 from services.bottom.V0 import Bottom
 from services.primitives.boolean_type import Boolean
 from services.primitives.string_type import String
-from bootstrap.primitive import (
-    bootstrap_primitive_types
-    # bootstrap_boolean_type,
-    # bootstrap_float_type,
-    # bootstrap_integer_type,
-    # bootstrap_string_type,
-    # bootstrap_type_type,
-    # bootstrap_actioncode_type
-)
+from bootstrap.primitive import bootstrap_primitive_types
 
 
 def create_model_root(bottom: Bottom, model_name: str) -> UUID:
