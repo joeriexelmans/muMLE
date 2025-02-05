@@ -2,13 +2,14 @@ from abc import ABC, abstractmethod
 from typing import Any, List, Tuple, Optional, Union
 from uuid import UUID, uuid4
 
-primitive_types = (int, float, str, bool)
+primitive_types = (int, float, str, bool, bytes)
 INTEGER = ("Integer",)
 FLOAT = ("Float",)
 STRING = ("String",)
 BOOLEAN = ("Boolean",)
 TYPE = ("Type",)
-type_values = (INTEGER, FLOAT, STRING, BOOLEAN, TYPE)
+BYTES = ("Bytes",)
+type_values = (INTEGER, FLOAT, STRING, BOOLEAN, TYPE, BYTES)
 
 
 Node = UUID
