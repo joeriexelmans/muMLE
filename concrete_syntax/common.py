@@ -16,6 +16,8 @@ def display_value(val: any, type_name: str, indentation=0, newline_character='\n
         return '"'+val+'"'.replace('\n', newline_character)
     elif type_name == "Integer" or type_name == "Boolean":
         return str(val)
+    elif type_name == "Bytes":
+        return val
     else:
         raise Exception("don't know how to display value" + type_name)
 
@@ -47,6 +49,9 @@ class TBase(Transformer):
 
     def CODE(self, token):
         return _Code(str(token[1:-1])) # strip the ``
+
+    def BYTES(self, token):
+        return (bytes(token[2:-1], "utf-8"), token.line)  # Strip b"" or b''
 
     def INDENTED_CODE(self, token):
         skip = 4 # strip the ``` and the following newline character
