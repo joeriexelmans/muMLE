@@ -32,6 +32,7 @@ def bootstrap_scd(state: State) -> UUID:
     float_type_root = create_model_root(bottom, "Float")
     type_type_root = create_model_root(bottom, "Type")
     actioncode_type_root = create_model_root(bottom, "ActionCode")
+    bytes_type_root = create_model_root(bottom, "Bytes")
 
     # create MCL, without morphism links
 
@@ -132,7 +133,8 @@ def bootstrap_scd(state: State) -> UUID:
         float_type_root,
         string_type_root,
         type_type_root,
-        actioncode_type_root)
+        actioncode_type_root,
+        bytes_type_root)
     # bootstrap_integer_type(mcl_root, integer_type_root, integer_type_root, actioncode_type_root, state)
     # bootstrap_boolean_type(mcl_root, boolean_type_root, integer_type_root, actioncode_type_root, state)
     # bootstrap_float_type(mcl_root, float_type_root, integer_type_root, actioncode_type_root, state)

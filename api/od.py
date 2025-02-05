@@ -5,6 +5,7 @@ from services.primitives.boolean_type import Boolean
 from services.primitives.integer_type import Integer
 from services.primitives.string_type import String
 from services.primitives.actioncode_type import ActionCode
+from services.primitives.bytes_type import Bytes
 from uuid import UUID
 from typing import Optional
 from util.timer import Timer
@@ -41,6 +42,7 @@ class ODAPI:
         self.create_integer_value = self.od.create_integer_value
         self.create_string_value = self.od.create_string_value
         self.create_actioncode_value = self.od.create_actioncode_value
+        self.create_bytes_value = self.od.create_bytes_value
 
         self.__recompute_mappings()
 
@@ -208,6 +210,8 @@ class ODAPI:
                 tgt = self.create_actioncode_value(name, value)
             else:
                 tgt = self.create_string_value(name, value)
+        elif isinstance(value, bytes):
+            tgt = self.create_bytes_value(name, value)
         else:
             raise Exception("Unimplemented type "+value)
         self.__recompute_mappings()
@@ -235,6 +239,10 @@ class ODAPI:
                 if to_overwrite_type != "String":
                     raise Exception(f"Cannot assign string value '{value}' to value of type {to_overwrite_type}.")
                 String(referred_model, self.state).create(value)
+        elif isinstance(value, bytes):
+            if to_overwrite_type != "Bytes":
+                raise Exception(f"Cannot assign bytes value '{value}' to value of type {to_overwrite_type}.")
+            Bytes(referred_model, self.state).create(value)
         else:
             raise Exception("Unimplemented type "+value)
 
