@@ -28,5 +28,5 @@ The following branches exist:
 
  * `mde2425` - the branch containing a snapshot of the repo used for the MDE assignments 24-25. No breaking changes will be pushed here. After the re-exams (Sep 2025), this branch will be frozen.
  * `master` - currently equivalent to `mde2425` (this is the branch that was cloned by the students). This branch will be deleted after Sep 2025, because the name is too vague.
- * `cleaning` - in this branch, new development will occur, primarily cleaning up the code to prepare for next year's MDE classes.
+ * `development` - in this branch, new development will occur, primarily cleaning up the code to prepare for next year's MDE classes.
 
