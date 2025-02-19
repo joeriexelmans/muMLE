@@ -10,7 +10,8 @@ from uuid import UUID
 from typing import Optional
 from util.timer import Timer
 
-NEXT_ID = 0
+NEXT_LINK_ID = 0
+NEXT_OBJ_ID = 0
 
 # Models map names to elements
 # This builds the inverse mapping, so we can quickly lookup the name of an element
@@ -247,7 +248,7 @@ class ODAPI:
             raise Exception("Unimplemented type "+value)
 
     def create_link(self, link_name: Optional[str], assoc_name: str, src: UUID, tgt: UUID):
-        global NEXT_ID
+        global NEXT_LINK_ID
         types = self.bottom.read_outgoing_elements(self.mm, assoc_name) 
         if len(types) == 0:
             raise Exception(f"No such association: '{assoc_name}'")
@@ -255,13 +256,18 @@ class ODAPI:
             raise Exception(f"More than one association exists with name '{assoc_name}' - this means the MM is invalid.")
         typ = types[0]
         if link_name == None:
-            link_name = f"__{assoc_name}{NEXT_ID}"
-            NEXT_ID += 1
+            link_name = f"__{assoc_name}{NEXT_LINK_ID}"
+            NEXT_LINK_ID += 1
         link_id = self.od._create_link(link_name, typ, src, tgt)
         self.__recompute_mappings()
+
         return link_id
 
     def create_object(self, object_name: Optional[str], class_name: str):
+        global NEXT_OBJ_ID
+        if object_name == None:
+            object_name = f"__{class_name}{NEXT_OBJ_ID}"
+            NEXT_OBJ_ID += 1
         obj = self.od.create_object(object_name, class_name)
         self.__recompute_mappings()
         return obj
@@ -286,7 +292,7 @@ def bind_api_readonly(odapi):
         'get_type_name': odapi.get_type_name,
         'get_outgoing': odapi.get_outgoing,
         'get_incoming': odapi.get_incoming,
-        'has_slot': odapi.has_slot,
+        'has_slot': odapi.has_slot
     }
     return funcs
 
