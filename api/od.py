@@ -151,10 +151,9 @@ class ODAPI:
         self.bottom.delete_element(obj)
         self.__recompute_mappings()
 
-    # Does the class of the object have the given attribute?
+    # Does the the object have the given attribute?
     def has_slot(self, obj: UUID, attr_name: str):
-        class_name = self.get_name(self.get_type(obj))
-        return self.od.get_attr_link_name(class_name, attr_name) != None
+        return self.od.get_slot_link(obj, attr_name) != None
 
     def get_slots(self, obj: UUID) -> list[str]:
         return [attr_name for attr_name, _ in self.od.get_slots(obj)]
