@@ -8,17 +8,17 @@ from concrete_syntax.textual_od import parser as parser_od
 from concrete_syntax.textual_cd import parser as parser_cd
 from api.od import ODAPI
 from bootstrap.scd import bootstrap_scd
-from examples.petrinet.schedule import Schedule
 from examples.schedule.generator import schedule_generator
 from examples.schedule.schedule_lib import End, NullNode
 from framework.conformance import Conformance, render_conformance_check_result
 from state.devstate import DevState
 
+
 class ScheduleActionGenerator:
     def __init__(self, rule_executer, schedulefile:str):
         self.rule_executer = rule_executer
         self.rule_dict = {}
-        self.schedule: Schedule
+        self.schedule: "Schedule"
 
 
         self.state = DevState()

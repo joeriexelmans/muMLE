@@ -8,13 +8,9 @@ transitions:Match{
 
 d:Data_modify
 {
-    rename = '
+    modify_dict = '
     {
-    "tr": null
-    }';
-    delete = '
-    {
-    "tr": null
+    "tr": "t"
     }';
 }
 
