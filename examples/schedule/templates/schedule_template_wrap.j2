@@ -1,0 +1,47 @@
+from examples.schedule.schedule_lib import *
+
+class Schedule:
+    def __init__(self, rule_executer):
+        self.start: Start
+        self.cur: ExecNode = None
+        self.rule_executer = rule_executer
+
+    def __call__(self, od):
+        self.cur = self.cur.nextState()
+        while not isinstance(self.cur, NullNode):
+            action_gen = self.cur.execute(od)
+            if action_gen is not None:
+            # if (action_gen := self.cur.execute(od)) is not None:
+                return action_gen
+            self.cur = self.cur.nextState()
+        return NullNode.terminate(od)
+
+    @staticmethod
+    def get_matchers():
+        return [
+            {% for file in match_files %}
+              "{{ file }}.od",
+            {% endfor %}
+        ]
+
+    def init_schedule(self, matchers):
+    {% for block in blocks%}
+        {{ block }}
+    {% endfor %}
+
+    {% for conn in exec_conn%}
+        {{ conn }}
+    {% endfor %}
+    {% for conn_d in data_conn%}
+        {{ conn_d }}
+    {% endfor %}
+        self.start = {{ start }}
+        self.cur = {{ start }}
+
+    {% for match in matchers %}
+        {{ match["name"] }}.init_rule(matchers["{{ match["file"] }}.od"], self.rule_executer)
+    {% endfor %}
+        return None
+
+    def generate_dot(self, *args, **kwargs):
+        return self.start.generate_dot(*args, **kwargs)

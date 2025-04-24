@@ -1,0 +1,35 @@
+{% macro Start(name) %}
+{{ name }} = Start()
+{%- endmacro %}
+
+{% macro End(name) %}
+{{ name }} = End()
+{%- endmacro %}
+
+{% macro Match(name, file, n) %}
+{{ name }} = Match("{{ file }}", {{ n }})
+{%- endmacro %}
+
+{% macro Rewrite(name, file) %}
+{{ name }} = Rewrite("{{ file }}")
+{%- endmacro %}
+
+{% macro Data_modify(name, dict) %}
+{{ name }} = DataModify({{ dict }})
+{%- endmacro %}
+
+{% macro Exec_con(name_from, name_to, gate_from, gate_to) %}
+{{ name_from }}.connect({{ name_to }},{{ gate_from }},{{ gate_to }})
+{%- endmacro %}
+
+{% macro Data_con(name_from, name_to, event) %}
+{{ name_from }}.connect_data({{ name_to }}, {{ event }})
+{%- endmacro %}
+
+{% macro Loop(name, choise) %}
+{{ name }} = Loop({{ choise }})
+{%- endmacro %}
+
+{% macro Print(name, label) %}
+{{ name }} = Print("{{ label }}")
+{%- endmacro %}
