@@ -27,6 +27,8 @@ class RandomDecisionMaker(DecisionMaker):
 
     def __call__(self, actions):
         arr = [action for descr, action in actions]
+        if len(arr) == 0:
+            return
         i = math.floor(self.r.random()*len(arr))
         return arr[i]
 
@@ -91,7 +93,7 @@ class MinimalSimulator:
         self._print("Start simulation")
         self._print(f"Decision maker: {self.decision_maker}")
         step_counter = 0
-        while True:
+        while step_counter < 10:
             termination_reason = self.termination_condition(model)
             if termination_reason != None:
                 self._print(f"Termination condition satisfied.\nReason: {termination_reason}.")
