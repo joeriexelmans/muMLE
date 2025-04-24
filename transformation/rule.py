@@ -117,7 +117,6 @@ class RuleMatcherRewriter:
 
         try:
             rhs_match = rewrite(self.state,
-                lhs_m=lhs,
                 rhs_m=rhs,
                 pattern_mm=self.mm_ramified,
                 lhs_match=lhs_match,
