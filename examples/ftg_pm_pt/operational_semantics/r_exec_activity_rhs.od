@@ -1,0 +1,42 @@
+model:RAM_pm_Model
+
+py_activity:RAM_pm_PythonAutomatedActivity {
+
+    condition = ```
+        start_activity = create_object(None, "pt_StartActivity")
+        create_activity_links(odapi, start_activity, matched("prev_trace_element"), matched("ctrl_in"))
+        input_data = extract_input_data(odapi, this)
+        result = execute_activity(odapi, globals()["packages"], this, input_data)
+        if len(result) == 3:
+            status_code, output_data, input_used = result
+        else:
+            status_code, output_data, input_used = *result, None
+        if input_used:
+            handle_artefact(odapi, start_activity, "pt_Artefact", "pt_Consumes", get(input_used), input_data[input_used], direction="DataFlowOut")
+        end_activity = create_object(None, "pt_EndActivity")
+        ctrl_out = get(status_code)
+        create_activity_links(odapi, end_activity, start_activity, ctrl_out, end_trace=matched("end_trace"))
+        if output_data:
+            port, data = output_data
+            handle_artefact(odapi, end_activity, "pt_Artefact", "pt_Produces", get(port), data, direction="DataFlowIn")
+        update_control_states(odapi, this, ctrl_out)
+    ```;
+}
+
+model_to_activity:RAM_pm_Owns
+
+ctrl_in:RAM_pm_CtrlActivityIn
+
+ctrl_in_state:RAM_pm_CtrlPortState {
+    RAM_active = `False`;
+}
+
+state_to_port:RAM_pm_Of (ctrl_in_state -> ctrl_in)
+
+activity_to_port:RAM_pm_HasCtrlIn (py_activity -> ctrl_in)
+
+end_trace:RAM_pt_EndTrace
+ends:RAM_pt_Ends (end_trace -> model)
+
+prev_trace_element:RAM_pt_Event
+

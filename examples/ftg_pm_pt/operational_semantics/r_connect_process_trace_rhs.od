@@ -1,0 +1,12 @@
+# Keep the left hand side
+model:RAM_pm_Model
+
+# Connect a process trace to it
+start_trace:RAM_pt_StartTrace
+    starts:RAM_pt_Starts (start_trace -> model)
+
+end_trace:RAM_pt_EndTrace
+    ends:RAM_pt_Ends (end_trace -> model)
+
+# Connect the start with the end
+:RAM_pt_IsFollowedBy (start_trace -> end_trace)

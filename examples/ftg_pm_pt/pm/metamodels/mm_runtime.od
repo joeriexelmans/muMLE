@@ -1,0 +1,38 @@
+##################################################
+
+pm_State:Class {
+  abstract = True;
+}
+
+##################################################
+
+pm_ArtefactState:Class 
+  :Inheritance (pm_ArtefactState -> pm_State)
+
+pm_ArtefactState_data:AttributeLink (pm_ArtefactState -> Bytes) {
+    name = "data";
+    optional = False;
+}
+
+##################################################
+
+pm_CtrlPortState:Class 
+  :Inheritance (pm_CtrlPortState -> pm_State)
+
+pm_CtrlPortState_active:AttributeLink (pm_CtrlPortState -> Boolean) {
+    name = "active";
+    optional = False;
+}
+
+##################################################
+##################################################
+
+pm_Of:Association (pm_State -> pm_Stateful) {
+  # one-to-one
+  source_lower_cardinality = 1;
+  source_upper_cardinality = 1;
+  target_lower_cardinality = 1;
+  target_upper_cardinality = 1;
+}
+
+##################################################

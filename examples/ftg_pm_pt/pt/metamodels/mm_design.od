@@ -1,0 +1,109 @@
+##################################################
+
+pt_Event:Class {
+  abstract = True;
+}
+
+##################################################
+
+pt_Activity:Class {
+  abstract = True;
+} :Inheritance (pt_Activity -> pt_Event)
+
+pt_StartActivity:Class {
+  # A start activity can only be related to a control in port
+  constraint = ```
+      correct_related = True
+
+      port = get_target(get_outgoing(this, "pt_RelatesTo")[0])
+      correct_related = port in [uid for _, uid in get_all_instances("pm_CtrlIn")]
+      correct_related
+  ```;
+
+} :Inheritance (pt_StartActivity -> pt_Activity)
+
+pt_EndActivity:Class {
+  # A end activity can only be related to a control out port
+  constraint = ```
+    correct_related = True
+
+    port = get_target(get_outgoing(this, "pt_RelatesTo")[0])
+    correct_related = port in [uid for _, uid in get_all_instances("pm_CtrlOut")]
+
+    correct_related
+  ```;
+
+} :Inheritance (pt_EndActivity -> pt_Activity)
+
+##################################################
+
+pt_StartTrace:Class
+  :Inheritance (pt_StartTrace -> pt_Event)
+
+pt_EndTrace:Class
+  :Inheritance (pt_EndTrace -> pt_Event)
+
+##################################################
+
+pt_Artefact:Class
+  :Inheritance (pt_Artefact -> pt_Event)
+
+pt_Artefact_data:AttributeLink (pt_Artefact -> Bytes) {
+  name = "data";
+  optional = False;
+}
+
+##################################################
+##################################################
+
+pt_IsFollowedBy:Association (pt_Event -> pt_Event) {
+  source_upper_cardinality = 1;
+  target_upper_cardinality = 1;
+}
+
+##################################################
+
+pt_RelatesTo:Association (pt_Activity -> pm_CtrlPort) {
+  source_upper_cardinality = 1;
+  target_lower_cardinality = 1;
+  target_upper_cardinality = 1;
+}
+
+pt_Consumes:Association (pt_Artefact -> pt_StartActivity) {
+  source_upper_cardinality = 1;
+  target_lower_cardinality = 1;
+  target_upper_cardinality = 1;
+}
+
+pt_Produces:Association (pt_EndActivity -> pt_Artefact) {
+  source_lower_cardinality = 1;
+  source_upper_cardinality = 1;
+  target_upper_cardinality = 1;
+}
+
+##################################################
+
+pt_Starts:Association (pt_StartTrace -> pm_Model) {
+  source_upper_cardinality = 1;
+  target_lower_cardinality = 1;
+  target_upper_cardinality = 1;
+}
+
+pt_Ends:Association (pt_EndTrace -> pm_Model) {
+  source_upper_cardinality = 1;
+  target_lower_cardinality = 1;
+  target_upper_cardinality = 1;
+}
+##################################################
+
+pt_PrevVersion:Association (pt_Artefact -> pt_Artefact) {
+  source_upper_cardinality = 1;
+  target_upper_cardinality = 1;
+}
+
+pt_BelongsTo:Association (pt_Artefact -> pm_Artefact) {
+  target_lower_cardinality = 1;
+  target_upper_cardinality = 1;
+}
+
+##################################################
