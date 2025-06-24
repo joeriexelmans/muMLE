@@ -171,3 +171,12 @@ def test_create_nodevalue_string_type(state):
 def test_create_nodevalue_invalid_type(state):
     id1 = state.create_nodevalue(("Class",))
     assert id1 == None
+
+
+@pytest.mark.usefixtures("state")
+def test_create_nodevalue_bytes_type(state):
+    id1 = state.create_nodevalue(("Bytes",))
+    assert id1 != None
+
+    v = state.read_value(id1)
+    assert v == ("Bytes",)

@@ -2,15 +2,7 @@ from state.base import State, UUID
 from services.bottom.V0 import Bottom
 from services.primitives.boolean_type import Boolean
 from services.primitives.string_type import String
-from bootstrap.primitive import (
-    bootstrap_primitive_types
-    # bootstrap_boolean_type,
-    # bootstrap_float_type,
-    # bootstrap_integer_type,
-    # bootstrap_string_type,
-    # bootstrap_type_type,
-    # bootstrap_actioncode_type
-)
+from bootstrap.primitive import bootstrap_primitive_types
 
 
 def create_model_root(bottom: Bottom, model_name: str) -> UUID:
@@ -32,6 +24,7 @@ def bootstrap_scd(state: State) -> UUID:
     float_type_root = create_model_root(bottom, "Float")
     type_type_root = create_model_root(bottom, "Type")
     actioncode_type_root = create_model_root(bottom, "ActionCode")
+    bytes_type_root = create_model_root(bottom, "Bytes")
 
     # create MCL, without morphism links
 
@@ -132,7 +125,8 @@ def bootstrap_scd(state: State) -> UUID:
         float_type_root,
         string_type_root,
         type_type_root,
-        actioncode_type_root)
+        actioncode_type_root,
+        bytes_type_root)
     # bootstrap_integer_type(mcl_root, integer_type_root, integer_type_root, actioncode_type_root, state)
     # bootstrap_boolean_type(mcl_root, boolean_type_root, integer_type_root, actioncode_type_root, state)
     # bootstrap_float_type(mcl_root, float_type_root, integer_type_root, actioncode_type_root, state)

@@ -1,0 +1,20 @@
+# Match an active control output port
+out_state:RAM_pm_CtrlPortState {
+    RAM_active = `get_value(this)`;
+}
+
+out:RAM_pm_CtrlOut
+
+state_to_out:RAM_pm_Of (out_state -> out)
+
+# Match an inactive control input port
+in_state:RAM_pm_CtrlPortState {
+    RAM_active = `not get_value(this)`;
+}
+
+in:RAM_pm_CtrlIn
+
+state_to_in:RAM_pm_Of (in_state -> in)
+
+# Match the connection between those two ports
+flow:RAM_pm_CtrlFlow (out -> in)

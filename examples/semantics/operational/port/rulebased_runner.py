@@ -53,7 +53,7 @@ sim = Simulator(
     termination_condition=termination_condition,
     check_conformance=True,
     verbose=True,
-    renderer=render_port_textual,
+    # renderer=render_port_textual,
     # renderer=render_port_graphviz,
 )
 

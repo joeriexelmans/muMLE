@@ -5,11 +5,13 @@ from services.primitives.boolean_type import Boolean
 from services.primitives.integer_type import Integer
 from services.primitives.string_type import String
 from services.primitives.actioncode_type import ActionCode
+from services.primitives.bytes_type import Bytes
 from uuid import UUID
 from typing import Optional
 from util.timer import Timer
 
-NEXT_ID = 0
+NEXT_LINK_ID = 0
+NEXT_OBJ_ID = 0
 
 # Models map names to elements
 # This builds the inverse mapping, so we can quickly lookup the name of an element
@@ -41,6 +43,7 @@ class ODAPI:
         self.create_integer_value = self.od.create_integer_value
         self.create_string_value = self.od.create_string_value
         self.create_actioncode_value = self.od.create_actioncode_value
+        self.create_bytes_value = self.od.create_bytes_value
 
         self.__recompute_mappings()
 
@@ -207,6 +210,8 @@ class ODAPI:
                 tgt = self.create_actioncode_value(name, value)
             else:
                 tgt = self.create_string_value(name, value)
+        elif isinstance(value, bytes):
+            tgt = self.create_bytes_value(name, value)
         else:
             raise Exception("Unimplemented type "+value)
         self.__recompute_mappings()
@@ -214,22 +219,35 @@ class ODAPI:
 
     def overwrite_primitive_value(self, name: str, value: any, is_code=False):
         referred_model = UUID(self.bottom.read_value(self.get(name)))
+        to_overwrite_type = self.get_type_name(self.get(name))
         # watch out: in Python, 'bool' is subtype of 'int'
         #  so we must check for 'bool' first
         if isinstance(value, bool):
+            if to_overwrite_type != "Boolean":
+                raise Exception(f"Cannot assign boolean value '{value}' to value of type {to_overwrite_type}.")
             Boolean(referred_model, self.state).create(value)
         elif isinstance(value, int):
+            if to_overwrite_type != "Integer":
+                raise Exception(f"Cannot assign integer value '{value}' to value of type {to_overwrite_type}.")
             Integer(referred_model, self.state).create(value)
         elif isinstance(value, str):
             if is_code:
+                if to_overwrite_type != "ActionCode":
+                    raise Exception(f"Cannot assign code to value of type {to_overwrite_type}.")
                 ActionCode(referred_model, self.state).create(value)
             else:
+                if to_overwrite_type != "String":
+                    raise Exception(f"Cannot assign string value '{value}' to value of type {to_overwrite_type}.")
                 String(referred_model, self.state).create(value)
+        elif isinstance(value, bytes):
+            if to_overwrite_type != "Bytes":
+                raise Exception(f"Cannot assign bytes value '{value}' to value of type {to_overwrite_type}.")
+            Bytes(referred_model, self.state).create(value)
         else:
             raise Exception("Unimplemented type "+value)
 
     def create_link(self, link_name: Optional[str], assoc_name: str, src: UUID, tgt: UUID):
-        global NEXT_ID
+        global NEXT_LINK_ID
         types = self.bottom.read_outgoing_elements(self.mm, assoc_name) 
         if len(types) == 0:
             raise Exception(f"No such association: '{assoc_name}'")
@@ -237,13 +255,18 @@ class ODAPI:
             raise Exception(f"More than one association exists with name '{assoc_name}' - this means the MM is invalid.")
         typ = types[0]
         if link_name == None:
-            link_name = f"__{assoc_name}{NEXT_ID}"
-            NEXT_ID += 1
+            link_name = f"__{assoc_name}{NEXT_LINK_ID}"
+            NEXT_LINK_ID += 1
         link_id = self.od._create_link(link_name, typ, src, tgt)
         self.__recompute_mappings()
+
         return link_id
 
     def create_object(self, object_name: Optional[str], class_name: str):
+        global NEXT_OBJ_ID
+        if object_name == None:
+            object_name = f"__{class_name}{NEXT_OBJ_ID}"
+            NEXT_OBJ_ID += 1
         obj = self.od.create_object(object_name, class_name)
         self.__recompute_mappings()
         return obj

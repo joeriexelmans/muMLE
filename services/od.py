@@ -5,6 +5,7 @@ from services.primitives.integer_type import Integer
 from services.primitives.string_type import String
 from services.primitives.boolean_type import Boolean
 from services.primitives.actioncode_type import ActionCode
+from services.primitives.bytes_type import Bytes
 from api.cd import CDAPI
 from typing import Optional
 
@@ -146,6 +147,13 @@ class OD:
         actioncode_t = ActionCode(actioncode_node, self.bottom.state)
         actioncode_t.create(value)
         return self.create_model_ref(name, "ActionCode", actioncode_node)
+
+    def create_bytes_value(self, name: str, value: bytes):
+        from services.primitives.bytes_type import Bytes
+        bytes_node = self.bottom.create_node()
+        bytes_t = Bytes(bytes_node, self.bottom.state)
+        bytes_t.create(value)
+        return self.create_model_ref(name, "Bytes", bytes_node)
 
     # Identical to the same SCD method:
     def create_model_ref(self, name: str, type_name: str, model: UUID):
@@ -389,6 +397,8 @@ def read_primitive_value(bottom, modelref: UUID, mm: UUID):
         return Boolean(referred_model, bottom.state).read(), typ_name
     elif typ_name == "ActionCode":
         return ActionCode(referred_model, bottom.state).read(), typ_name
+    elif typ_name == "Bytes":
+        return Bytes(referred_model, bottom.state).read(), typ_name
     else:
         raise Exception("Unimplemented type:", typ_name)
 

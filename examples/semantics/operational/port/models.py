@@ -270,7 +270,7 @@ port_rt_m_cs = port_m_cs + """
         time = 0;
     }
 
-    waitingState:PlaceState         { numShips = 0; }  :of (waitingState -> waiting)
+    waitingState:PlaceState         { numShips = 2; }  :of (waitingState -> waiting)
     inboundPassageState:PlaceState  { numShips = 0; }  :of (inboundPassageState -> inboundPassage)
     outboundPassageState:PlaceState { numShips = 0; }  :of (outboundPassageState -> outboundPassage)
 
@@ -282,7 +282,7 @@ port_rt_m_cs = port_m_cs + """
     berth1State:BerthState { status = "empty"; numShips = 0; }  :of (berth1State -> berth1)
     berth2State:BerthState { status = "empty"; numShips = 0; }  :of (berth2State -> berth2)
 
-    servedState:PlaceState { numShips = 0; }  :of (servedState -> served)
+    servedState:PlaceState { numShips = 1; }  :of (servedState -> served)
 
     workersState:WorkerSetState  :of (workersState -> workers)
 
@@ -396,12 +396,12 @@ smaller_model2_rt_cs = smaller_model2_cs + """
     }
 
     waitingState:PlaceState { numShips = 1; }  :of (waitingState -> waiting)
-    berthState:BerthState { numShips = 0; status = "empty"; }  :of (berthState -> berth)
-    servedState:PlaceState { numShips = 0; }  :of (servedState -> served)
+    berthState:BerthState { numShips = 1; status = "served"; }  :of (berthState -> berth)
+    servedState:PlaceState { numShips = 1; }  :of (servedState -> served)
 
     gen2waitState:ConnectionState { moved = False; }  :of (gen2waitState -> gen2wait)
     wait2berthState:ConnectionState { moved = False; }  :of (wait2berthState -> wait2berth)
-    berth2servedState:ConnectionState { moved = False; }  :of (berth2servedState -> berth2served)
+    berth2servedState:ConnectionState { moved = True; }  :of (berth2servedState -> berth2served)
 
     workersState:WorkerSetState  :of (workersState -> workers)
 """

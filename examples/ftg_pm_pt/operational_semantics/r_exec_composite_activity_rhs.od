@@ -1,0 +1,29 @@
+model:RAM_pm_Model
+
+activity:RAM_pm_Activity {
+
+    RAM_composite = `True`;
+
+    condition = ```
+        # Execute inner workflow
+        execute_composite_workflow(odapi, this, matched("ctrl_in"), globals()["composite_linkage"], globals()["packages"], matched)
+    ```;
+}
+
+model_to_activity:RAM_pm_Owns
+
+ctrl_in:RAM_pm_CtrlActivityIn
+
+ctrl_in_state:RAM_pm_CtrlPortState {
+    RAM_active = `False`;
+}
+
+state_to_port:RAM_pm_Of (ctrl_in_state -> ctrl_in)
+
+activity_to_port:RAM_pm_HasCtrlIn (activity -> ctrl_in)
+
+end_trace:RAM_pt_EndTrace
+ends:RAM_pt_Ends (end_trace -> model)
+
+prev_trace_element:RAM_pt_Event
+

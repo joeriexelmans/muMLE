@@ -47,7 +47,7 @@ def bootstrap_constraint(class_node, type_name: str, python_type: str, scd_root:
     bottom.create_edge(constraint_node, scd_node, "Morphism")
     bottom.create_edge(constraint_link, scd_link, "Morphism")
     
-def bootstrap_primitive_types(scd_root, state, integer_type, boolean_type, float_type, string_type, type_type, actioncode_type):
+def bootstrap_primitive_types(scd_root, state, integer_type, boolean_type, float_type, string_type, type_type, actioncode_type, bytes_type):
     # Order is important: Integer must come first
     class_integer    = bootstrap_type("Integer",    scd_root, integer_type,    state)
     class_type       = bootstrap_type("Type",       scd_root, type_type,       state)
@@ -55,6 +55,7 @@ def bootstrap_primitive_types(scd_root, state, integer_type, boolean_type, float
     class_float      = bootstrap_type("Float",      scd_root, float_type,      state)
     class_string     = bootstrap_type("String",     scd_root, string_type,     state)
     class_actioncode = bootstrap_type("ActionCode", scd_root, actioncode_type, state)
+    class_bytes      = bootstrap_type("Bytes",      scd_root, bytes_type,      state)
 
     # Can only create constraints after ActionCode type has been created:
     bootstrap_constraint(class_integer,    "Integer",    "int",   scd_root, integer_type,    actioncode_type, state)
@@ -63,3 +64,4 @@ def bootstrap_primitive_types(scd_root, state, integer_type, boolean_type, float
     bootstrap_constraint(class_float,      "Float",      "float", scd_root, float_type,      actioncode_type, state)
     bootstrap_constraint(class_string,     "String",     "str",   scd_root, string_type,     actioncode_type, state)
     bootstrap_constraint(class_actioncode, "ActionCode", "str",   scd_root, actioncode_type, actioncode_type, state)
+    bootstrap_constraint(class_bytes,      "Bytes",      "bytes", scd_root, bytes_type,      actioncode_type, state)

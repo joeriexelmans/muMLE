@@ -9,7 +9,7 @@ def render_od(state, m_id, mm_id, hide_names=True):
     
     m_od = od.OD(mm_id, m_id, state)
 
-    serialized = set(["Integer", "String", "Boolean", "ActionCode"]) # assume these types always already exist
+    serialized = set(["Integer", "String", "Boolean", "ActionCode", "Bytes"]) # assume these types always already exist
 
     def display_name(name: str):
         # object names that start with "__" are hidden

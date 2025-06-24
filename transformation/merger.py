@@ -4,7 +4,7 @@ from concrete_syntax.textual_od import parser, renderer
 from services.scd import SCD
 from util.timer import Timer
 
-PRIMITIVE_TYPES = set(["Integer", "String", "Boolean", "ActionCode"])
+PRIMITIVE_TYPES = set(["Integer", "String", "Boolean", "ActionCode", "Bytes"])
 
 # Merges N models. The models must have the same meta-model.
 # Care should be taken to avoid naming collisions before calling this function.
@@ -12,7 +12,7 @@ def merge_models(state, mm, models: list[UUID]):
     with Timer("merge_models"):
         primitive_types = {
             type_name : UUID(state.read_value(state.read_dict(state.read_root(), type_name)))
-                for type_name in ["Integer", "String", "Boolean", "ActionCode"]
+                for type_name in ["Integer", "String", "Boolean", "ActionCode", "Bytes"]
         }
 
         merged = state.create_node()

@@ -21,6 +21,7 @@ literal: INT
        | STR
        | BOOL
        | CODE
+       | BYTES
        | INDENTED_CODE
 
 INT: /[0-9]+/
@@ -28,6 +29,8 @@ STR: /"[^"]*"/
    | /'[^']*'/
 BOOL: "True" | "False"
 CODE: /`[^`]*`/
+BYTES: /b"[^"]*"/
+      | /b'[^']*'/
 INDENTED_CODE: /```[^`]*```/
 
 type_name: IDENTIFIER
@@ -67,7 +70,7 @@ def parse_od(state,
 
     primitive_types = {
         type_name : UUID(state.read_value(state.read_dict(state.read_root(), type_name)))
-            for type_name in ["Integer", "String", "Boolean", "ActionCode"]
+            for type_name in ["Integer", "String", "Boolean", "ActionCode", "Bytes"]
     }
 
     class T(Transformer):
@@ -88,6 +91,10 @@ def parse_od(state,
 
         def CODE(self, token):
             return (_Code(str(token[1:-1])), token.line) # strip the ``
+
+        def BYTES(self, token):
+            # Strip b"" or b'', and make \\ back to \ (happens when reading the file as a string)
+            return (token[2:-1].encode().decode('unicode_escape').encode('raw_unicode_escape'), token.line)  # Strip b"" or b''
 
         def INDENTED_CODE(self, token):
             skip = 4 # strip the ``` and the following newline character
