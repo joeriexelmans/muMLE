@@ -40,7 +40,7 @@ attrs: attr*
 
 constraint: CODE | INDENTED_CODE
 
-class_: [ABSTRACT] "class" IDENTIFIER [multiplicity] ["(" superclasses ")"]  ["{" attrs [constraint] "}"]
+class_: [ABSTRACT] "class" IDENTIFIER [multiplicity] ["(" superclasses ")"]  ["{" attrs [constraint ";"] "}"]
 
 association: "association" IDENTIFIER  [multiplicity] IDENTIFIER "->" IDENTIFIER [multiplicity] ["{" attrs [constraint] "}"]
 
