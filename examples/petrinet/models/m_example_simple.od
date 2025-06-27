@@ -1,5 +1,8 @@
 p0:PNPlace
 p1:PNPlace
+p2:PNPlace
+p3:PNPlace
+p4:PNPlace
 
 t0:PNTransition
 :arc (p0 -> t0)
@@ -7,4 +10,12 @@ t0:PNTransition
 
 t1:PNTransition
 :arc (p1 -> t1)
-:arc (t1 -> p0)
+:arc (t1 -> p2)
+
+t2:PNTransition
+:arc (p2 -> t2)
+:arc (t2 -> p0)
+
+
+t3:PNTransition
+:arc (t3 -> p4)

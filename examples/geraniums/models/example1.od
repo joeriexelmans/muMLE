@@ -1,0 +1,17 @@
+f1:Geranium {
+    flowering = True;
+}
+f2:Geranium {
+    flowering = False;
+}
+f3:Geranium {
+    flowering = True;
+}
+
+p1:Pot {
+    cracked = True;
+}
+
+:Planted (f1 -> p1)
+:Planted (f2 -> p1)
+:Planted (f3 -> p1)

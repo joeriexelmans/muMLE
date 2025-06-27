@@ -1,0 +1,28 @@
+{% for id, param in nodes.items() -%}
+    {{ param[0] }}:{{ param[1].pop("type") }}
+    {%- if param[1] %}
+ {
+        {% for key, value in param[1].items() %}
+            {% if value %}
+                {% if key in ["file"] %}
+                    {% set value = '"' ~ value ~ '"' %}
+                {% elif key in ["custom"] %}
+                    {% set value = '`"' ~ value.replace('\n', '\\n') ~ '"`' %}
+                {% elif key in ["action", "init"] %}
+                    {% set value = '\n```\n' ~ value ~ '\n```' %}
+                {% elif key in ["ports", "ports_exec_in", "ports_exec_out", "ports_data_in", "ports_data_out", "rename", "delete"] %}
+                    {% set value = '`' ~ value.replace('\n', '\\n') ~ '`' %}
+                {% endif %}
+    {{ key }} = {{ value }};
+            {% endif %}
+        {% endfor %}
+}
+    {% endif %}
+
+{% endfor %}
+
+{%- for edge in edges %}
+    {% set source = edge[0] %}
+    {% set target = edge[1] %}
+:Conn_{{ source[2] }} ({{ source[0] }} -> {{ target[0] }}) {from="{{ source[1] }}"; to="{{ target[1] }}";}
+{% endfor -%}

@@ -1,0 +1,39 @@
+string:Print {
+    custom = `'["port_out", "port_in"]'`;
+}
+
+list:Print {
+        custom = `["port_out", "port_in"]`;
+}
+set:Print {
+        custom = `{"port_out", "port_in"}`;
+}
+
+tuple:Print {
+        custom = `("port_out", "port_in")`;
+}
+
+dict:Print {
+        custom = `{"port_out": "port_in"}`;
+}
+
+none:Print {
+        custom = `None`;
+}
+
+invalid:Print {
+        custom = `["", [{]]`;
+}
+
+subtype:Print {
+        custom = `[1, 2]`;
+}
+
+code:Print {
+        custom = `print("hello world")`;
+}
+
+no:Print
+
+start:Start
+end:End

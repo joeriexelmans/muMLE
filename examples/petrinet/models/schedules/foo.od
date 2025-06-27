@@ -1,0 +1,23 @@
+start:Start {
+    ports_exec = `["F","FF"]`;
+}
+end:End {
+    ports_exec = `["F"]`;
+}
+
+p1:Print{
+    custom = "Foo";
+}
+
+p2:Print{
+    custom = "FooFoo";
+}
+
+p3:Print{
+    custom = "FooFooFoo";
+}
+
+:Conn_exec (start -> p1) {from="F";to="in";}
+:Conn_exec (p1 -> end) {from="out";to="F";}
+:Conn_exec (start -> p2) {from="FF";to="in";}
+:Conn_exec (p2 -> end) {from="out";to="F";}

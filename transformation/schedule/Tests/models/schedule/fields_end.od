@@ -1,0 +1,52 @@
+start:Start
+
+string:End {
+    ports_exec_in = `'["out", "in"]'`;
+    ports_data_in = `'["out", "in"]'`;
+}
+
+int:End {
+    ports_exec_in = `123`;
+    ports_data_in = `123`;
+}
+
+list:End {
+    ports_exec_in = `["out", "in"]`;
+    ports_data_in = `["out", "in"]`;
+}
+set:End {
+    ports_exec_in = `{"out", "in"}`;
+    ports_data_in = `{"out", "in"}`;
+}
+
+tuple:End {
+    ports_exec_in = `("out", "in")`;
+    ports_data_in = `("out", "in")`;
+}
+
+dict:End {
+    ports_exec_in = `{"out": "in"}`;
+    ports_data_in = `{"out": "in"}`;
+}
+
+none:End {
+    ports_exec_in = `None`;
+    ports_data_in = `None`;
+}
+
+invalid:End {
+    ports_exec_in = `[{a(0)['qkja("fyvka`;
+    ports_data_in = `["", [{]]`;
+}
+
+subtype:End {
+    ports_exec_in = `[1, 2]`;
+    ports_data_in = `[1, 2]`;
+}
+
+code:End {
+    ports_exec_in = `print("hello world")`;
+    ports_data_in = `print("hello world")`;
+}
+
+no:End

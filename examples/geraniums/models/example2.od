@@ -1,0 +1,47 @@
+f1:Geranium {
+    flowering = True;
+}
+f2:Geranium {
+    flowering = True;
+}
+f3:Geranium {
+    flowering = False;
+}
+
+p1:Pot {
+    cracked = True;
+}
+
+:Planted (f1 -> p1)
+:Planted (f2 -> p1)
+:Planted (f3 -> p1)
+
+
+
+
+f4:Geranium {
+    flowering = True;
+}
+p2:Pot {
+    cracked = True;
+}
+:Planted (f4 -> p2)
+
+
+
+f5:Geranium {
+    flowering = True;
+}
+p3:Pot {
+    cracked = False;
+}
+:Planted (f5 -> p3)
+
+
+f6:Geranium {
+    flowering = False;
+}
+p4:Pot {
+    cracked = True;
+}
+:Planted (f6 -> p4)

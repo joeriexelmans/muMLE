@@ -1,0 +1,48 @@
+#generated from somewhere i do not now but it here so live with it
+
+from transformation.schedule.schedule_lib import *
+
+class Schedule:
+    def __init__(self):
+        self.start: Start | None = None
+        self.end: End | None = None
+        self.nodes: list[DataNode] = []
+
+    @staticmethod
+    def get_matchers():
+        return [
+            {% for file in match_files %}
+              "{{ file }}",
+            {% endfor %}
+        ]
+
+    def init_schedule(self, schedular, rule_executer, matchers):
+    {% for block in blocks_start_end%}
+        {{ block }}
+    {% endfor %}
+        self.start = {{ start }}
+        self.end = {{ end }}
+    {% for block in blocks%}
+        {{ block }}
+    {% endfor %}
+
+    {% for conn in exec_conn%}
+        {{ conn }}
+    {% endfor %}
+    {% for conn_d in data_conn%}
+        {{ conn_d }}
+    {% endfor %}
+
+    {% for match in matchers %}
+        {{ match["name"] }}.init_rule(matchers["{{ match["file"] }}"], rule_executer)
+    {% endfor %}
+
+        self.nodes = [
+    {% for name in blocks_name%}
+            {{ name }},
+    {% endfor %}
+        ]
+        return None
+
+    def generate_dot(self, *args, **kwargs):
+        return self.start.generate_dot(*args, **kwargs)

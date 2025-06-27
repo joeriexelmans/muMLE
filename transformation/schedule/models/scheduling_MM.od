@@ -1,0 +1,195 @@
+abstract class Exec
+
+association Conn_exec [0..*] Exec -> Exec [0..*] {
+    String from;
+    String to;
+}
+
+abstract class Data
+association Conn_data  [0..*] Data -> Data [0..*] {
+    Integer from;
+    Integer to;
+}
+abstract class Node (Exec, Data)
+
+class Start [1..1] (Node) {
+    optional ActionCode ports_exec_out;
+    optional ActionCode ports_data_out;
+    ```
+    err = check_slot_code_type(this, "ports_exec_out", list[str] | set[str], True)
+    err.extend(check_slot_code_type(this, "ports_data_out", list[str] | set[str], True))
+    if len(err) == 0:
+        err = check_all_connections(this, [
+            [],
+            eval(get_slot_value_default(this, "ports_exec_out", "['out']")),
+            [],
+            eval(get_slot_value_default(this, "ports_data_out", "[]"))
+        ])
+    err
+    ```;
+}
+class End [1..1] (Node) {
+    optional ActionCode ports_exec_in;
+    optional ActionCode ports_data_in;
+    ```
+    err = check_slot_code_type(this, "ports_exec_in", list[str] | set[str], True)
+    err.extend(check_slot_code_type(this, "ports_data_in", list[str] | set[str], True))
+    if len(err) == 0:
+        err = check_all_connections(this, [
+            eval(get_slot_value_default(this, "ports_exec_in", "['in']")),
+            [],
+            eval(get_slot_value_default(this, "ports_data_in", "[]")),
+            []
+        ])
+    err
+    ```;
+}
+
+abstract class Rule (Node)
+{
+    String file;
+}
+
+class Match (Rule)
+{
+    optional Integer n;
+    ```
+    check_all_connections(this, [
+        ["in"],
+        ["success", "fail"],
+        ["in"],
+        ["out"]
+    ])
+    ```;
+}
+
+class Rewrite (Rule)
+{
+    ```
+    check_all_connections(this, [
+        ["in"],
+        ["out"],
+        ["in"],
+        ["out"]
+    ])
+    ```;
+}
+
+class Action (Node)
+{
+    optional ActionCode ports_exec_in;
+    optional ActionCode ports_exec_out;
+    optional ActionCode ports_data_in;
+    optional ActionCode ports_data_out;
+    optional ActionCode init `check_code_syntax(get_value(get_target(this)))`;
+    ActionCode action `check_code_syntax(get_value(get_target(this)))`;
+    ```
+    err = check_slot_code_type(this, "ports_exec_in", list[str] | set[str], True)
+    err.extend(check_slot_code_type(this, "ports_exec_out", list[str] | set[str], True))
+    err.extend(check_slot_code_type(this, "ports_data_in", list[str] | set[str], True))
+    err.extend(check_slot_code_type(this, "ports_data_out", list[str] | set[str], True))
+    if len(err) == 0:
+        err = check_all_connections(this, [
+            eval(get_slot_value_default(this, "ports_exec_in", "['in']")),
+            eval(get_slot_value_default(this, "ports_exec_out", "['out']")),
+            eval(get_slot_value_default(this, "ports_data_in", "[]")),
+            eval(get_slot_value_default(this, "ports_data_out", "[]"))
+        ])
+    err
+    ```;
+
+}
+
+class Modify (Node)
+{
+    optional ActionCode rename;
+    optional ActionCode delete;
+    ```
+    err = check_slot_code_type(this, "rename", dict[str,str])
+    err.extend(check_slot_code_type(this, "delete", list[str] | set[str]))
+    if len(err) == 0:
+        if not (eval(get_slot_value_default(this, "rename", "dict()")).keys().isdisjoint(
+                eval(get_slot_value_default(this, "delete", "set()")))
+        ):
+            err.append("rename and delete should be disjoint.")
+    err.extend(check_all_connections(this, [
+            [],
+            [],
+            ["in"],
+            ["out"]
+        ]))
+    err
+    ```;
+}
+
+class Merge (Node)
+{
+    ActionCode ports_data_in;
+    ```
+    err = check_slot_code_type(this, "ports_data_in", list[str] | set[str], True, mandatory = True)
+    if len(err) == 0:
+        err = check_all_connections(this, [
+            [],
+            [],
+            eval(get_slot_value(this, "ports_data_in")),
+            ["out"]
+        ])
+    err
+    ```;
+}
+
+class Store (Node)
+{
+    ActionCode ports;
+    ```
+    err = check_slot_code_type(this, "ports", list[str] | set[str], True, mandatory = True, blacklist = ["in", "out"])
+    if len(err) == 0:
+        err = check_all_connections(this, [
+            [*(ports:= eval(get_slot_value(this, "ports"))), "in"],
+            [*ports, "out"],
+            ports,
+            ["out"]
+        ])
+    err
+    ```;
+}
+
+class Schedule (Node)
+{
+    String file;
+    ```
+    check_all_connections(this, [
+        {get_slot_value(conn, "to") for conn in get_incoming(this, "Conn_exec")},
+        {get_slot_value(conn, "from") for conn in get_outgoing(this, "Conn_exec")},
+        {get_slot_value(conn, "to") for conn in get_incoming(this, "Conn_data")},
+        {get_slot_value(conn, "from") for conn in get_outgoing(this, "Conn_data")}
+    ])
+    ```;
+}
+
+class Loop(Node)
+{
+    ```
+    check_all_connections(this, [
+        ["in"],
+        ["it", "out"],
+        ["in"],
+        ["out"]
+    ])
+    ```;
+}
+
+class Print(Node) 
+{
+    optional Boolean event;
+    optional String label;
+    optional ActionCode custom `check_jinja2_code(get_source(this), "custom")`;
+    ```
+    check_all_connections(this, [
+        ["in"],
+        ["out"],
+        ["in"],
+        []
+    ])
+    ```;
+}

@@ -1,0 +1,39 @@
+string:Merge {
+    ports_data_in = `'["out", "in"]'`;
+}
+
+list:Merge {
+        ports_data_in = `["out", "in"]`;
+}
+set:Merge {
+        ports_data_in = `{"out", "in"}`;
+}
+
+tuple:Merge {
+        ports_data_in = `("out", "in")`;
+}
+
+dict:Merge {
+        ports_data_in = `{"out": "in"}`;
+}
+
+none:Merge {
+        ports_data_in = `None`;
+}
+
+invalid:Merge {
+        ports_data_in = `["", [{]]`;
+}
+
+subtype:Merge {
+        ports_data_in = `[1, 2]`;
+}
+
+code:Merge {
+        ports_data_in = `print("hello world")`;
+}
+
+no:Merge
+
+start:Start
+end:End

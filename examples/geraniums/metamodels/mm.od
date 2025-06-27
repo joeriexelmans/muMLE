@@ -1,0 +1,9 @@
+class Geranium {
+    Boolean flowering;
+}
+
+class Pot {
+    Boolean cracked;
+}
+
+association Planted [0..*] Geranium -> Pot [1..1]

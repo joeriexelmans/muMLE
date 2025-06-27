@@ -9,3 +9,21 @@ p1s:PNPlaceState {
 }
 
 :pn_of (p1s -> p1)
+
+p2s:PNPlaceState {
+  numTokens = 0;
+}
+
+:pn_of (p2s -> p2)
+
+p3s:PNPlaceState {
+  numTokens = 0;
+}
+
+:pn_of (p3s -> p3)
+
+p4s:PNPlaceState {
+  numTokens = 0;
+}
+
+:pn_of (p4s -> p4)

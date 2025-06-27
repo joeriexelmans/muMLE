@@ -1,0 +1,60 @@
+digraph G {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+{% for node in nodes %}
+    {{ node }}
+{% endfor %}
+
+{% for edge in edges %}
+    {{ edge }}
+{% endfor %}
+}
+
+{% macro Node(label, id, ports_exec=[], ports_data=[]) %}
+subgraph cluster_{{ id }} {
+    label = "{{ id }}__{{ label }}";
+    style = rounded;
+    input_{{ id }} [
+      shape=rect;
+      label= {{ Gate_Table(ports_exec[0], ports_data[0]) }}
+    ];
+    output_{{ id }} [
+      shape=rect;
+      label= {{ Gate_Table(ports_exec[1], ports_data[1]) }}
+    ];
+        input_{{ id }}->output_{{ id }} [style=invis];
+    }
+{%- endmacro %}
+
+{%- macro Edge(from_id, to_id, from_gate, to_gate, prefix, color) %}
+output_{{ from_id }}:{{ prefix }}_{{ from_gate }} -> input_{{ to_id }}:{{ prefix }}_{{ to_gate }} [color = {{ color }}]
+{%- endmacro %}
+
+{%- macro Gate_Table(ports_exec, ports_data) %}
+
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          {% if ports_exec or ports_data %}
+          {% if ports_exec %}
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              {% for port_e in ports_exec %}
+              <TR><TD PORT="e_{{ port_e }}">{{ port_e }}</TD></TR>
+              {% endfor %}
+            </TABLE>
+          </TD></TR>
+          {% endif %}
+          {% if ports_data %}
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              {% for port_d in ports_data %}
+              <TR><TD PORT="d_{{ port_d }}">{{ port_d }}</TD></TR>
+              {% endfor %}
+            </TABLE>
+          </TD></TR>
+          {% endif %}
+          {% else %}
+            <TR><TD>X</TD></TR>
+          {% endif %}
+        </TABLE>>
+{%- endmacro %}

@@ -1,0 +1,51 @@
+{% macro Start(name, ports_exec_out, ports_data_out) %}
+{{ name }} = Start({{ ports_exec_out }}, {{ ports_data_out }})
+{%- endmacro %}
+
+{% macro End(name, ports_exec_in, ports_data_in) %}
+{{ name }} = End({{ ports_exec_in }}, {{ ports_data_in }})
+{%- endmacro %}
+
+{% macro Match(name, file, n) %}
+{{ name }} = Match("{{ file }}", {{ n }})
+{%- endmacro %}
+
+{% macro Rewrite(name, file) %}
+{{ name }} = Rewrite("{{ file }}")
+{%- endmacro %}
+
+{% macro Action(name, ports_exec_in, ports_exec_out, ports_data_in, ports_data_out, action, init) %}
+{{ name }} = Action({{ ports_exec_in }}, {{ ports_exec_out }}, {{ ports_data_in }}, {{ ports_data_out }}, {{ action }}, {{ init }})
+{%- endmacro %}
+
+{% macro Modify(name, rename, delete) %}
+{{ name }} = Modify({{ rename }}, {{ delete }})
+{%- endmacro %}
+
+{% macro Merge(name, ports_data_in) %}
+{{ name }} = Merge({{ ports_data_in }})
+{%- endmacro %}
+
+{% macro Store(name, ports) %}
+{{ name }} = Store({{ ports }})
+{%- endmacro %}
+
+{% macro Schedule(name, file) %}
+{{ name }} = SubSchedule(schedular, "{{ file }}")
+{%- endmacro %}
+
+{% macro Loop(name) %}
+{{ name }} = Loop()
+{%- endmacro %}
+
+{% macro Print(name, label, custom) %}
+{{ name }} = Print("{{ label }}", {{ custom }})
+{%- endmacro %}
+
+{% macro Conn_exec(name_from, name_to, from, to) %}
+{{ name_from }}.connect({{ name_to }},"{{ from }}","{{ to }}")
+{%- endmacro %}
+
+{% macro Conn_data(name_from, name_to, from, to, event) %}
+{{ name_from }}.connect_data({{ name_to }}, "{{ from }}", "{{ to }}", {{ event }})
+{%- endmacro %}

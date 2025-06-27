@@ -1,0 +1,22 @@
+p0:PNPlace
+p1:PNPlace
+
+t0:PNTransition
+:arc (p0 -> t0)
+:arc (t0 -> p1)
+
+t1:PNTransition
+:arc (p1 -> t1)
+:arc (t1 -> p0)
+
+p0s:PNPlaceState {
+  numTokens = 1;
+}
+
+:pn_of (p0s -> p0)
+
+p1s:PNPlaceState {
+  numTokens = 0;
+}
+
+:pn_of (p1s -> p1)

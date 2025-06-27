@@ -1,0 +1,62 @@
+start:Start {
+    ports_data_out = `["1", "2", "3"]`;
+}
+
+m:Match{
+    file="rules/transition.od";
+}
+m2:Match{
+    file="rules/transition.od";
+}
+m3:Match{
+    file="rules/transition.od";
+}
+
+a_void:Action{
+    ports_data_in = `["in1", "in2"]`;
+    ports_data_out = `["out1", "out2"]`;
+    action=`print("hello foo1")`;
+}
+
+a_foo1:Action{
+    ports_data_in = `["in1", "in2"]`;
+    ports_data_out = `["out1", "out2"]`;
+    action=`print("hello foo1")`;
+}
+
+a_foo2:Action{
+    ports_exec_in = `["in2"]`;
+    ports_exec_out = `["out2", "out3"]`;
+    action=`print("hello foo2")`;
+}
+
+end:End {
+    ports_data_in = `["1", "2", "3"]`;
+}
+
+:Conn_exec (start -> m) {from="out";to="in";}
+:Conn_exec (m -> m2) {from="fail";to="in";}
+:Conn_exec (m -> m3) {from="success";to="in";}
+
+:Conn_exec (m2 -> a_foo1) {from="success";to="in";}
+:Conn_exec (m2 -> a_foo1) {from="fail";to="in";}
+:Conn_exec (m3 -> a_foo1) {from="success";to="foo_in";}
+:Conn_exec (m3 -> a_foo2) {from="fail";to="in2";}
+
+:Conn_exec (a_foo1 -> a_foo2) {from="out";to="in";}
+:Conn_exec (a_foo1 -> a_foo2) {from="out";to="in2";}
+:Conn_exec (a_foo1 -> a_foo2) {from="foo";to="in2";}
+:Conn_exec (a_foo2 -> end) {from="out";to="in";}
+:Conn_exec (a_foo2 -> end) {from="out2";to="in";}
+:Conn_exec (a_foo2 -> end) {from="out3";to="in";}
+:Conn_exec (a_foo2 -> end) {from="out3";to="in";}
+
+:Conn_data (start -> a_foo2) {from="1";to="in";}
+:Conn_data (a_foo2-> m2) {from="out";to="in";}
+
+:Conn_data (start -> a_foo1) {from="1";to="in1";}
+:Conn_data (start -> a_foo1) {from="2";to="in1";}
+:Conn_data (start -> a_foo1) {from="3";to="in2";}
+:Conn_data (a_foo1 -> end) {from="out1";to="1";}
+:Conn_data (a_foo1 -> end) {from="out1";to="2";}
+:Conn_data (a_foo1 -> end) {from="out2";to="3";}
