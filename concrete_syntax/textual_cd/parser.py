@@ -75,7 +75,7 @@ def parse_cd(state, m_text):
 
     primitive_types = {
         type_name : UUID(state.read_value(state.read_dict(state.read_root(), type_name)))
-            for type_name in ["Integer", "String", "Boolean"]
+            for type_name in ["Integer", "String", "Boolean", "ActionCode"]
     }
 
     class T(TBase):
