@@ -34,7 +34,7 @@ if __name__ == "__main__":
     print(render_conformance_check_result(conf_err))
     mm_ramified = ramify(state, mm)
 
-    action_generator = RuleSchedular(state, mm, mm_ramified, verbose=True, directory="examples/geraniums", eval_context=eval_context)
+    action_generator = RuleScheduler(state, mm, mm_ramified, verbose=True, directory="examples/geraniums", eval_context=eval_context)
     od = ODAPI(state, m, mm)
     render_geraniums_dot(od, f"{THIS_DIR}/geraniums.dot")
 

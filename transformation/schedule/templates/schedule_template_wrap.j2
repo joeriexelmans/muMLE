@@ -16,7 +16,7 @@ class Schedule:
             {% endfor %}
         ]
 
-    def init_schedule(self, schedular, rule_executer, matchers):
+    def init_schedule(self, scheduler, rule_executer, matchers):
     {% for block in blocks_start_end%}
         {{ block }}
     {% endfor %}

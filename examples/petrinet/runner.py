@@ -41,13 +41,13 @@ if __name__ == "__main__":
 
 
 
-    action_generator = RuleSchedular(state, mm_rt, mm_rt_ramified, verbose=True, directory="models")
+    scheduler = RuleScheduler(state, mm_rt, mm_rt_ramified, verbose=True, directory="models")
 
     # if action_generator.load_schedule(f"petrinet.od"):
     # if action_generator.load_schedule("schedules/combinatory.drawio"):
     if action_generator.load_schedule("schedules/petrinet3.drawio"):
 
 
-        action_generator.generate_dot("../dot.dot")
-        code, message = action_generator.run(ODAPI(state, m_rt_initial, mm_rt))
+        scheduler.generate_dot("../dot.dot")
+        code, message = scheduler.run(ODAPI(state, m_rt_initial, mm_rt))
         print(f"{code}: {message}")

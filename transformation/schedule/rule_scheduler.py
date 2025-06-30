@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from transformation.schedule.schedule import Schedule
 
 
-class RuleSchedular:
+class RuleScheduler:
     __slots__ = (
         "rule_executor",
         "schedule_main",

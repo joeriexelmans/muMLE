@@ -1,5 +1,9 @@
 from abc import abstractmethod
+from typing import override
+from jinja2 import Template
+
 from api.od import ODAPI
+from .funcs import generate_dot_edge
 from .node import Node
 
 
@@ -33,3 +37,25 @@ class ExecNode(Node):
     @abstractmethod
     def execute(self, port: str, exec_id: int, od: ODAPI) -> tuple[int, any] | None:
         return None
+
+    @override
+    def generate_dot(
+        self, nodes: list[str], edges: list[str], visited: set[int], template: Template
+    ) -> None:
+        for out_port, edge in self.next_node.items():
+            template.render()
+            generate_dot_edge(
+                self,
+                edge[0],
+                edges,
+                template,
+                kwargs={
+                    "prefix": "e",
+                    "from_gate": out_port,
+                    "to_gate": edge[1],
+                    "color": "darkblue",
+                },
+            )
+
+        for edge in self.next_node.values():
+            edge[0].generate_dot(nodes, edges, visited, template)

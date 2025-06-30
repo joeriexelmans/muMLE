@@ -12,6 +12,10 @@ m3:Match{
     file="rules/transition.od";
 }
 
+m_exec:Merge {
+    ports_data_in = `["in1", "in2"]`;
+}
+
 m_foo:Merge {
     ports_data_in = `["in1", "in2"]`;
 }
@@ -28,10 +32,8 @@ end:End {
 :Conn_exec (m -> m2) {from="fail";to="in";}
 :Conn_exec (m -> m3) {from="success";to="in";}
 
-:Conn_exec (m2 -> m_foo) {from="success";to="in";}
-:Conn_exec (m2 -> m_foo) {from="fail";to="in";}
-
-:Conn_exec (m_foo -> end) {from="out";to="in";}
+:Conn_exec (m2 -> m_exec) {from="success";to="in";}
+:Conn_exec (m_exec -> end) {from="out";to="in";}
 
 :Conn_data (start -> m_foo) {from="1";to="in1";}
 :Conn_data (start -> m_foo) {from="1";to="in2";}

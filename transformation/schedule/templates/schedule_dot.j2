@@ -11,9 +11,14 @@ digraph G {
 {% endfor %}
 }
 
-{% macro Node(label, id, ports_exec=[], ports_data=[]) %}
+{% macro Node(label, id, ports_exec=[], ports_data=[], debug = False) %}
 subgraph cluster_{{ id }} {
-    label = "{{ id }}__{{ label }}";
+    label = "
+    {%- if debug %}
+    {{ id }}_
+    {%- endif -%}
+    {{ label }}"
+
     style = rounded;
     input_{{ id }} [
       shape=rect;
@@ -54,7 +59,7 @@ output_{{ from_id }}:{{ prefix }}_{{ from_gate }} -> input_{{ to_id }}:{{ prefix
           </TD></TR>
           {% endif %}
           {% else %}
-            <TR><TD>X</TD></TR>
+            <TR><TD>&nbsp;</TD></TR>
           {% endif %}
         </TABLE>>
 {%- endmacro %}

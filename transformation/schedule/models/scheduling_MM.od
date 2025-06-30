@@ -7,12 +7,11 @@ association Conn_exec [0..*] Exec -> Exec [0..*] {
 
 abstract class Data
 association Conn_data  [0..*] Data -> Data [0..*] {
-    Integer from;
-    Integer to;
+    String from;
+    String to;
 }
-abstract class Node (Exec, Data)
 
-class Start [1..1] (Node) {
+class Start [1..1] (Exec, Data) {
     optional ActionCode ports_exec_out;
     optional ActionCode ports_data_out;
     ```
@@ -28,7 +27,7 @@ class Start [1..1] (Node) {
     err
     ```;
 }
-class End [1..1] (Node) {
+class End [1..1] (Exec, Data) {
     optional ActionCode ports_exec_in;
     optional ActionCode ports_data_in;
     ```
@@ -45,7 +44,7 @@ class End [1..1] (Node) {
     ```;
 }
 
-abstract class Rule (Node)
+abstract class Rule (Exec, Data)
 {
     String file;
 }
@@ -75,7 +74,7 @@ class Rewrite (Rule)
     ```;
 }
 
-class Action (Node)
+class Action (Exec, Data)
 {
     optional ActionCode ports_exec_in;
     optional ActionCode ports_exec_out;
@@ -100,7 +99,7 @@ class Action (Node)
 
 }
 
-class Modify (Node)
+class Modify (Data)
 {
     optional ActionCode rename;
     optional ActionCode delete;
@@ -122,7 +121,7 @@ class Modify (Node)
     ```;
 }
 
-class Merge (Node)
+class Merge (Data)
 {
     ActionCode ports_data_in;
     ```
@@ -138,7 +137,7 @@ class Merge (Node)
     ```;
 }
 
-class Store (Node)
+class Store (Exec, Data)
 {
     ActionCode ports;
     ```
@@ -154,7 +153,7 @@ class Store (Node)
     ```;
 }
 
-class Schedule (Node)
+class Schedule (Exec, Data)
 {
     String file;
     ```
@@ -167,7 +166,7 @@ class Schedule (Node)
     ```;
 }
 
-class Loop(Node)
+class Loop(Exec, Data)
 {
     ```
     check_all_connections(this, [
@@ -179,7 +178,7 @@ class Loop(Node)
     ```;
 }
 
-class Print(Node) 
+class Print(Exec, Data) 
 {
     optional Boolean event;
     optional String label;

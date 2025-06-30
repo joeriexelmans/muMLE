@@ -12,6 +12,7 @@ m3:Match{
     file="rules/transition.od";
 }
 
+m_exec:Modify
 m_foo:Modify
 m_void:Modify
 
@@ -25,10 +26,10 @@ end:End {
 :Conn_exec (m -> m2) {from="fail";to="in";}
 :Conn_exec (m -> m3) {from="success";to="in";}
 
-:Conn_exec (m2 -> m_foo) {from="success";to="in";}
-:Conn_exec (m2 -> m_foo) {from="fail";to="in";}
+:Conn_exec (m2 -> m_exec) {from="success";to="in";}
+:Conn_exec (m2 -> m_exec) {from="fail";to="in";}
 
-:Conn_exec (m_foo -> end) {from="out";to="in";}
+:Conn_exec (m_exec -> end) {from="out";to="in";}
 
 :Conn_data (start -> mo) {from="1";to="in";}
 :Conn_data (mo -> m2) {from="out";to="in";}

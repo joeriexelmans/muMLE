@@ -1,16 +1,14 @@
-import io
 import os
 import unittest
 
-from transformation.schedule import rule_scheduler
-from transformation.schedule.rule_scheduler import RuleSchedular
+from transformation.schedule.rule_scheduler import RuleScheduler
 from state.devstate import DevState
 
 
 class MyTestCase(unittest.TestCase):
     def setUp(self):
         state = DevState()
-        self.generator = RuleSchedular(state, "", "")
+        self.generator = RuleScheduler(state, "", "")
 
     def test_empty(self):
         try:

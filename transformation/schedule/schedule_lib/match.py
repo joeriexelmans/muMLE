@@ -52,7 +52,7 @@ class Match(ExecNode, DataNode):
             nodes,
             template,
             **{
-                "label": f"match_{self.n}\n{self.label}",
+                "label": f"match\n{self.label}\nn = {self.n}",
                 "ports_exec": (
                     self.get_exec_input_gates(),
                     self.get_exec_output_gates(),

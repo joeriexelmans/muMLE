@@ -7,12 +7,9 @@ sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
 )
 
-from icecream import ic
-
 from api.od import ODAPI
 from bootstrap.scd import bootstrap_scd
-from examples.schedule import rule_schedular
-from examples.schedule.rule_schedular import ScheduleActionGenerator
+from transformation.schedule.rule_scheduler import RuleScheduler
 from state.devstate import DevState
 from transformation.ramify import ramify
 from util import loader
@@ -37,7 +34,7 @@ class Test_Meta_Model(unittest.TestCase):
     def setUp(self):
         self.model = ODAPI(*self.model_param)
         self.out = io.StringIO()
-        self.generator = ScheduleActionGenerator(
+        self.generator = RuleScheduler(
             *self.generator_param,
             directory=self.dir + "/models",
             verbose=True,
@@ -50,9 +47,7 @@ class Test_Meta_Model(unittest.TestCase):
         try:
             self.generator.load_schedule(f"schedule/{file}")
             errors = self.out.getvalue().split("\u25b8")[1:]
-            ic(errors)
             if len(errors) != len(expected_substr_err.keys()):
-                ic("len total errors")
                 assert len(errors) == len(expected_substr_err.keys())
             for err in errors:
                 error_lines = err.strip().split("\n")
@@ -62,13 +57,9 @@ class Test_Meta_Model(unittest.TestCase):
                         key = key_pattern
                         break
                 else:
-                    ic("no matching key")
-                    ic(line)
                     assert False
                 expected = expected_substr_err[key]
                 if (len(error_lines) - 1) != len(expected):
-                    ic("len substr errors")
-                    ic(line)
                     assert (len(error_lines) - 1) == len(expected)
                 it = error_lines.__iter__()
                 it.__next__()
@@ -77,15 +68,11 @@ class Test_Meta_Model(unittest.TestCase):
                         all(exp in err_line for exp in line_exp)
                         for line_exp in expected
                     ):
-                        ic("wrong substr error")
-                        ic(line)
-                        ic(error_lines)
                         assert False
                 expected_substr_err.pop(key)
         except AssertionError:
             raise
         except Exception as e:
-            ic(e)
             assert False
 
     def test_no_start(self):
@@ -101,12 +88,15 @@ class Test_Meta_Model(unittest.TestCase):
         self._test_conformance("multiple_end.od", {("End", "Cardinality"): []})
 
     def test_connections_start(self):
+        # try to load the following schedule.
+        # The schedules contains happy day nodes and faulty nodes.
+        # Use the error messages to select error location and further validate the multiple reasons of failure.
         self._test_conformance(
             "connections_start.od",
             {
-                ("Start", "start"): [
-                    ["input exec", "foo_in", "exist"],
-                    ["output exec", "out", "multiple"],
+                ("Start", "start"): [ # locate failure (contains these two substrings), make sure other do not fully overlap -> flakey test
+                    ["input exec", "foo_in", "exist"], # 4 total reasons, a reason contains these three substrings
+                    ["output exec", "out", "multiple"], # a reason will match to exactly one subnstring list
                     ["output exec", "foo_out", "exist"],
                     ["input data", "in", "exist"],
                 ]
@@ -180,32 +170,52 @@ class Test_Meta_Model(unittest.TestCase):
         )
 
     def test_connections_modify(self):
+        #TODO:
+        # see test_connections_merge
         self._test_conformance(
             "connections_modify.od",
             {
+                ("Invalid source", "Conn_exec"): [],
+                ("Invalid target", "Conn_exec"): [],
                 ("Modify", "m_foo"): [
-                    ["input exec", "in", "exist"],
-                    ["input exec", "in", "exist"],
-                    ["output exec", "out", "exist"],
                     ["input data", "foo_in", "exist"],
                     ["output data", "foo_out", "exist"],
                     ["input data", "in", "multiple"],
+                ],
+                ("Modify", "m_exec"): [
+                    ["input exec", "in", "exist"],
+                    ["input exec", "in", "exist"],
+                    ["output exec", "out", "exist"],
                 ]
             },
         )
 
     def test_connections_merge(self):
+        #TODO:
+        # mm:
+        # association Conn_exec [0..*] Exec -> Exec [0..*] {
+        #     ...;
+        # }
+        # m:
+        # Conn_exec ( Data -> Exec) {...;} -> Invalid source type 'Merge' for link '__Conn_exec_3:Conn_exec' (1)
+        #                                  -> Invalid target type 'End' for link '__Conn_exec_3:Conn_exec' (2)
+        # Conn_exec ( Exec -> Data) {...;} -> No error at all, inconsistent and unexpected behaviour (3)
+        # different combinations behave unexpected
+
         self._test_conformance(
             "connections_merge.od",
             {
+                ("Invalid source", "Conn_exec"): [], # (1), expected
+                ("Invalid target", "Conn_exec"): [], # (2), invalid error, should not be shown
                 ("Merge", "m_foo"): [
-                    ["input exec", "in", "exist"],
+                    ["input data", "foo_in", "exist"],
+                    ["input data", "in2", "multiple"],
+                    ["output data", "foo_out", "exist"],
+                ],
+                ("Merge", "m_exec"): [ # (3), checked in Merge itself
                     ["input exec", "in", "exist"],
                     ["output exec", "out", "exist"],
-                    ["input data", "foo_in", "exist"],
-                    ["output data", "foo_out", "exist"],
-                    ["input data", "in2", "multiple"],
-                ]
+                ],
             },
         )
 
@@ -274,7 +284,7 @@ class Test_Meta_Model(unittest.TestCase):
                     ["Unexpected type", "ports_exec_out", "str"],
                     ["Unexpected type", "ports_data_out", "str"],
                 ],
-                ("Start", '"int"'): [
+                ("Start", '"int"'): [ # included " to avoid flakey test
                     ["Unexpected type", "ports_exec_out", "int"],
                     ["Unexpected type", "ports_data_out", "int"],
                 ],
@@ -380,13 +390,16 @@ class Test_Meta_Model(unittest.TestCase):
                     ["Unexpected type", "ports_data_out", "NoneType"],
                     ["Unexpected type", "ports_data_in", "NoneType"],
                 ],
-                ("Action", '"invalid"'): [
+                ('"Action"', '"invalid"'): [
                     ["Invalid python", "ports_exec_out"],
                     ["Invalid python", "ports_exec_in"],
                     ["Invalid python", "ports_data_out"],
                     ["Invalid python", "ports_data_in"],
                 ],
-                ("Action_action", "invalid_action"): [],
+                ('"Action_action"', '"invalid_action"'): [
+                    ["Invalid python code"],
+                    ["line"],
+                ],
                 ("Action", "subtype"): [
                     ["Unexpected type", "ports_exec_out", "list"],
                     ["Unexpected type", "ports_exec_in", "list"],

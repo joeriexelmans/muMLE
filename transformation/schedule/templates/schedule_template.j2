@@ -31,7 +31,7 @@
 {%- endmacro %}
 
 {% macro Schedule(name, file) %}
-{{ name }} = SubSchedule(schedular, "{{ file }}")
+{{ name }} = SubSchedule(scheduler, "{{ file }}")
 {%- endmacro %}
 
 {% macro Loop(name) %}

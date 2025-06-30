@@ -41,7 +41,7 @@ class Rewrite(ExecNode, DataNode):
             nodes,
             template,
             **{
-                "label": "rewrite",
+                "label": f"rewrite\n{self.label}",
                 "ports_exec": (
                     self.get_exec_input_gates(),
                     self.get_exec_output_gates(),

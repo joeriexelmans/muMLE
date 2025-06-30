@@ -8,7 +8,7 @@ from .exec_node import ExecNode
 from .funcs import not_visited, generate_dot_node, IdGenerator
 
 if TYPE_CHECKING:
-    from ..rule_scheduler import RuleSchedular
+    from ..rule_scheduler import RuleScheduler
 
 
 class ScheduleState:
@@ -16,9 +16,9 @@ class ScheduleState:
         self.end_gate: str = ""
 
 class SubSchedule(ExecNode, DataNode):
-    def __init__(self, schedular: "RuleSchedular", file: str) -> None:
-        self.schedule = schedular._load_schedule(file, _main=False)
-        self.schedular = schedular
+    def __init__(self, scheduler: "RuleScheduler", file: str) -> None:
+        self.schedule = scheduler._load_schedule(file, _main=False)
+        self.scheduler = scheduler
         super().__init__()
         self.state: dict[int, ScheduleState] = {}
 
@@ -58,7 +58,7 @@ class SubSchedule(ExecNode, DataNode):
 
     @override
     def execute(self, port: str, exec_id: int, od: ODAPI) -> tuple[int, any] | None:
-        runstatus, result = self.schedular._runner(
+        runstatus, result = self.scheduler._runner(
             od,
             self.schedule,
             port,
