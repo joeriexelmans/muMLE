@@ -233,6 +233,15 @@ Not all functionalities can be described using the current nodes. For petrinets,
 
 [Action.md](schedule_lib/action.md)
 
+## Edge Types
+Nodes can be connected using two different edges. The execution-edges define the execution flow of the schedule. 
+These connections can only connect nodes that inherit form [ExecNode](schedule_lib/exec_node.md).
+Connecting nodes between execution-gates defined by the nodes, happens in a system of "one to many" for gates. 
+The data-edges allows information to be distributed to other [DataNode](schedule_lib/data_node.md). 
+This happens in the opposite way of "many to one" on data-gates. 
+Data changes on a gate wil notify all connected nodes of the changes, allowing propagation through the system. Note: the data received is immutable to ensure consistent and reliable execution of the schedule.
+
+
 ## file formats
 
 ### .od
