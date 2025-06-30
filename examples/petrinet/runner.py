@@ -43,9 +43,9 @@ if __name__ == "__main__":
 
     scheduler = RuleScheduler(state, mm_rt, mm_rt_ramified, verbose=True, directory="models")
 
-    # if action_generator.load_schedule(f"petrinet.od"):
-    # if action_generator.load_schedule("schedules/combinatory.drawio"):
-    if action_generator.load_schedule("schedules/petrinet3.drawio"):
+    # if scheduler.load_schedule(f"petrinet.od"):
+    # if scheduler.load_schedule("schedules/combinatory.drawio"):
+    if scheduler.load_schedule("schedules/petrinet3.drawio"):
 
 
         scheduler.generate_dot("../dot.dot")
