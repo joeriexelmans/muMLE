@@ -1,4 +1,0 @@
-bearState:RAM_BearState {
-  RAM_hunger = `get_value(this)`; # unchanged
-  RAM_dead = `True`;
-}

@@ -1,0 +1,31 @@
+# Places, transitions, arcs (and only one kind of arc)
+
+PNConnectable:Class { abstract = True; }
+
+arc:Association (PNConnectable -> PNConnectable)
+
+PNPlace:Class
+PNTransition:Class
+
+# inhibitor arc
+inh_arc:Association (PNPlace -> PNTransition)
+
+:Inheritance (PNPlace -> PNConnectable)
+:Inheritance (PNTransition -> PNConnectable)
+
+# A place has a number of tokens, and that's it.
+
+PNPlaceState:Class
+PNPlaceState_numTokens:AttributeLink (PNPlaceState -> Integer) {
+  name = "numTokens";
+  optional = False;
+  constraint = `"numTokens cannot be negative" if get_value(get_target(this)) < 0 else None`;
+}
+
+pn_of:Association (PNPlaceState -> PNPlace) {
+  # one-to-one
+  source_lower_cardinality = 1;
+  source_upper_cardinality = 1;
+  target_lower_cardinality = 1;
+  target_upper_cardinality = 1;
+}

@@ -52,7 +52,7 @@ def merge_models(state, mm, models: list[UUID]):
                     model = state.read_value(obj)
                     scd = SCD(merged, state)
                     created_obj = scd.create_model_ref(prefixed_obj_name, model)
-                    merged_odapi._ODAPI__recompute_mappings() # dirty!!
+                    merged_odapi.recompute_mappings() # dirty!!
                 else:
                     # create node or edge
                     if state.is_edge(obj):

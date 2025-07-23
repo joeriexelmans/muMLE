@@ -1,0 +1,3 @@
+pot:RAM_Pot {
+    RAM_cracked = `get_value(this)`;
+}

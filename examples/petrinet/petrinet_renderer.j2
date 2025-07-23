@@ -1,0 +1,12 @@
+digraph G {
+  rankdir=LR;
+  center=true;
+  margin=1;
+  nodesep=1;
+  subgraph places {
+    node [fontname=Arial,fontsize=10,shape=circle,fixedsize=true,label="", height=.35,width=.35];
+    {% for place in places %}
+      {{ place[0] }} [label="{{ place[1] }}_{{ place[2] }}"]
+    {% endfor %}
+  }
+}

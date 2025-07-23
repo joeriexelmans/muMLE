@@ -1,4 +1,0 @@
-berthState:RAM_BerthState {
-  RAM_numShips = `1`;
-  RAM_status   = `"served"`;
-}

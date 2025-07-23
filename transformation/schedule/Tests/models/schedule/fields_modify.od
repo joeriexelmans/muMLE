@@ -1,0 +1,51 @@
+string:Modify {
+    rename = `'["out", "in"]'`;
+    delete = `'["out", "in"]'`;
+}
+
+list:Modify {
+    rename = `["out", "in"]`;
+    delete = `["out", "in"]`;
+}
+set:Modify {
+    rename = `{"out", "in"}`;
+    delete = `{"out", "in"}`;
+}
+
+tuple:Modify {
+    rename = `("out", "in")`;
+    delete = `("out", "in")`;
+}
+
+dict:Modify {
+    rename = `{"out": "in"}`;
+    delete = `{"out": "in"}`;
+}
+
+none:Modify {
+    rename = `None`;
+    delete = `None`;
+}
+
+invalid:Modify {
+    rename = `[{a(0)['qkja("fyvka`;
+    delete = `["", [{]]`;
+}
+
+subtype:Modify {
+    rename = `{1: 2}`;
+    delete = `[1, 2]`;
+}
+
+code:Modify {
+    rename = `print("hello world")`;
+    delete = `print("hello world")`;
+}
+
+joined:Modify {
+    rename = `{"a":"1", "b":"2", "c":"3"}`;
+    delete = `{"a", "d"}`;
+}
+
+start:Start
+end:End

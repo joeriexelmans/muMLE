@@ -1,0 +1,27 @@
+start:Start {
+    ports_exec_out = `["out", "in"]`;
+    ports_data_out = `["out", "in"]`;
+}
+
+m:Match{
+    file="rules/transition.od";
+}
+m2:Match{
+    file="rules/transition.od";
+}
+m3:Match{
+    file="rules/transition.od";
+}
+end:End
+
+:Conn_exec (start -> m) {from="out";to="in";}
+:Conn_exec (start -> m) {from="out";to="in";}
+:Conn_exec (start -> m) {from="in";to="in";}
+:Conn_exec (start -> m) {from="foo_out";to="in";}
+:Conn_exec (m -> start) {from="fail";to="foo_in";}
+:Conn_exec (m -> end) {from="success";to="in";}
+
+:Conn_data (start -> m) {from="out";to="in";}
+:Conn_data (start -> m2) {from="out";to="in";}
+:Conn_data (start -> m3) {from="in";to="in";}
+:Conn_data (m -> start) {from="out";to="in";}

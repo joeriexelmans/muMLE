@@ -1,3 +1,7 @@
+import os
+
+from jinja2 import Environment, FileSystemLoader
+
 from api.od import ODAPI
 from concrete_syntax.graphviz.make_url import show_graphviz
 from concrete_syntax.graphviz.renderer import make_graphviz_id
@@ -16,13 +20,24 @@ def render_tokens(num_tokens: int):
     return str(num_tokens)
 
 def render_petri_net_to_dot(od: ODAPI) -> str:
+    env = Environment(
+        loader=FileSystemLoader(
+            os.path.dirname(__file__)
+        )
+    )
+    env.trim_blocks = True
+    env.lstrip_blocks = True
+    template_dot = env.get_template("petrinet_renderer.j2")
+    with open("test_pet.dot", "w", encoding="utf-8") as f_dot:
+        places = [(make_graphviz_id(place), place_name, render_tokens(od.get_slot_value(od.get_source(od.get_incoming(place, "pn_of")[0]), "numTokens"))) for place_name, place in od.get_all_instances("PNPlace")]
+        f_dot.write(template_dot.render({"places": places}))
     dot = ""
-    dot += "rankdir=LR;"
-    dot += "center=true;"
-    dot += "margin=1;"
-    dot += "nodesep=1;"
-    dot += "subgraph places {"
-    dot += "  node [fontname=Arial,fontsize=10,shape=circle,fixedsize=true,label=\"\", height=.35,width=.35];"
+    dot += "rankdir=LR;\n"
+    dot += "center=true;\n"
+    dot += "margin=1;\n"
+    dot += "nodesep=1;\n"
+    dot += "subgraph places {\n"
+    dot += "  node [fontname=Arial,fontsize=10,shape=circle,fixedsize=true,label=\"\", height=.35,width=.35];\n"
     for place_name, place in od.get_all_instances("PNPlace"):
         # place_name = od.get_name(place)
         try:

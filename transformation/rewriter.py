@@ -149,13 +149,13 @@ def rewrite(state,
                 if od.is_typed_by(bottom, rhs_type, class_type):
                     obj_name = first_available_name(suggested_name)
                     host_od._create_object(obj_name, host_type)
-                    host_odapi._ODAPI__recompute_mappings()
+                    host_odapi.recompute_mappings()
                     rhs_match[rhs_name] = obj_name
                 elif od.is_typed_by(bottom, rhs_type, assoc_type):
                     _, _, host_src, host_tgt = get_src_tgt()
                     link_name = first_available_name(suggested_name)
                     host_od._create_link(link_name, host_type, host_src, host_tgt)
-                    host_odapi._ODAPI__recompute_mappings()
+                    host_odapi.recompute_mappings()
                     rhs_match[rhs_name] = link_name
                 elif od.is_typed_by(bottom, rhs_type, attr_link_type):
                     host_src_name, _, host_src, host_tgt = get_src_tgt()
@@ -163,7 +163,7 @@ def rewrite(state,
                     host_attr_name = host_mm_odapi.get_slot_value(host_attr_link, "name")
                     link_name = f"{host_src_name}_{host_attr_name}" # must follow naming convention here
                     host_od._create_link(link_name, host_type, host_src, host_tgt)
-                    host_odapi._ODAPI__recompute_mappings()
+                    host_odapi.recompute_mappings()
                     rhs_match[rhs_name] = link_name
                 elif rhs_type == rhs_mm_odapi.get("ActionCode"):
                     # If we encounter ActionCode in our RHS, we assume that the code computes the value of an attribute...

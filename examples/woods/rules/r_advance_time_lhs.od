@@ -1,4 +1,0 @@
-clock:RAM_Clock {
-  RAM_time = `True`;
-}
-

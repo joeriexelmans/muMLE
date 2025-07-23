@@ -1,0 +1,83 @@
+string:Action {
+    ports_exec_in = `'["out", "in"]'`;
+    ports_exec_out = `'["out", "in"]'`;
+    ports_data_in = `'["out", "in"]'`;
+    ports_data_out = `'["out", "in"]'`;
+    action = `'["out", "in"]'`;
+}
+
+int:Action {
+    ports_exec_in = `123`;
+    ports_exec_out = `123`;
+    ports_data_in = `123`;
+    ports_data_out = `123`;
+    action = `123`;
+}
+
+list:Action {
+    ports_exec_out = `["out", "in"]`;
+    ports_exec_in = `["out", "in"]`;
+    ports_data_out = `["out", "in"]`;
+    ports_data_in = `["out", "in"]`;
+    action = `["out", "in"]`;
+}
+set:Action {
+    ports_exec_in = `{"out", "in"}`;
+    ports_exec_out = `{"out", "in"}`;
+    ports_data_in = `{"out", "in"}`;
+    ports_data_out = `{"out", "in"}`;
+    action = `{"out", "in"}`;
+}
+
+tuple:Action {
+    ports_exec_in = `("out", "in")`;
+    ports_exec_out = `("out", "in")`;
+    ports_data_in = `("out", "in")`;
+    ports_data_out = `("out", "in")`;
+    action = `("out", "in")`;
+}
+
+dict:Action {
+    ports_exec_in = `{"out": "in"}`;
+    ports_exec_out = `{"out": "in"}`;
+    ports_data_in = `{"out": "in"}`;
+    ports_data_out = `{"out": "in"}`;
+    action = `{"out": "in"}`;
+}
+
+none:Action {
+    ports_exec_in = `None`;
+    ports_exec_out = `None`;
+    ports_data_in = `None`;
+    ports_data_out = `None`;
+    action = `None`;
+}
+
+invalid:Action {
+    ports_exec_in = `[{a(0)['qkja("fyvka`;
+    ports_exec_out = `[{a(0)['qkja("fyvka`;
+    ports_data_in = `["", [{]]`;
+    ports_data_out = `["", [{]]`;
+    action = `hu(ja&{]8}]`;
+}
+
+subtype:Action {
+    ports_exec_in = `[1, 2]`;
+    ports_exec_out = `[1, 2]`;
+    ports_data_in = `[1, 2]`;
+    ports_data_out = `[1, 2]`;
+    action = `[1, 2]`;
+}
+
+code:Action {
+    ports_exec_in = `print("hello world")`;
+    ports_exec_out = `print("hello world")`;
+    ports_data_in = `print("hello world")`;
+    ports_data_out = `print("hello world")`;
+    action = `print("hello world")`;
+}
+
+no:Action
+
+start:Start
+end:End

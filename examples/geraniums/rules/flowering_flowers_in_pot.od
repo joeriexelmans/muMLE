@@ -1,0 +1,7 @@
+pot:RAM_Pot
+
+flower:RAM_Geranium {
+    RAM_flowering = `get_value(this)`;
+}
+
+:RAM_Planted (flower -> pot)

@@ -1,0 +1,66 @@
+start:Start
+end:End
+
+m:Match{
+    file = "operational_semantics/transition";
+}
+
+nac1:Match{
+    file = "operational_semantics/all_input_have_token";
+    n = "1";
+}
+
+inputs:Match{
+    file = "operational_semantics/all_inputs";
+}
+rinput:Rewrite{
+    file = "operational_semantics/all_inputs_reduced";
+}
+
+outputs:Match{
+    file = "operational_semantics/all_outputs";
+}
+routput:Rewrite{
+    file = "operational_semantics/all_outputs_increased";
+}
+
+p:Print{
+    event = True;
+}
+p2:Print{
+    event = False;
+    custom = `"succesfully execuded a petrinet transition"`;
+}
+
+l:Loop
+l2:Loop
+l3:Loop
+
+
+:Conn_exec (start -> m) {from="out"; to="in";}
+:Conn_exec (m -> l) {from="success"; to="in";}
+:Conn_exec (l -> nac1) {from="it"; to="in";}
+:Conn_exec (l -> end) {from="out"; to="in";}
+:Conn_exec (nac1 -> l) {from="success"; to="in";}
+:Conn_exec (nac1 -> inputs) {from="fail"; to="in";}
+:Conn_exec (inputs -> l2) {from="success"; to="in";}
+:Conn_exec (inputs -> l2) {from="fail"; to="in";}
+:Conn_exec (l2 -> rinput) {from="it"; to="in";}
+:Conn_exec (rinput -> l2) {from="out"; to="in";}
+:Conn_exec (l2 -> outputs) {from="out"; to="in";}
+:Conn_exec (outputs -> l3) {from="success"; to="in";}
+:Conn_exec (outputs -> l3) {from="fail"; to="in";}
+:Conn_exec (l3 -> routput) {from="it"; to="in";}
+:Conn_exec (routput -> l3) {from="out"; to="in";}
+:Conn_exec (l3 -> p2) {from="out"; to="in";}
+:Conn_exec (p2 -> end) {from="out"; to="in";}
+
+
+:Conn_data (m -> l) {from="out"; to="in";}
+:Conn_data (l -> nac1) {from="out"; to="in";}
+:Conn_data (l -> inputs) {from="out"; to="in";}
+:Conn_data (inputs -> l2) {from="out"; to="in";}
+:Conn_data (l2 -> rinput) {from="out"; to="in";}
+:Conn_data (l -> outputs) {from="out"; to="in";}
+:Conn_data (outputs -> l3) {from="out"; to="in";}
+:Conn_data (l3 -> routput) {from="out"; to="in";}

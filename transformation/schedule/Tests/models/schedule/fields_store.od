@@ -1,0 +1,39 @@
+string:Store {
+    ports = `'["port_out", "port_in"]'`;
+}
+
+list:Store {
+        ports = `["port_out", "port_in"]`;
+}
+set:Store {
+        ports = `{"port_out", "port_in"}`;
+}
+
+tuple:Store {
+        ports = `("port_out", "port_in")`;
+}
+
+dict:Store {
+        ports = `{"port_out": "port_in"}`;
+}
+
+none:Store {
+        ports = `None`;
+}
+
+invalid:Store {
+        ports = `["", [{]]`;
+}
+
+subtype:Store {
+        ports = `[1, 2]`;
+}
+
+code:Store {
+        ports = `print("hello world")`;
+}
+
+no:Store
+
+start:Start
+end:End

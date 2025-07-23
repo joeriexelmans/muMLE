@@ -1,0 +1,34 @@
+digraph G {
+    rankdir=LR;
+    center=true;
+    margin=1;
+    nodesep=1;
+
+    node [fontname="Arial", fontsize=10, shape=box, style=filled, fillcolor=white];
+
+    // Geraniums
+    {% for id, name, flowering in geraniums %}
+    g{{ id }} [
+        label="geranium: {{ name }}\n({{ 'flowering' if flowering else 'not flowering' }})",
+        shape=ellipse,
+        fillcolor="{{ 'lightpink' if flowering else 'lightgray' }}",
+        fontcolor=black
+    ];
+    {% endfor %}
+
+    // Pots
+    {% for id, name, cracked in pots %}
+    p{{ id }} [
+        label="pot: {{ name }}\n({{ 'cracked' if cracked else 'pristine' }})",
+        shape=box,
+        fillcolor="{{ 'mistyrose' if cracked else 'lightgreen' }}",
+        fontcolor=black,
+        style="filled,bold"
+    ];
+    {% endfor %}
+
+    // Connections: geranium -> pot
+    {% for source, target in planted %}
+    g{{ source }} -> p{{ target }};
+    {% endfor %}
+}
