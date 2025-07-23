@@ -61,6 +61,7 @@ from transformation.cloner import clone_od
 from transformation import rewriter
 from concrete_syntax.textual_od.renderer import render_od
 from concrete_syntax.common import indent
+from api.od import ODAPI
 
 state = DevState()
 mmm = bootstrap_scd(state)
@@ -166,11 +167,32 @@ def fire_transition(m, transition_match):
     for match_outgoing in match_od(state, m, mm, lhs_outgoing, mm_ramified, pivot=transition_match):
         rewriter.rewrite(state, lhs_outgoing, rhs_outgoing, mm_ramified, match_outgoing, m, mm)
 
+def show_petri_net(m):
+    odapi = ODAPI(state, m, mm)
+    p1 = odapi.get_slot_value(odapi.get("p1"), "tokens")
+    p2 = odapi.get_slot_value(odapi.get("p2"), "tokens")
+    cp1 = odapi.get_slot_value(odapi.get("cp1"), "tokens")
+    cp2 = odapi.get_slot_value(odapi.get("cp2"), "tokens")
+    return f"""
+     t1                   t2                   t3  
+     ┌─┐        p1        ┌─┐        p2        ┌─┐ 
+     │ │        ---       │ │        ---       │ │ 
+     │ ├─────► ( {p1} )─────►│ │─────► ( {p2} )─────►│ │ 
+     └─┘        ---       └─┘        ---       └─┘ 
+      ▲                   │ ▲                   │  
+      │                   │ │                   │  
+      │                   │ │                   │  
+      │                   │ │                   │  
+      │        ---        │ │       ---         │  
+      └───────( {cp1} )◄──────┘ └──────( {cp2} )◄───────┘  
+               ---                  ---            
+               cp1                  cp2            """
 
 # Let's see if it works:
 while len(enabled) > 0:
+    print(show_petri_net(m))
+    print("\nenabled PN transitions:", enabled)
     print("press ENTER to fire", enabled[0]['t'])
     input()
     fire_transition(m, enabled[0])
     enabled = list(find_enabled_transitions(m))
-    print("\nenabled PN transitions:", enabled)

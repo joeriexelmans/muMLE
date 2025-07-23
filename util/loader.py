@@ -39,7 +39,10 @@ KINDS = ["nac", "lhs", "rhs"]
 # Phony name generator that raises an error if you try to use it :)
 class LHSNameGenerator:
     def __call__(self, type_name):
+        if type_name == "GlobalCondition":
+            return parser.DefaultNameGenerator()(type_name)
         raise Exception(f"Error: Object or link of type '{type_name}' does not have a name.\nAnonymous objects/links are not allowed in the LHS of a rule, because they can have unintended consequences. Please give all of the elements in the LHS explicit names.")
+
 
 # load model transformation rules
 def load_rules(state, get_filename, rt_mm_ramified, rule_names, check_conformance=True):

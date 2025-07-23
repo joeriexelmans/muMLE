@@ -14,7 +14,6 @@ mm_cs = """
     myZ:Association (MyAbstractClass -> Z) {
         target_lower_cardinality = 1;
     }
-
 """
 
 m_cs = """

@@ -1,4 +1,3 @@
-
 # The following meta-model has an inheritance relation:
 
 mm_cs = """
@@ -33,8 +32,6 @@ m_nonconform_cs = """
 
 from state.devstate import DevState
 from bootstrap.scd import bootstrap_scd
-# from concrete_syntax.textual_od import parser
-# from framework.conformance import Conformance, render_conformance_check_result
 from util import loader
 
 state = DevState()

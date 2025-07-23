@@ -27,7 +27,10 @@ m_cs = """
     myLnk:a2b (myA -> myB)
 """
 
-# So far we've only created text strings. To parse the models, we first create our 'state', which is a mutable graph that will contain our models and meta-models:
+# Notice that the syntax for meta-model and model is the same: We always declare a named object/link, followed by a colon (:) and the name of the type. The type name refers to the name of an object/link in the meta-model of our model.
+
+
+# So far we've only created text strings in Python. To parse them as models, we first create our 'state', which is a mutable graph that will contain our models and meta-models:
 
 
 from state.devstate import DevState
@@ -37,7 +40,9 @@ state = DevState()
 
 # Next, we must load the Simple Class Diagrams (SCD) meta-meta-model into our 'state'. The SCD meta-meta-model is a meta-model for our meta-model, and it is also a meta-model for itself.
 
-# The meta-meta-model is not specified in textual syntax because it is typed by itself, and the parser cannot resolve circular dependencies. Therefore, we load the meta-meta-model by mutating the 'state' directly at a very low level:
+# The meta-meta-model is not specified in textual syntax because it is typed by itself. In textual syntax, it would contain things like:
+#    Class:Class
+# which is an object typed by itself. The parser cannot handle this (or circular dependencies in general). Therefore, we load the meta-meta-model by mutating the 'state' directly at a very low level:
 
 from bootstrap.scd import bootstrap_scd
 
@@ -50,7 +55,7 @@ print("OK")
 from concrete_syntax.textual_od import parser
 
 print()
-print("Parsing 'woods' meta-model...")
+print("Parsing meta-model...")
 mm = parser.parse_od(
     state,
     m_text=mm_cs, # the string of text to parse
@@ -62,7 +67,7 @@ print("OK")
 # And we can parse our model, the same way:
 
 print()
-print("Parsing 'woods' model...")
+print("Parsing model...")
 m = parser.parse_od(
     state,
     m_text=m_cs,
