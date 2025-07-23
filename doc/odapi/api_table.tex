@@ -1,0 +1,121 @@
+\documentclass{article}
+
+\usepackage[left=1cm, right=1cm]{geometry} % reduce page margins
+
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage[normalem]{ulem}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{color,listings}
+\usepackage{awesomebox}
+
+\newcommand{\specialcell}[2][c]{%
+  \begin{tabular}[#1]{@{}l@{}}#2\end{tabular}}
+
+\def\ck{\checkmark} 
+
+\begin{document}
+
+\centering
+\begin{scriptsize}
+\begin{tabular}{|l|c|c|c|c|c|l|}
+  \hline
+    &  \multicolumn{5}{c|}{Availability in Context} &  \\
+  \hline
+    &  \multicolumn{2}{c|}{ \specialcell{Meta-Model \\ Constraint}} & \multicolumn{2}{c|}{ \specialcell{Model Trans- \\ formation Rule} } & & \\
+
+  \hline
+     & \specialcell{ \textbf{Local} }
+     & \specialcell{ \textbf{Global} }
+     & \specialcell{ \textbf{NAC} \\ \textbf{LHS} }
+     & \textbf{RHS}
+     & \specialcell{ \textbf{OD-} \\ \textbf{API} }
+     & \textbf{Meaning} \\
+  \hline
+  \hline
+    \multicolumn{7}{|l|}{\textit{Querying}} \\
+  \hline
+  \texttt{this :obj} & \ck & & \ck & \ck & & Current object or link \\
+  \hline
+  \texttt{get\_name(:obj) :str} & \ck & \ck & \ck & \ck & \ck & Get name of object or link \\
+  \hline
+  \texttt{get(name:str) :obj} & \ck & \ck & \ck & \ck & \ck & Get object or link by name (inverse of \texttt{get\_name}) \\
+  \hline
+  \texttt{get\_type(:obj) :obj} & \ck & \ck & \ck & \ck & \ck & {Get type of object or link} \\
+  \hline
+  \texttt{get\_type\_name(:obj) :str} & \ck & \ck & \ck & \ck & \ck & {Same as \texttt{get\_name(get\_type(...))}} \\
+  \hline
+  \specialcell{
+       \texttt{is\_instance(:obj, type\_name:str}
+    \\ \texttt{    [,include\_subtypes:bool=True]) :bool}
+  } & \ck & \ck & \ck & \ck & \ck & \specialcell{Is object instance of given type\\(or subtype thereof)?} \\
+  \hline
+
+  \texttt{get\_value(:obj) :int|str|bool} & \ck & \ck & \ck & \ck & \ck & \specialcell{Get value (only works on Integer,\\String, Boolean objects)} \\
+  \hline
+  \texttt{get\_target(:link) :obj} & \ck & \ck & \ck & \ck & \ck & {Get target of link} \\
+  \hline
+  \texttt{get\_source(:link) :obj} & \ck & \ck & \ck & \ck & \ck & {Get source of link} \\
+  \hline
+  \texttt{get\_slot(:obj, attr\_name:str) :link} & \ck & \ck & \ck & \ck & \ck & {Get slot-link (link connecting object to a value)} \\
+  \hline
+  \specialcell{
+      \texttt{get\_slot\_value(:obj,}
+      \\ \texttt{attr\_name:str) :int|str|bool}
+   } & \ck & \ck & \ck & \ck & \ck & {Same as \texttt{get\_value(get\_slot(...))})} \\
+  \hline
+
+  \specialcell{
+         \texttt{get\_all\_instances(type\_name:str}
+      \\ \texttt{    [,include\_subtypes:bool=True]}
+      \\ \texttt{) :list<(str, obj)>}
+    } & \ck & \ck & \ck & \ck & \ck & \specialcell{Get list of tuples (name, object) \\ of given type (and its subtypes).} \\
+  \hline
+  \specialcell{
+       \texttt{get\_outgoing(:obj,}
+    \\ \texttt{ assoc\_name:str) :list<link>}
+  } & \ck & \ck & \ck & \ck & \ck & {Get outgoing links of given type} \\
+  \hline
+    \specialcell{
+       \texttt{get\_incoming(:obj,}
+    \\ \texttt{ assoc\_name:str) :list<link>}
+  } & \ck & \ck & \ck & \ck & \ck & {Get incoming links of given type} \\
+  \hline
+  \texttt{has\_slot(:obj, attr\_name:str) :bool} & \ck & \ck & \ck & \ck & \ck & {Does object have given slot?} \\
+  \hline
+  \texttt{matched(label:str) :obj} & & & \ck & \ck & & \specialcell{Get matched object by its label \\ (the name of the object in the pattern)} \\
+
+  \hline
+  \hline
+    \multicolumn{7}{|l|}{\textit{Modifying}} \\
+  \hline
+  \texttt{delete(:obj)} & & & & \ck & \ck & {Delete object or link} \\
+  \hline
+
+  \specialcell{
+       \texttt{set\_slot\_value(:obj, attr\_name:str,}
+    \\ \texttt{    val:int|str|bool)}
+  } & & & & \ck & \ck & \specialcell{Set value of slot.
+                              \\ Creates slot if it doesn't exist yet.} \\
+  \hline
+
+  \specialcell{
+    \texttt{create\_link(link\_name:str|None,} \\
+    \texttt{  assoc\_name:str, src:obj, tgt:obj) :link}
+  } & & & & \ck & \ck & \specialcell{Create link (typed by given association). \\
+                                 If \texttt{link\_name} is None, name is auto-generated.} \\
+  \hline
+  \specialcell{
+    \texttt{create\_object(object\_name:str|None,} \\
+    \texttt{  class\_name:str) :obj}
+  } & & & & \ck & \ck & \specialcell{Create object (typed by given class). \\
+                                 If \texttt{object\_name} is None, name is auto-generated.} \\
+  \hline
+  % \texttt{print(*args)} & \multicolumn{2}{c|}{Python's print function (useful for debugging)} & no, use the real print() \\
+\end{tabular}
+\end{scriptsize}
+
+\end{document}
