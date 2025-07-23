@@ -1,0 +1,200 @@
+##################################################
+
+pm_Model:Class
+
+##################################################
+
+pm_Stateful:Class
+
+##################################################
+
+pm_ModelElement:Class {
+  abstract = True;
+}
+
+##################################################
+
+pm_Activity:Class 
+  :Inheritance (pm_Activity -> pm_ModelElement)
+
+pm_Activity_name:AttributeLink (pm_Activity -> String) {
+  name = "name";
+  optional = False;
+}
+
+pm_Activity_composite:AttributeLink (pm_Activity -> Boolean) {
+  name = "composite";
+  optional = False;
+}
+
+pm_Activity_subworkflow_path:AttributeLink (pm_Activity -> String) {
+	name = "subworkflow_path";
+	optional = True;
+}
+
+
+pm_AutomatedActivity:Class {
+  abstract = True;
+} :Inheritance (pm_AutomatedActivity -> pm_Activity)
+
+pm_AutomatedActivity_input_or:AttributeLink (pm_AutomatedActivity -> Boolean) {
+  name = "input_or";
+  optional = False;
+}
+
+pm_PythonAutomatedActivity:Class 
+  :Inheritance (pm_PythonAutomatedActivity -> pm_AutomatedActivity)
+
+pm_PythonAutomatedActivity_func:AttributeLink (pm_PythonAutomatedActivity -> ActionCode) {
+  name = "func";
+  optional = False;
+}
+
+##################################################
+
+pm_Artefact:Class 
+  :Inheritance (pm_Artefact -> pm_ModelElement)
+  :Inheritance (pm_Artefact -> pm_Stateful)
+
+##################################################
+
+pm_CtrlPort:Class {
+  abstract = True;
+} :Inheritance (pm_CtrlPort -> pm_Stateful)
+
+pm_CtrlIn:Class {
+  abstract = True;
+} :Inheritance (pm_CtrlIn -> pm_CtrlPort)
+
+pm_CtrlSink:Class {
+    # 1) A control sink port must have at least one incoming control flow
+    # 2) A control sink port can't have any control flow output
+    constraint = ```
+        has_incoming = len(get_incoming(this, "pm_CtrlFlow")) > 0
+        no_outgoing = len(get_outgoing(this, "pm_CtrlFlow")) == 0
+
+        # Return constraint
+        has_incoming and no_outgoing
+    ```;
+} :Inheritance (pm_CtrlSink -> pm_CtrlIn)
+
+pm_CtrlActivityIn:Class {
+    # 1) Must have at least one incoming control flow
+    constraint = ```
+        has_incoming = len(get_incoming(this, "pm_CtrlFlow")) > 0
+        # Return constraint
+        has_incoming
+    ```;
+} :Inheritance (pm_CtrlActivityIn -> pm_CtrlIn)
+
+pm_CtrlOut:Class {
+  abstract = True;
+} :Inheritance (pm_CtrlOut -> pm_CtrlPort)
+
+pm_CtrlSource:Class {
+    # 1) A control source port can't have any control flow inputs
+    # 2) A control source port must have at least one outgoing control flow
+    constraint = ```
+        no_incoming = len(get_incoming(this, "pm_CtrlFlow")) == 0
+        has_outgoing = len(get_outgoing(this, "pm_CtrlFlow")) > 0
+
+        # Return constraint
+        no_incoming and has_outgoing
+    ```;
+} :Inheritance (pm_CtrlSource -> pm_CtrlOut)
+
+pm_CtrlActivityOut:Class {
+    # 1) Must have at least one outgoing control flow
+    constraint = ```
+        has_outgoing = len(get_outgoing(this, "pm_CtrlFlow")) > 0
+
+        # Return constraint
+        has_outgoing
+    ```;
+} :Inheritance (pm_CtrlActivityOut -> pm_CtrlOut)
+
+##################################################
+
+pm_DataPort:Class {
+  abstract = True;
+}
+
+pm_DataIn:Class {
+  abstract = True;
+} :Inheritance (pm_DataIn -> pm_DataPort)
+
+pm_DataSink:Class
+  :Inheritance (pm_DataSink -> pm_DataIn)
+
+pm_DataActivityIn:Class
+  :Inheritance (pm_DataActivityIn -> pm_DataIn)
+
+pm_DataOut:Class {
+  abstract = True;
+} :Inheritance (pm_DataOut -> pm_DataPort)
+
+pm_DataSource:Class
+  :Inheritance (pm_DataSource -> pm_DataOut)
+
+pm_DataActivityOut:Class
+  :Inheritance (pm_DataActivityOut -> pm_DataOut)
+
+##################################################
+##################################################
+
+pm_Owns:Association (pm_Model -> pm_ModelElement) {
+  source_lower_cardinality = 1;
+  source_upper_cardinality = 1;
+}
+
+##################################################
+
+pm_CtrlFlow:Association (pm_CtrlPort -> pm_CtrlPort)
+
+##################################################
+
+pm_HasCtrlIn:Association (pm_Activity -> pm_CtrlIn) {
+    source_upper_cardinality = 1;
+    target_lower_cardinality = 1;
+}
+
+pm_HasCtrlOut:Association (pm_Activity -> pm_CtrlOut) {
+    source_upper_cardinality = 1;
+    target_lower_cardinality = 1;
+}
+
+pm_HasDataIn:Association (pm_Activity -> pm_DataIn) {
+    source_upper_cardinality = 1;
+}
+
+pm_HasDataOut:Association (pm_Activity -> pm_DataOut) {
+    source_upper_cardinality = 1;
+}
+
+##################################################
+
+pm_DataFlowIn:Association (pm_DataOut -> pm_Artefact) {
+    source_lower_cardinality = 1;
+    target_lower_cardinality = 1;
+}
+
+pm_DataFlowOut:Association (pm_Artefact -> pm_DataIn) {
+    source_lower_cardinality = 1;
+    target_lower_cardinality = 1;
+}
+
+##################################################
+##################################################
+
+has_source_and_sink:GlobalConstraint {
+    # There should be at least one source and sink control port
+    constraint = ```
+        contains_source = len(get_all_instances("pm_CtrlSource")) > 0
+        contains_sink = len(get_all_instances("pm_CtrlSink")) > 0
+
+        # return constraint      
+        contains_source and contains_sink
+    ```;
+}
+
+##################################################

@@ -1,0 +1,7 @@
+model:RAM_pm_Model
+
+# Check if the model isn't already connected to a process trace
+start_trace:RAM_pt_StartTrace
+  :RAM_pt_Starts (start_trace -> model)
+end_trace:RAM_pt_EndTrace
+  :RAM_pt_Ends (end_trace -> model)

@@ -10,7 +10,8 @@ from uuid import UUID
 from typing import Optional
 from util.timer import Timer
 
-NEXT_ID = 0
+NEXT_LINK_ID = 0
+NEXT_OBJ_ID = 0
 
 # Models map names to elements
 # This builds the inverse mapping, so we can quickly lookup the name of an element
@@ -145,7 +146,7 @@ class ODAPI:
         typ = self.cdapi.get_type(type_name)
         types = set(typ) if not include_subtypes else self.cdapi.transitive_sub_types[type_name]
         for type_of_obj in self.bottom.read_outgoing_elements(obj, "Morphism"):
-            if type_of_obj in types:
+            if self.get_name(type_of_obj) in types:
                 return True
         return False
 
@@ -153,10 +154,9 @@ class ODAPI:
         self.bottom.delete_element(obj)
         self.__recompute_mappings()
 
-    # Does the class of the object have the given attribute?
+    # Does the the object have the given attribute?
     def has_slot(self, obj: UUID, attr_name: str):
-        class_name = self.get_name(self.get_type(obj))
-        return self.od.get_attr_link_name(class_name, attr_name) != None
+        return self.od.get_slot_link(obj, attr_name) != None
 
     def get_slots(self, obj: UUID) -> list[str]:
         return [attr_name for attr_name, _ in self.od.get_slots(obj)]
@@ -247,7 +247,7 @@ class ODAPI:
             raise Exception("Unimplemented type "+value)
 
     def create_link(self, link_name: Optional[str], assoc_name: str, src: UUID, tgt: UUID):
-        global NEXT_ID
+        global NEXT_LINK_ID
         types = self.bottom.read_outgoing_elements(self.mm, assoc_name) 
         if len(types) == 0:
             raise Exception(f"No such association: '{assoc_name}'")
@@ -255,13 +255,18 @@ class ODAPI:
             raise Exception(f"More than one association exists with name '{assoc_name}' - this means the MM is invalid.")
         typ = types[0]
         if link_name == None:
-            link_name = f"__{assoc_name}{NEXT_ID}"
-            NEXT_ID += 1
+            link_name = f"__{assoc_name}{NEXT_LINK_ID}"
+            NEXT_LINK_ID += 1
         link_id = self.od._create_link(link_name, typ, src, tgt)
         self.__recompute_mappings()
+
         return link_id
 
     def create_object(self, object_name: Optional[str], class_name: str):
+        global NEXT_OBJ_ID
+        if object_name == None:
+            object_name = f"__{class_name}{NEXT_OBJ_ID}"
+            NEXT_OBJ_ID += 1
         obj = self.od.create_object(object_name, class_name)
         self.__recompute_mappings()
         return obj
@@ -279,6 +284,7 @@ def bind_api_readonly(odapi):
         'get_target': odapi.get_target,
         'get_source': odapi.get_source,
         'get_slot': odapi.get_slot,
+        'get_slots': odapi.get_slots,
         'get_slot_value': odapi.get_slot_value,
         'get_slot_value_default': odapi.get_slot_value_default,
         'get_all_instances': odapi.get_all_instances,
@@ -287,6 +293,7 @@ def bind_api_readonly(odapi):
         'get_outgoing': odapi.get_outgoing,
         'get_incoming': odapi.get_incoming,
         'has_slot': odapi.has_slot,
+        'is_instance': odapi.is_instance,
     }
     return funcs
 

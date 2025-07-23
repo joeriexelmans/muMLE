@@ -148,7 +148,7 @@ class OD:
         actioncode_t.create(value)
         return self.create_model_ref(name, "ActionCode", actioncode_node)
 
-    def create_bytes_value(self, name: str, value: str):
+    def create_bytes_value(self, name: str, value: bytes):
         from services.primitives.bytes_type import Bytes
         bytes_node = self.bottom.create_node()
         bytes_t = Bytes(bytes_node, self.bottom.state)

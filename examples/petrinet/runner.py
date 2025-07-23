@@ -1,3 +1,4 @@
+from examples.schedule.RuleExecuter import RuleExecuter
 from state.devstate import DevState
 from api.od import ODAPI
 from concrete_syntax.textual_od.renderer import render_od
@@ -8,6 +9,10 @@ from transformation.rule import RuleMatcherRewriter, ActionGenerator
 from transformation.ramify import ramify
 from examples.semantics.operational import simulator
 from examples.petrinet.renderer import show_petri_net
+
+from examples.schedule.ScheduledActionGenerator import *
+from examples.schedule.RuleExecuter import *
+
 
 
 if __name__ == "__main__":
@@ -46,19 +51,24 @@ if __name__ == "__main__":
         mm_rt_ramified,
         ["fire_transition"]) # only 1 rule :(
 
-    matcher_rewriter = RuleMatcherRewriter(state, mm_rt, mm_rt_ramified)
-    action_generator = ActionGenerator(matcher_rewriter, rules)
+    # matcher_rewriter = RuleMatcherRewriter(state, mm_rt, mm_rt_ramified)
+    # action_generator = ActionGenerator(matcher_rewriter, rules)
+
+    matcher_rewriter2 = RuleExecuter(state, mm_rt, mm_rt_ramified)
+    action_generator = ScheduleActionGenerator(matcher_rewriter2, f"models/schedule.od")
 
     def render_callback(od):
         show_petri_net(od)
         # return render_od(state, od.m, od.mm)
         return render_od_jinja2(state, od.m, od.mm)
 
-    sim = simulator.Simulator(
+    action_generator.generate_dot()
+
+    sim = simulator.MinimalSimulator(
         action_generator=action_generator,
         decision_maker=simulator.InteractiveDecisionMaker(auto_proceed=False),
         # decision_maker=simulator.RandomDecisionMaker(seed=0),
-        renderer=render_callback,
+        termination_condition=action_generator.termination_condition,
         # renderer=lambda od: render_od(state, od.m, od.mm),
     )
 

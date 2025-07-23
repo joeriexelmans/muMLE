@@ -53,7 +53,7 @@ class CDAPI:
         return self.bottom.read_outgoing_elements(self.m, type_name)[0]
 
     def is_direct_subtype(self, super_type_name: str, sub_type_name: str):
-        return sub_type_name in self.direct_sub_types[super_type]
+        return sub_type_name in self.direct_sub_types[super_type_name]
 
     def is_direct_supertype(self, sub_type_name: str, super_type_name: str):
         return super_type_name in self.direct_super_types[sub_type_name]
@@ -83,3 +83,6 @@ class CDAPI:
                 result = self.find_attribute_type(supertype, attr_name)
                 if result != None:
                     return result
+
+    def get_type(self, type_name: str):
+        return next(k for k, v in self.type_model_names.items() if v == type_name)

@@ -1,0 +1,42 @@
+# Copy the left hand side
+
+out_state:RAM_pm_CtrlPortState {
+    # Only set the output port to inactive if all connected input ports are set to active
+    RAM_active = ```
+        set_to_active = False
+
+        output_port = matched("out")
+        outgoing_flows = get_outgoing(output_port, "pm_CtrlFlow")
+
+        # for each flow: pm_CtrlFlow -> pm_CtrlIn <- pm_Of <- pm_CtrlPortState == state 
+        all_input_port_states = [get_source(get_incoming(get_target(flow), "pm_Of")[0]) for flow in outgoing_flows]
+        input_port_state = matched("in_state")
+
+        for state in all_input_port_states:
+            is_active = get_slot_value(state, "active")
+
+            # If the state is not active and it is not the input port state we have matched and planned to set active
+            # Then we can't yet set this output port state to active
+            if not is_active and state != input_port_state:
+                set_to_active = True
+                break
+          
+        # Set the attribute to the assigned value
+        set_to_active
+    ```;
+}
+
+out:RAM_pm_CtrlOut
+
+state_to_out:RAM_pm_Of (out_state -> out)
+
+in_state:RAM_pm_CtrlPortState {
+    # Set the input port active
+    RAM_active = `True`;
+}
+
+in:RAM_pm_CtrlIn
+
+state_to_in:RAM_pm_Of (in_state -> in)
+
+flow:RAM_pm_CtrlFlow (out -> in)

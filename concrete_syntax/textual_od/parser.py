@@ -93,8 +93,8 @@ def parse_od(state,
             return (_Code(str(token[1:-1])), token.line) # strip the ``
 
         def BYTES(self, token):
-            # return (bytes(token[2:-1], "utf-8"), token.line)  # Strip b"" or b''
-            return (bytes(token[2:-1], "utf-8"), token.line)  # Strip b"" or b''
+            # Strip b"" or b'', and make \\ back to \ (happens when reading the file as a string)
+            return (token[2:-1].encode().decode('unicode_escape').encode('raw_unicode_escape'), token.line)  # Strip b"" or b''
 
         def INDENTED_CODE(self, token):
             skip = 4 # strip the ``` and the following newline character

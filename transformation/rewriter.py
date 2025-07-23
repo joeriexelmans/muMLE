@@ -22,7 +22,6 @@ class TryAgainNextRound(Exception):
 
 # Rewrite is performed in-place (modifying `host_m`)
 def rewrite(state,
-    lhs_m: UUID, # LHS-pattern
     rhs_m: UUID, # RHS-pattern
     pattern_mm: UUID, # meta-model of both patterns (typically the RAMified host_mm)
     lhs_match: dict, # a match, morphism, from lhs_m to host_m (mapping pattern name -> host name), typically found by the 'match_od'-function.

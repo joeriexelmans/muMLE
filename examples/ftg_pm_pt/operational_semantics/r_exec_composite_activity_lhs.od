@@ -1,0 +1,36 @@
+# When a control port is active and is connected to an activity, we want to execute the activity. If it is a composite one, we execute the inner workflow of it
+# But, if the activity has input_and (input_or = False). It only can be activated if all its inputs are active
+
+
+# Match the model
+model:RAM_pm_Model
+
+# Match the a python automated activity
+activity:RAM_pm_Activity {
+
+    RAM_composite = `True`;
+
+} model_to_activity:RAM_pm_Owns (model -> activity)
+
+
+# Match a control activity in port that is active
+ctrl_in:RAM_pm_CtrlActivityIn
+
+ctrl_in_state:RAM_pm_CtrlPortState {
+    RAM_active = `get_value(this)`;
+}
+
+state_to_port:RAM_pm_Of (ctrl_in_state -> ctrl_in)
+
+# Match the activity link to the port
+activity_to_port:RAM_pm_HasCtrlIn (activity -> ctrl_in)
+
+# Match the end of the trace
+end_trace:RAM_pt_EndTrace
+ends:RAM_pt_Ends (end_trace -> model)
+
+# Match the previous trace element before the end trace
+prev_trace_element:RAM_pt_Event
+
+followed_by:RAM_pt_IsFollowedBy (prev_trace_element -> end_trace)
+

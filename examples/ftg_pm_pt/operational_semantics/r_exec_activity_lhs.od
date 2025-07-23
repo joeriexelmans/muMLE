@@ -1,0 +1,49 @@
+# When a control port is active and is connected to an activity, we want to execute the activity
+# But, if the activity has input_and (input_or = False). It only can be activated if all its inputs are active
+
+
+# Match the model
+model:RAM_pm_Model
+
+# Match the a python automated activity
+py_activity:RAM_pm_PythonAutomatedActivity {
+    # Check if all connected ports are active in case of input_and
+    condition = ```
+        all_active = True
+        
+        # Check for or / and
+        if not get_slot_value(this, "input_or"):
+            # Get all the ctrl in ports
+            for has_ctrl_in in get_outgoing(this, "pm_HasCtrlIn"):
+                c_in_state = get_source(get_incoming(get_target(has_ctrl_in), "pm_Of")[0])
+                # Check if the port is active or not
+                if not get_slot_value(c_in_state, "active"):
+                    all_active = False
+                    break
+
+        all_active
+    ```;
+} model_to_activity:RAM_pm_Owns (model -> py_activity)
+
+
+# Match a control activity in port that is active
+ctrl_in:RAM_pm_CtrlActivityIn
+
+ctrl_in_state:RAM_pm_CtrlPortState {
+    RAM_active = `get_value(this)`;
+}
+
+state_to_port:RAM_pm_Of (ctrl_in_state -> ctrl_in)
+
+# Match the activity link to the port
+activity_to_port:RAM_pm_HasCtrlIn (py_activity -> ctrl_in)
+
+# Match the end of the trace
+end_trace:RAM_pt_EndTrace
+ends:RAM_pt_Ends (end_trace -> model)
+
+# Match the previous trace element before the end trace
+prev_trace_element:RAM_pt_Event
+
+followed_by:RAM_pt_IsFollowedBy (prev_trace_element -> end_trace)
+
