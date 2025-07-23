@@ -30,3 +30,7 @@ The following branches exist:
  * `master` - currently equivalent to `mde2425` (this is the branch that was cloned by the students). This branch will be deleted after Sep 2025, because the name is too vague.
  * `development` - in this branch, new development will occur, primarily cleaning up the code to prepare for next year's MDE classes.
 
+
+## Tutorial
+
+A good place to learn how to use muMLE is the `tutorial` directory. Each file is an executable Python script that explains muMLE step-by-step (read the comments).
