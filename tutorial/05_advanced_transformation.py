@@ -1,3 +1,5 @@
+# In this tutorial, we implement the semantics of Petri Nets by means of model transformation.
+# Compared to the previous tutorial, it only introduces one more feature: pivots.
 # Consider the following Petri Net language meta-model:
 
 mm_cs = """
@@ -74,12 +76,14 @@ mm_ramified = ramify(state, mm)
 # We will now implement Petri Net operational semantics by means of model transformation.
 
 
-# Look for any transition
+# Look for any transition:
+
 lhs_transition_cs = """
     t:RAM_Transition
 """
 
-# A transition is disabled if it has an incoming arc (P2T) from a place with 0 tokens:
+# But, if that transition has an incoming arc (P2T) from a place with not enough tokens, the transition cannot fire. We can express this as a pattern:
+
 lhs_transition_disabled_cs = """
     t:RAM_Transition
     p:RAM_Place
@@ -93,30 +97,37 @@ lhs_transition_disabled_cs = """
     }
 """
 
+# Parse these patterns:
 lhs_transition = loader.parse_and_check(state, lhs_transition_cs, mm_ramified, "lhs_transition")
 lhs_transition_disabled = loader.parse_and_check(state, lhs_transition_disabled_cs, mm_ramified, "lhs_transition_disabled")
 
-# We write a generator function, that yields all enabled transitions.
-# Notice that we nest two calls to 'match_od', and the result of the first call is passed as a pivot to the second:
+# To find enabled transitions, we first match our first pattern (looking for a transition), and then we try to 'grow' that match with our second, "Negative Application Condition" (NAC) pattern. If growing the match with the second pattern is possible, we abort and look for another transition.
+# To grow a match, we use the 'pivot'-argument of the match-function. A pivot is a partial match that needs to be grown.
+# This results in the following generator function:
 
 def find_enabled_transitions(m):
     for match in match_od(state, m, mm, lhs_transition, mm_ramified):
-        for match_nac in match_od(state, m, mm, lhs_transition_disabled, mm_ramified, pivot=match):
+        for match_nac in match_od(state, m, mm, lhs_transition_disabled, mm_ramified, pivot=match): # <-- notice the pivot :)
             # transition is disabled
             break # find next transition
         else:
-            # transition is enabled
+            # we've found an enabled transition:
             yield match
 
+# Let's see if it works:
 
 enabled = list(find_enabled_transitions(m))
 print("enabled PN transitions:", enabled)
 
 
-# To fire a transition, decrement the number of tokens of every incoming place:
+# Next, to fire a transition:
+#  - we decrement the number of tokens of every incoming place
+#  - we increment the number of tokens of every outgoing place
+# We do this also by growing our match: given an enabled transition (already matched), we match for *any* incoming place, and rewrite that place to reduce its tokens. Next, we look for *any* outgoing place, and increment its tokens.
 
+# Decrement incoming
 lhs_incoming_cs = """
-    t:RAM_Transition
+    t:RAM_Transition # <-- we already know this transition is enabled
     inplace:RAM_Place {
         RAM_tokens = `True`; # this needs to be here, otherwise, the rewriter will try to create a new attribute rather than update the existing one
     }
@@ -134,8 +145,7 @@ rhs_incoming_cs = """
     inarc:RAM_P2T (inplace -> t)
 """
 
-# And increment for every outgoing place:
-
+# Increment outgoing
 lhs_outgoing_cs = """
     t:RAM_Transition
     outplace:RAM_Place {
@@ -155,17 +165,18 @@ rhs_outgoing_cs = """
     outarc:RAM_T2P (t -> outplace)
 """
 
+# Parse all the patterns
 lhs_incoming = loader.parse_and_check(state, lhs_incoming_cs, mm_ramified, "lhs_incoming")
 rhs_incoming = loader.parse_and_check(state, rhs_incoming_cs, mm_ramified, "rhs_incoming")
 lhs_outgoing = loader.parse_and_check(state, lhs_outgoing_cs, mm_ramified, "lhs_outgoing")
 rhs_outgoing = loader.parse_and_check(state, rhs_outgoing_cs, mm_ramified, "rhs_outgoing")
 
+# Firing is really simple:
 def fire_transition(m, transition_match):
-    print("firing transition:", transition_match['t'])
     for match_incoming in match_od(state, m, mm, lhs_incoming, mm_ramified, pivot=transition_match):
-        rewriter.rewrite(state, lhs_incoming, rhs_incoming, mm_ramified, match_incoming, m, mm)
+        rewriter.rewrite(state, rhs_incoming, mm_ramified, match_incoming, m, mm)
     for match_outgoing in match_od(state, m, mm, lhs_outgoing, mm_ramified, pivot=transition_match):
-        rewriter.rewrite(state, lhs_outgoing, rhs_outgoing, mm_ramified, match_outgoing, m, mm)
+        rewriter.rewrite(state, rhs_outgoing, mm_ramified, match_outgoing, m, mm)
 
 def show_petri_net(m):
     odapi = ODAPI(state, m, mm)
@@ -192,7 +203,11 @@ def show_petri_net(m):
 while len(enabled) > 0:
     print(show_petri_net(m))
     print("\nenabled PN transitions:", enabled)
-    print("press ENTER to fire", enabled[0]['t'])
+    to_fire = enabled[0]['t']
+    print("press ENTER to fire", to_fire)
     input()
+    print("firing transition:", to_fire)
     fire_transition(m, enabled[0])
     enabled = list(find_enabled_transitions(m))
+
+# That's it!

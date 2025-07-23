@@ -139,7 +139,7 @@ from transformation import rewriter
 m_rewritten = clone_od(state, m, mm) # copy our model before rewriting (this is optional - we do this so we can later render the model before and after rewrite in a single PlantUML diagram)
 
 lhs_match = all_matches[0] # select one match
-rhs_match = rewriter.rewrite(state, lhs, rhs, ramified_mm, lhs_match, m_rewritten, mm)
+rhs_match = rewriter.rewrite(state, rhs, ramified_mm, lhs_match, m_rewritten, mm)
 
 # Let's render everything as PlantUML:
 
