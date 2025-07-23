@@ -1,5 +1,6 @@
 # In this tutorial, we implement the semantics of Petri Nets by means of model transformation.
 # Compared to the previous tutorial, it only introduces one more feature: pivots.
+
 # Consider the following Petri Net language meta-model:
 
 mm_cs = """
