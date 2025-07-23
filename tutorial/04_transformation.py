@@ -9,6 +9,7 @@ from concrete_syntax.textual_od.renderer import render_od
 from concrete_syntax.common import indent
 from concrete_syntax.plantuml import renderer as plantuml
 from concrete_syntax.plantuml.make_url import make_url as make_plantuml_url
+from framework.conformance import Conformance, render_conformance_check_result
 
 mm_cs = """
     Bear:Class
@@ -57,6 +58,12 @@ ramified_mm = ramify(state, mm)
 
 print("RAMified meta-model:")
 print(indent(render_od(state, ramified_mm, mmm), 2))
+
+# Note that our RAMified meta-model is also a valid class diagram:
+
+print()
+print("Is valid class diagram?")
+print(render_conformance_check_result(Conformance(state, ramified_mm, mmm).check_nominal()))
 
 # We now specify our patterns.
 # We create a rule that looks for a Man with weight > 60, who is afraid of an animal:
