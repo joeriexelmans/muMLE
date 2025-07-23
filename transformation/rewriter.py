@@ -223,7 +223,12 @@ def rewrite(state,
             result = exec_then_eval(python_expr,
                 _globals=eval_globals,
                 _locals={'this': host_obj}) # 'this' can be used to read the previous value of the slot
-            host_odapi.overwrite_primitive_value(host_obj_name, result, is_code=False)
+            # print("EVAL", common_name, python_expr, "RESULT", result, host_obj_name)
+            try:
+                host_odapi.overwrite_primitive_value(host_obj_name, result, is_code=False)
+            except Exception as e:
+                e.add_note(f"while evaluating attribute {common_name}")
+                raise
         else:
             msg = f"Don't know what to do with element '{common_name}' -> '{host_obj_name}:{host_type}')"
             # print(msg)

@@ -78,8 +78,7 @@ def bootstrap_scd(state: State) -> UUID:
     add_edge_element("gc_inh_element", glob_constr_node, element_node)
     # # Attribute inherits from Element
     add_edge_element("attr_inh_element", attr_node, element_node)
-    # # Association inherits from Element
-    # add_edge_element("assoc_inh_element", assoc_edge, element_node)
+    # # Association inherits from Class
     add_edge_element("assoc_inh_element", assoc_edge, class_node)
     # # AttributeLink inherits from Element
     add_edge_element("attr_link_inh_element", attr_link_edge, element_node)
