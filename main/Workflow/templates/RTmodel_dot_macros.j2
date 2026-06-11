@@ -1,0 +1,41 @@
+{% macro include_model(model) %}
+{% set m = model.strip() %}
+    subgraph cluster {{ m[m.find("{"):] }}
+{% endmacro %}
+
+{% macro render_rtstate(node) %}
+    {{ node.id }}[label={{ node.name }}]
+{% endmacro %}
+
+{% macro render_port_data(node) -%}
+    {{ node.id }}[label="`{{ node.params.Value }}`"]
+{%- endmacro %}
+
+{% set render_nodes = {
+    "RTState": render_rtstate,
+    "Port_data": render_port_data
+} %}
+
+
+{% macro render_prev(edge) %}
+    {{ edge.target }} -> {{ edge.source }}[label="Next" color="lightgray"]
+{% endmacro %}
+
+{% macro render_running(edge) %}
+    {{ edge.source }} -> {{ edge.target }} [label="Running" color="red"]
+{% endmacro %}
+
+{% macro render_port_data_connect(edge) %}
+    {{ edge.source }} -> {{ edge.target }} [label="Dconn"]
+{% endmacro %}
+
+{% macro render_rt_data_connect(edge) %}
+    {{ edge.source }} -> {{ edge.target }} [label="RTconn"]
+{% endmacro %}
+
+{% set render_edges = {
+    "Prev": render_prev,
+    "Running": render_running,
+    "Port_data_connect": render_port_data_connect,
+    "RT_data_connect": render_rt_data_connect
+} %}

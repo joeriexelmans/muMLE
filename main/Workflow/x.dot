@@ -1,0 +1,582 @@
+digraph Model {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+
+    subgraph cluster {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+        2612[label="a4"]
+        2517[label="a3"]
+        2422[label="a2"]
+        2897[label="a7"]
+        2707[label="a5"]
+        2802[label="a6"]
+        2327[label="a1"]
+        3253[shape=point, width=0.15, xlabel=rt_state]
+        3485[shape=point, width=0.15, xlabel=inputFlow]
+        3282[shape=point, width=0.15, xlabel=finished_task]
+        2992[shape=point, width=0.15, xlabel=out]
+        3108[shape=point, width=0.15, xlabel=out]
+        3949[shape=point, width=0.15, xlabel=data]
+        3717[shape=point, width=0.15, xlabel=out]
+        3166[shape=point, width=0.15, xlabel=new_rt_state]
+        3369[shape=point, width=0.15, xlabel=inputFlow]
+        3804[shape=point, width=0.15, xlabel=flow_output]
+        3456[shape=point, width=0.15, xlabel=new_rt_state]
+        3050[shape=point, width=0.15, xlabel=new_rt_state]
+        3224[shape=point, width=0.15, xlabel=activity_finished]
+        3630[shape=point, width=0.15, xlabel=activity]
+        3572[shape=point, width=0.15, xlabel=new_rt_state]
+        3514[shape=point, width=0.15, xlabel=out]
+        3137[shape=point, width=0.15, xlabel=old_rt_state]
+        3427[shape=point, width=0.15, xlabel=old_rt_state]
+        3601[shape=point, width=0.15, xlabel=results]
+        3833[shape=point, width=0.15, xlabel=new_activities]
+        3775[shape=point, width=0.15, xlabel=new_rt_state]
+        3891[shape=point, width=0.15, xlabel=new_rt_state]
+        3079[shape=point, width=0.15, xlabel=in]
+        3746[shape=point, width=0.15, xlabel=activity_finished]
+        3659[shape=point, width=0.15, xlabel=inputFlow1]
+        3920[shape=point, width=0.15, xlabel=new_activities]
+        3543[shape=point, width=0.15, xlabel=old_rt_state]
+        3340[shape=point, width=0.15, xlabel=flow_output]
+        3862[shape=point, width=0.15, xlabel=inputFlow]
+        3021[shape=point, width=0.15, xlabel=rt_state]
+        3195[shape=point, width=0.15, xlabel=finished_task]
+        3688[shape=point, width=0.15, xlabel=inputFlow2]
+        3398[shape=point, width=0.15, xlabel=out]
+        3311[shape=point, width=0.15, xlabel=results]
+
+        3514 -> 3659
+        3717 -> 3862
+        3108 -> 3485
+        2992 -> 3079
+        3398 -> 3688
+        2992 -> 3369
+        3253 -> 3543
+        3050 -> 3775
+        3050 -> 3456
+        3311 -> 3601
+        3253 -> 3021
+        3050 -> 3572
+        3282 -> 3195
+        3253 -> 3137
+        3833 -> 3920
+        3253 -> 3427
+        3050 -> 3891
+        3050 -> 3166
+        3224 -> 3746
+        3224 -> 3630
+        3340 -> 3804
+        3572 -> 2707[color="blue"]
+        3456 -> 2612[color="blue"]
+        3137 -> 2422[color="blue"]
+        3427 -> 2612[color="blue"]
+        3804 -> 2802[color="blue"]
+        3166 -> 2422[color="blue"]
+        3920 -> 2897[color="blue"]
+        3601 -> 2707[color="blue"]
+        3746 -> 2802[color="blue"]
+        3630 -> 2707[color="blue"]
+        3195 -> 2422[color="blue"]
+        3021 -> 2327[color="blue"]
+        3775 -> 2802[color="blue"]
+        3891 -> 2897[color="blue"]
+        3543 -> 2707[color="blue"]
+        2327 -> 3050[color="blue"]
+        2517 -> 3311[color="blue"]
+        2517 -> 3253[color="blue"]
+        2517 -> 3282[color="blue"]
+        2897 -> 3949[color="blue"]
+        2422 -> 3224[color="blue"]
+        2802 -> 3833[color="blue"]
+        2517 -> 3340[color="blue"]
+        3688 -> 2802[color="green"]
+        3485 -> 2707[color="green"]
+        3659 -> 2802[color="green"]
+        3079 -> 2422[color="green"]
+        3862 -> 2897[color="green"]
+        3369 -> 2612[color="green"]
+        2802 -> 3717[color="green"]
+        2707 -> 3514[color="green"]
+        2422 -> 3108[color="green"]
+        2612 -> 3398[color="green"]
+        2327 -> 2992[color="green"]
+}
+
+            11398[label=rt_state13]
+
+            9292[label=rt_state4]
+
+            9639[label=rt_state6]
+
+            11051[label=rt_state11]
+
+            8953[label=rt_state2]
+
+            10845[label=rt_state10]
+
+            8725[label=rt_state1]
+
+            9086[label=rt_state3]
+
+            3978[label=rt_state]
+
+            9809[label=rt_state7]
+
+            8050[label=rt_state0]
+
+            10484[label=rt_state8]
+
+            10712[label=rt_state9]
+
+            11199[label=rt_state12]
+
+            9440[label=rt_state5]
+
+        9902[label="`None`"]
+        3985[label="`None`"]
+        8617[label="`None`"]
+        9823[label="`{}`"]
+        4072[label="`None`"]
+        8301[label="`{}`"]
+        4043[label="`None`"]
+        4014[label="`None`"]
+        4188[label="`None`"]
+        8380[label="`'566b6f3d-1d46-4a6b-8931-901db72ebb0e'`"]
+        10575[label="`'rt_state2'`"]
+        8538[label="`['out']`"]
+        11489[label="`[{'Place': 'a3', 'Id': '4568f4ef-b8b3-46bc-9738-9c38291802e2', 'Process': 'a3', 'Data': {}}]`"]
+        10376[label="`None`"]
+        10297[label="`None`"]
+        10218[label="`'421d10a2-3b57-4c99-817c-65b8b5ea4c06'`"]
+        4159[label="`None`"]
+        11290[label="`['a3']`"]
+        8459[label="`None`"]
+        9184[label="`'a1'`"]
+        4130[label="`None`"]
+        8816[label="`'rt_state1'`"]
+        10943[label="`'a2'`"]
+        8143[label="`None`"]
+        8222[label="`None`"]
+        4101[label="`None`"]
+        9730[label="`[{'Place': 'a2', 'Id': '421d10a2-3b57-4c99-817c-65b8b5ea4c06', 'Process': 'a2', 'Data': {}}]`"]
+        9981[label="`None`"]
+        10060[label="`['out']`"]
+        9531[label="`['a2']`"]
+        10139[label="`'rt_state1'`"]
+        8064[label="`'rt_state0'`"]
+
+            11199 -> 11398[label="Next" color="lightgray"]
+
+            9086 -> 9292[label="Next" color="lightgray"]
+
+            9440 -> 9639[label="Next" color="lightgray"]
+
+            10845 -> 11051[label="Next" color="lightgray"]
+
+            8725 -> 8953[label="Next" color="lightgray"]
+
+            10712 -> 10845[label="Next" color="lightgray"]
+
+            8050 -> 8725[label="Next" color="lightgray"]
+
+            8953 -> 9086[label="Next" color="lightgray"]
+
+            3978 -> 9809[label="Next" color="lightgray"]
+
+            3978 -> 8050[label="Next" color="lightgray"]
+
+            9809 -> 10484[label="Next" color="lightgray"]
+
+            10484 -> 10712[label="Next" color="lightgray"]
+
+            11051 -> 11199[label="Next" color="lightgray"]
+
+            9292 -> 9440[label="Next" color="lightgray"]
+
+            4014 -> 9902[label="Next" color="lightgray"]
+
+            3985 -> 8617[label="Next" color="lightgray"]
+
+            4101 -> 9823[label="Next" color="lightgray"]
+
+            4101 -> 8301[label="Next" color="lightgray"]
+
+            4072 -> 8380[label="Next" color="lightgray"]
+
+            10376 -> 10575[label="Next" color="lightgray"]
+
+            4130 -> 8538[label="Next" color="lightgray"]
+
+            9981 -> 11489[label="Next" color="lightgray"]
+
+            3985 -> 10376[label="Next" color="lightgray"]
+
+            4159 -> 10297[label="Next" color="lightgray"]
+
+            4072 -> 10218[label="Next" color="lightgray"]
+
+            10297 -> 11290[label="Next" color="lightgray"]
+
+            4159 -> 8459[label="Next" color="lightgray"]
+
+            8143 -> 9184[label="Next" color="lightgray"]
+
+            8617 -> 8816[label="Next" color="lightgray"]
+
+            9902 -> 10943[label="Next" color="lightgray"]
+
+            4014 -> 8143[label="Next" color="lightgray"]
+
+            4188 -> 8222[label="Next" color="lightgray"]
+
+            8222 -> 9730[label="Next" color="lightgray"]
+
+            4188 -> 9981[label="Next" color="lightgray"]
+
+            4130 -> 10060[label="Next" color="lightgray"]
+
+            8459 -> 9531[label="Next" color="lightgray"]
+
+            4043 -> 10139[label="Next" color="lightgray"]
+
+            4043 -> 8064[label="Next" color="lightgray"]
+
+            9292 -> 2802 [label="Running" color="red"]
+
+            11051 -> 2802 [label="Running" color="red"]
+
+            8953 -> 2422 [label="Running" color="red"]
+
+            10845 -> 2707 [label="Running" color="red"]
+
+            8725 -> 2422 [label="Running" color="red"]
+
+            8725 -> 2612 [label="Running" color="red"]
+
+            9086 -> 2707 [label="Running" color="red"]
+
+            3978 -> 2327 [label="Running" color="red"]
+
+            9809 -> 2327 [label="Running" color="red"]
+
+            8050 -> 2327 [label="Running" color="red"]
+
+            10484 -> 2612 [label="Running" color="red"]
+
+            10484 -> 2422 [label="Running" color="red"]
+
+            10712 -> 2422 [label="Running" color="red"]
+
+            11199 -> 2897 [label="Running" color="red"]
+
+            9440 -> 2897 [label="Running" color="red"]
+
+            8380 -> 3282 [label="Dconn"]
+
+            4014 -> 3224 [label="Dconn"]
+
+            3985 -> 3050 [label="Dconn"]
+
+            9184 -> 3224 [label="Dconn"]
+
+            10297 -> 3833 [label="Dconn"]
+
+            10060 -> 3340 [label="Dconn"]
+
+            8617 -> 3050 [label="Dconn"]
+
+            4043 -> 3253 [label="Dconn"]
+
+            9981 -> 3949 [label="Dconn"]
+
+            9902 -> 3224 [label="Dconn"]
+
+            8064 -> 3253 [label="Dconn"]
+
+            10943 -> 3224 [label="Dconn"]
+
+            10218 -> 3282 [label="Dconn"]
+
+            4130 -> 3340 [label="Dconn"]
+
+            10139 -> 3253 [label="Dconn"]
+
+            9823 -> 3311 [label="Dconn"]
+
+            4101 -> 3311 [label="Dconn"]
+
+            8816 -> 3050 [label="Dconn"]
+
+            4188 -> 3949 [label="Dconn"]
+
+            8301 -> 3311 [label="Dconn"]
+
+            8143 -> 3224 [label="Dconn"]
+
+            9531 -> 3833 [label="Dconn"]
+
+            11489 -> 3949 [label="Dconn"]
+
+            11290 -> 3833 [label="Dconn"]
+
+            8222 -> 3949 [label="Dconn"]
+
+            9730 -> 3949 [label="Dconn"]
+
+            4072 -> 3282 [label="Dconn"]
+
+            4159 -> 3833 [label="Dconn"]
+
+            10376 -> 3050 [label="Dconn"]
+
+            8459 -> 3833 [label="Dconn"]
+
+            10575 -> 3050 [label="Dconn"]
+
+            8538 -> 3340 [label="Dconn"]
+
+            8953 -> 8064 [label="RTconn"]
+
+            3978 -> 4043 [label="RTconn"]
+
+            10712 -> 9823 [label="RTconn"]
+
+            9809 -> 9823 [label="RTconn"]
+
+            10845 -> 10060 [label="RTconn"]
+
+            9809 -> 9981 [label="RTconn"]
+
+            8725 -> 8816 [label="RTconn"]
+
+            9639 -> 9730 [label="RTconn"]
+
+            8725 -> 8538 [label="RTconn"]
+
+            9086 -> 8064 [label="RTconn"]
+
+            11398 -> 9823 [label="RTconn"]
+
+            9086 -> 8459 [label="RTconn"]
+
+            9292 -> 8301 [label="RTconn"]
+
+            9639 -> 9184 [label="RTconn"]
+
+            9086 -> 8380 [label="RTconn"]
+
+            11199 -> 10943 [label="RTconn"]
+
+            8050 -> 8380 [label="RTconn"]
+
+            9086 -> 8816 [label="RTconn"]
+
+            3978 -> 4014 [label="RTconn"]
+
+            11051 -> 10297 [label="RTconn"]
+
+            8953 -> 8816 [label="RTconn"]
+
+            8725 -> 8301 [label="RTconn"]
+
+            8050 -> 8617 [label="RTconn"]
+
+            9639 -> 8064 [label="RTconn"]
+
+            10845 -> 10218 [label="RTconn"]
+
+            11199 -> 9981 [label="RTconn"]
+
+            9639 -> 9531 [label="RTconn"]
+
+            9440 -> 9531 [label="RTconn"]
+
+            9292 -> 9184 [label="RTconn"]
+
+            8725 -> 8143 [label="RTconn"]
+
+            3978 -> 4188 [label="RTconn"]
+
+            11051 -> 10218 [label="RTconn"]
+
+            10845 -> 10575 [label="RTconn"]
+
+            8725 -> 8222 [label="RTconn"]
+
+            9639 -> 8380 [label="RTconn"]
+
+            8050 -> 8538 [label="RTconn"]
+
+            9292 -> 8222 [label="RTconn"]
+
+            11051 -> 9823 [label="RTconn"]
+
+            10484 -> 10297 [label="RTconn"]
+
+            9086 -> 8538 [label="RTconn"]
+
+            9440 -> 8538 [label="RTconn"]
+
+            9440 -> 8301 [label="RTconn"]
+
+            10712 -> 10297 [label="RTconn"]
+
+            10845 -> 10297 [label="RTconn"]
+
+            10484 -> 9981 [label="RTconn"]
+
+            9809 -> 10139 [label="RTconn"]
+
+            9086 -> 8222 [label="RTconn"]
+
+            9440 -> 8222 [label="RTconn"]
+
+            10845 -> 10139 [label="RTconn"]
+
+            9292 -> 8380 [label="RTconn"]
+
+            8953 -> 8380 [label="RTconn"]
+
+            9292 -> 8538 [label="RTconn"]
+
+            10845 -> 10943 [label="RTconn"]
+
+            9440 -> 9184 [label="RTconn"]
+
+            11199 -> 10218 [label="RTconn"]
+
+            9809 -> 10376 [label="RTconn"]
+
+            11051 -> 10943 [label="RTconn"]
+
+            9086 -> 8301 [label="RTconn"]
+
+            10712 -> 10218 [label="RTconn"]
+
+            11398 -> 10139 [label="RTconn"]
+
+            10484 -> 10218 [label="RTconn"]
+
+            10845 -> 9981 [label="RTconn"]
+
+            8050 -> 8143 [label="RTconn"]
+
+            11398 -> 10575 [label="RTconn"]
+
+            8953 -> 8301 [label="RTconn"]
+
+            8953 -> 8459 [label="RTconn"]
+
+            8953 -> 8143 [label="RTconn"]
+
+            11051 -> 10575 [label="RTconn"]
+
+            3978 -> 4101 [label="RTconn"]
+
+            11199 -> 10575 [label="RTconn"]
+
+            9809 -> 10297 [label="RTconn"]
+
+            9292 -> 8064 [label="RTconn"]
+
+            8725 -> 8459 [label="RTconn"]
+
+            8050 -> 8301 [label="RTconn"]
+
+            3978 -> 4072 [label="RTconn"]
+
+            11398 -> 10943 [label="RTconn"]
+
+            11199 -> 10060 [label="RTconn"]
+
+            9440 -> 8064 [label="RTconn"]
+
+            11051 -> 10139 [label="RTconn"]
+
+            11051 -> 9981 [label="RTconn"]
+
+            8725 -> 8380 [label="RTconn"]
+
+            3978 -> 4159 [label="RTconn"]
+
+            8050 -> 8459 [label="RTconn"]
+
+            11199 -> 9823 [label="RTconn"]
+
+            10712 -> 9902 [label="RTconn"]
+
+            9440 -> 8380 [label="RTconn"]
+
+            9440 -> 8816 [label="RTconn"]
+
+            10712 -> 10139 [label="RTconn"]
+
+            9639 -> 8538 [label="RTconn"]
+
+            9292 -> 8816 [label="RTconn"]
+
+            10484 -> 9902 [label="RTconn"]
+
+            8953 -> 8222 [label="RTconn"]
+
+            11398 -> 10060 [label="RTconn"]
+
+            8050 -> 8064 [label="RTconn"]
+
+            9086 -> 9184 [label="RTconn"]
+
+            8725 -> 8064 [label="RTconn"]
+
+            11199 -> 10139 [label="RTconn"]
+
+            9809 -> 10060 [label="RTconn"]
+
+            11398 -> 10218 [label="RTconn"]
+
+            9292 -> 8459 [label="RTconn"]
+
+            8953 -> 8538 [label="RTconn"]
+
+            10484 -> 10060 [label="RTconn"]
+
+            10712 -> 10575 [label="RTconn"]
+
+            10845 -> 9823 [label="RTconn"]
+
+            3978 -> 4130 [label="RTconn"]
+
+            11199 -> 11290 [label="RTconn"]
+
+            10484 -> 10139 [label="RTconn"]
+
+            8050 -> 8222 [label="RTconn"]
+
+            10484 -> 9823 [label="RTconn"]
+
+            11398 -> 11290 [label="RTconn"]
+
+            3978 -> 3985 [label="RTconn"]
+
+            11051 -> 10060 [label="RTconn"]
+
+            9639 -> 8301 [label="RTconn"]
+
+            10712 -> 10060 [label="RTconn"]
+
+            10484 -> 10575 [label="RTconn"]
+
+            9809 -> 9902 [label="RTconn"]
+
+            9639 -> 8816 [label="RTconn"]
+
+            10712 -> 9981 [label="RTconn"]
+
+            11398 -> 11489 [label="RTconn"]
+
+            9809 -> 10218 [label="RTconn"]
+
+}

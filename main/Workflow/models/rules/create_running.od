@@ -1,0 +1,6 @@
+state:RTState
+
+p_running:Place
+run_new:Running (state -> p_running) {
+    Id = `generate_id()`;
+}

@@ -1,0 +1,73 @@
+digraph Model {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+
+    subgraph cluster {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+        2145[label="a1"]
+        2298[label="a4"]
+        2247[label="a3"]
+        2196[label="a2"]
+        2378[shape=point, width=0.15, xlabel=out]
+        2494[shape=point, width=0.15, xlabel=in]
+        2523[shape=point, width=0.15, xlabel=out]
+        2465[shape=point, width=0.15, xlabel=out2]
+        2407[shape=point, width=0.15, xlabel=in]
+        2349[shape=point, width=0.15, xlabel=in]
+        2436[shape=point, width=0.15, xlabel=out1]
+        2552[shape=point, width=0.15, xlabel=in]
+        2581[shape=point, width=0.15, xlabel=out]
+
+        2581 -> 2349
+        2523 -> 2349
+        2378 -> 2407
+        2465 -> 2552
+        2436 -> 2494
+        2494 -> 2247[color="green"]
+        2407 -> 2196[color="green"]
+        2349 -> 2145[color="green"]
+        2552 -> 2298[color="green"]
+        2196 -> 2465[color="green"]
+        2298 -> 2581[color="green"]
+        2196 -> 2436[color="green"]
+        2247 -> 2523[color="green"]
+        2145 -> 2378[color="green"]
+}
+
+            5526[label=rt_state2]
+
+            5462[label=rt_state1]
+
+            5619[label=rt_state3]
+
+            2610[label=rt_state]
+
+            5419[label=rt_state0]
+
+
+            5462 -> 5526[label="Next" color="lightgray"]
+
+            5419 -> 5462[label="Next" color="lightgray"]
+
+            5526 -> 5619[label="Next" color="lightgray"]
+
+            2610 -> 5419[label="Next" color="lightgray"]
+
+            5526 -> 2247 [label="Running" color="red"]
+
+            5526 -> 2298 [label="Running" color="red"]
+
+            5462 -> 2196 [label="Running" color="red"]
+
+            5619 -> 2145 [label="Running" color="red"]
+
+            5619 -> 2247 [label="Running" color="red"]
+
+            2610 -> 2145 [label="Running" color="red"]
+
+            5419 -> 2145 [label="Running" color="red"]
+
+}

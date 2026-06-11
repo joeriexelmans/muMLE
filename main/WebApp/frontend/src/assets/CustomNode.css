@@ -1,0 +1,120 @@
+.custom-node-wrapper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    padding: 0;
+    text-wrap: revert;
+    display: flex;
+
+    .custom-node {
+        width: 100%;
+        height: 100%;
+        padding: 0 16px;
+        min-width: 80px;
+        min-height: 100%;
+        border: 1px solid var(--node-border);
+        border-radius: 8px;
+        background: var(--node-bg);
+        color: var(--node-text);
+        text-align: left;
+        font-family: sans-serif;
+        text-wrap: revert;
+        font-size: 14px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        box-sizing: border-box;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        .label {
+            display: -webkit-box; /* needed for line clamp */
+            -webkit-line-clamp: 2; /* max 2 lines */
+            -webkit-box-orient: vertical; /* vertical stacking */
+            overflow: hidden;
+            text-overflow: ellipsis;
+
+            font-size: 13px;
+            line-height: 20px;
+            min-height: 20px;
+
+            text-align: center; /* horizontal center */
+            width: 100%;
+
+            display: flex; /* for vertical centering */
+            flex-direction: column;
+            justify-content: center; /* vertical center */
+        }
+
+
+        .seperator {
+            margin: -1.5px auto;
+            width: 95%;
+            height: 1px;
+            background: linear-gradient(
+                    to right,
+                    color-mix(in srgb, var(--node-text) 0%, transparent) 0%,
+                    color-mix(in srgb, var(--node-text) 50%, transparent) 30%,
+                    color-mix(in srgb, var(--node-text) 50%, transparent) 70%,
+                    color-mix(in srgb, var(--node-text) 0%, transparent) 100%
+            );
+        }
+    }
+
+    .running {
+        border-color: var(--node-selected);
+
+        box-shadow: 0 0 0 1px color-mix(
+                in srgb,
+                var(--node-selected) 60%,
+                transparent
+        ),
+        0 0 12px color-mix(
+                in srgb,
+                var(--node-selected) 60%,
+                transparent
+        ),
+        0 0 24px color-mix(
+                in srgb,
+                var(--node-selected) 35%,
+                transparent
+        );
+    }
+
+    .handle {
+        pointer-events: auto;
+        width: 8px;
+        height: 8px;
+        border: 1px solid var(--node-border);
+    }
+
+    .handle-tooltip {
+        padding: 4px 6px;
+        /*margin: 0 4px;*/
+        background-color: var(--node-bg);
+        color: var(--node-text);
+        border: 1px solid var(--node-border);
+        border-radius: 4px;
+        font-size: 12px;
+        opacity: 0;
+        transition: opacity 0.2s ease 0.3s;
+        pointer-events: none;
+    }
+
+    .handle-tooltip-wrapper {
+        position: absolute;
+        padding: 4px 4px 4px 0px;
+        margin: -16px 5px;
+        pointer-events: auto;
+    }
+
+    .handle-wrapper {
+        position: absolute;
+    }
+
+    .handle-wrapper:hover .handle-tooltip {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

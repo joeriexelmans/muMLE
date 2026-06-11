@@ -1,0 +1,17 @@
+{% import "model_macros.j2" as r %}
+digraph Model {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+{% for node_category, value in nodes.items() %}
+    {% for node in value %}
+        {{ r.render_nodes[node_category](node) }}
+    {% endfor %}
+{% endfor %}
+
+{% for edge_category, value in edges.items() %}
+    {% for edge in value %}
+        {{ r.render_edges[edge_category](edge) }}
+    {% endfor %}
+{% endfor %}
+}

@@ -1,0 +1,165 @@
+digraph Model {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+
+    subgraph cluster {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+        2422[label="a2"]
+        2327[label="a1"]
+        2612[label="a4"]
+        2517[label="a3"]
+        2707[shape=point, width=0.15, xlabel=in]
+        2910[shape=point, width=0.15, xlabel=in]
+        2823[shape=point, width=0.15, xlabel=out2]
+        2765[shape=point, width=0.15, xlabel=in]
+        2794[shape=point, width=0.15, xlabel=out1]
+        2881[shape=point, width=0.15, xlabel=out]
+        2852[shape=point, width=0.15, xlabel=in]
+        2736[shape=point, width=0.15, xlabel=out]
+        2939[shape=point, width=0.15, xlabel=out]
+
+        2823 -> 2910
+        2939 -> 2707
+        2794 -> 2852
+        2881 -> 2707
+        2736 -> 2765
+        2910 -> 2612[color="green"]
+        2852 -> 2517[color="green"]
+        2765 -> 2422[color="green"]
+        2707 -> 2327[color="green"]
+        2422 -> 2794[color="green"]
+        2612 -> 2939[color="green"]
+        2422 -> 2823[color="green"]
+        2327 -> 2736[color="green"]
+        2517 -> 2881[color="green"]
+}
+
+            6772[label=rt_state6]
+
+            6409[label=rt_state0]
+
+            7028[label=rt_state10]
+
+            6452[label=rt_state1]
+
+            6708[label=rt_state5]
+
+            7412[label=rt_state16]
+
+            7284[label=rt_state14]
+
+            2968[label=rt_state]
+
+            7092[label=rt_state11]
+
+            6644[label=rt_state4]
+
+            6964[label=rt_state9]
+
+            7540[label=rt_state18]
+
+            7156[label=rt_state12]
+
+            6580[label=rt_state3]
+
+            6900[label=rt_state8]
+
+            7604[label=rt_state19]
+
+            7476[label=rt_state17]
+
+            7220[label=rt_state13]
+
+            6836[label=rt_state7]
+
+            6516[label=rt_state2]
+
+            7348[label=rt_state15]
+
+
+            6708 -> 6772[label="Next" color="lightgray"]
+
+            2968 -> 6409[label="Next" color="lightgray"]
+
+            6964 -> 7028[label="Next" color="lightgray"]
+
+            6409 -> 6452[label="Next" color="lightgray"]
+
+            6644 -> 6708[label="Next" color="lightgray"]
+
+            7348 -> 7412[label="Next" color="lightgray"]
+
+            7220 -> 7284[label="Next" color="lightgray"]
+
+            7028 -> 7092[label="Next" color="lightgray"]
+
+            6580 -> 6644[label="Next" color="lightgray"]
+
+            6900 -> 6964[label="Next" color="lightgray"]
+
+            7476 -> 7540[label="Next" color="lightgray"]
+
+            7092 -> 7156[label="Next" color="lightgray"]
+
+            6516 -> 6580[label="Next" color="lightgray"]
+
+            6836 -> 6900[label="Next" color="lightgray"]
+
+            7540 -> 7604[label="Next" color="lightgray"]
+
+            7412 -> 7476[label="Next" color="lightgray"]
+
+            7156 -> 7220[label="Next" color="lightgray"]
+
+            6772 -> 6836[label="Next" color="lightgray"]
+
+            6452 -> 6516[label="Next" color="lightgray"]
+
+            7284 -> 7348[label="Next" color="lightgray"]
+
+            6772 -> 2327 [label="Running" color="red"]
+
+            6409 -> 2327 [label="Running" color="red"]
+
+            7028 -> 2422 [label="Running" color="red"]
+
+            6452 -> 2422 [label="Running" color="red"]
+
+            6708 -> 2517 [label="Running" color="red"]
+
+            7412 -> 2422 [label="Running" color="red"]
+
+            7284 -> 2517 [label="Running" color="red"]
+
+            2968 -> 2327 [label="Running" color="red"]
+
+            7092 -> 2612 [label="Running" color="red"]
+
+            6644 -> 2422 [label="Running" color="red"]
+
+            6964 -> 2327 [label="Running" color="red"]
+
+            7540 -> 2327 [label="Running" color="red"]
+
+            7156 -> 2327 [label="Running" color="red"]
+
+            6580 -> 2327 [label="Running" color="red"]
+
+            6900 -> 2612 [label="Running" color="red"]
+
+            7604 -> 2422 [label="Running" color="red"]
+
+            7476 -> 2517 [label="Running" color="red"]
+
+            7220 -> 2422 [label="Running" color="red"]
+
+            6836 -> 2422 [label="Running" color="red"]
+
+            6516 -> 2612 [label="Running" color="red"]
+
+            7348 -> 2327 [label="Running" color="red"]
+
+}

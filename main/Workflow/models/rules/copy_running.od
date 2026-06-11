@@ -1,0 +1,6 @@
+state:RTState
+
+p_running:Place
+run:Running (state -> p_running) {
+    Id = `get_value(this)`;
+}

@@ -1,0 +1,14 @@
+state:RTState
+
+p_running:Place
+in_port:Port
+
+:Port_data_in (p_running -> in_port)
+
+out_port:Port
+:Port_data_out (p_running -> out_port)
+:Data_flow (out_port -> in_port)
+
+data:Port_data
+p_data_conn:Port_data_connect (data -> out_port)
+r_data_conn:RT_data_connect (state -> data)

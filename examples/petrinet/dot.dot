@@ -1,0 +1,905 @@
+digraph G {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+    subgraph cluster_1 {
+    label = "start"
+
+    style = rounded;
+    input_1 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD>&nbsp;</TD></TR>
+        </TABLE>>
+    ];
+    output_1 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_out">out</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_1->output_1 [style=invis];
+    }
+    subgraph cluster_20 {
+    label = "match
+rules/transition.od
+n = inf"
+
+    style = rounded;
+    input_20 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_20 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_success">success</TD></TR>
+              <TR><TD PORT="e_fail">fail</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_out">out</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_20->output_20 [style=invis];
+    }
+    subgraph cluster_19 {
+    label = "rrrrrrrrrr"
+
+    style = rounded;
+    input_19 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_out">out</TD></TR>
+              <TR><TD PORT="e_foo">foo</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_t">t</TD></TR>
+              <TR><TD PORT="d_foo">foo</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_19 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_rrrreee">rrrreee</TD></TR>
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_t">t</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_19->output_19 [style=invis];
+    }
+    subgraph cluster_2 {
+    label = "null"
+
+    style = rounded;
+    input_2 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_2 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD>&nbsp;</TD></TR>
+        </TABLE>>
+    ];
+        input_2->output_2 [style=invis];
+    }
+    subgraph cluster_14 {
+    label = "rrrrrrrrrr"
+
+    style = rounded;
+    input_14 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_out">out</TD></TR>
+              <TR><TD PORT="e_foo">foo</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_t">t</TD></TR>
+              <TR><TD PORT="d_foo">foo</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_14 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_rrrreee">rrrreee</TD></TR>
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_14->output_14 [style=invis];
+    }
+    subgraph cluster_2 {
+    label = "null"
+
+    style = rounded;
+    input_2 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_2 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD>&nbsp;</TD></TR>
+        </TABLE>>
+    ];
+        input_2->output_2 [style=invis];
+    }
+    subgraph cluster_8 {
+    label = "rrrrrrrrrr"
+
+    style = rounded;
+    input_8 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_out">out</TD></TR>
+              <TR><TD PORT="e_foo">foo</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_t">t</TD></TR>
+              <TR><TD PORT="d_foo">foo</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_8 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_rrrreee">rrrreee</TD></TR>
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_8->output_8 [style=invis];
+    }
+    subgraph cluster_2 {
+    label = "null"
+
+    style = rounded;
+    input_2 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_2 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD>&nbsp;</TD></TR>
+        </TABLE>>
+    ];
+        input_2->output_2 [style=invis];
+    }
+    subgraph cluster_0 {
+    label = "end"
+
+    style = rounded;
+    input_0 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_0 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD>&nbsp;</TD></TR>
+        </TABLE>>
+    ];
+        input_0->output_0 [style=invis];
+    }
+    subgraph cluster_4 {
+    label = "start"
+
+    style = rounded;
+    input_4 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD>&nbsp;</TD></TR>
+        </TABLE>>
+    ];
+    output_4 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_out">out</TD></TR>
+              <TR><TD PORT="e_foo">foo</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_t">t</TD></TR>
+              <TR><TD PORT="d_foo">foo</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_4->output_4 [style=invis];
+    }
+    subgraph cluster_7 {
+    label = "match
+rules/all_outgoing.od
+n = 1"
+
+    style = rounded;
+    input_7 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_7 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_success">success</TD></TR>
+              <TR><TD PORT="e_fail">fail</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_out">out</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_7->output_7 [style=invis];
+    }
+    subgraph cluster_6 {
+    label = "loop"
+
+    style = rounded;
+    input_6 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_6 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_it">it</TD></TR>
+              <TR><TD PORT="e_out">out</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_out">out</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_6->output_6 [style=invis];
+    }
+    subgraph cluster_5 {
+    label = "rewrite
+rules/increase_outgoing.od"
+
+    style = rounded;
+    input_5 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_5 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_out">out</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_out">out</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_5->output_5 [style=invis];
+    }
+    subgraph cluster_3 {
+    label = "end"
+
+    style = rounded;
+    input_3 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_rrrreee">rrrreee</TD></TR>
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_3 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD>&nbsp;</TD></TR>
+        </TABLE>>
+    ];
+        input_3->output_3 [style=invis];
+    }
+    subgraph cluster_2 {
+    label = "null"
+
+    style = rounded;
+    input_2 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_2 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD>&nbsp;</TD></TR>
+        </TABLE>>
+    ];
+        input_2->output_2 [style=invis];
+    }
+    subgraph cluster_9 {
+    label = "start"
+
+    style = rounded;
+    input_9 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD>&nbsp;</TD></TR>
+        </TABLE>>
+    ];
+    output_9 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_out">out</TD></TR>
+              <TR><TD PORT="e_foo">foo</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_t">t</TD></TR>
+              <TR><TD PORT="d_foo">foo</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_9->output_9 [style=invis];
+    }
+    subgraph cluster_13 {
+    label = "match
+rules/all_incoming.od
+n = 1"
+
+    style = rounded;
+    input_13 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_13 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_success">success</TD></TR>
+              <TR><TD PORT="e_fail">fail</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_out">out</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_13->output_13 [style=invis];
+    }
+    subgraph cluster_12 {
+    label = "loop"
+
+    style = rounded;
+    input_12 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_12 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_it">it</TD></TR>
+              <TR><TD PORT="e_out">out</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_out">out</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_12->output_12 [style=invis];
+    }
+    subgraph cluster_11 {
+    label = "rewrite
+rules/reduce_incoming.od"
+
+    style = rounded;
+    input_11 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_11 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_out">out</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_out">out</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_11->output_11 [style=invis];
+    }
+    subgraph cluster_10 {
+    label = "end"
+
+    style = rounded;
+    input_10 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_rrrreee">rrrreee</TD></TR>
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_10 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD>&nbsp;</TD></TR>
+        </TABLE>>
+    ];
+        input_10->output_10 [style=invis];
+    }
+    subgraph cluster_2 {
+    label = "null"
+
+    style = rounded;
+    input_2 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_2 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD>&nbsp;</TD></TR>
+        </TABLE>>
+    ];
+        input_2->output_2 [style=invis];
+    }
+    subgraph cluster_16 {
+    label = "start"
+
+    style = rounded;
+    input_16 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD>&nbsp;</TD></TR>
+        </TABLE>>
+    ];
+    output_16 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_out">out</TD></TR>
+              <TR><TD PORT="e_foo">foo</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_t">t</TD></TR>
+              <TR><TD PORT="d_foo">foo</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_16->output_16 [style=invis];
+    }
+    subgraph cluster_18 {
+    label = "loop"
+
+    style = rounded;
+    input_18 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_18 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_it">it</TD></TR>
+              <TR><TD PORT="e_out">out</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_out">out</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_18->output_18 [style=invis];
+    }
+    subgraph cluster_17 {
+    label = "match
+rules/input_without_token.od
+n = 1"
+
+    style = rounded;
+    input_17 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_17 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_success">success</TD></TR>
+              <TR><TD PORT="e_fail">fail</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_out">out</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+        input_17->output_17 [style=invis];
+    }
+    subgraph cluster_15 {
+    label = "end"
+
+    style = rounded;
+    input_15 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_rrrreee">rrrreee</TD></TR>
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD>
+            <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" COLOR="green">
+              <TR><TD PORT="d_t">t</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_15 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD>&nbsp;</TD></TR>
+        </TABLE>>
+    ];
+        input_15->output_15 [style=invis];
+    }
+    subgraph cluster_2 {
+    label = "null"
+
+    style = rounded;
+    input_2 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_2 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD>&nbsp;</TD></TR>
+        </TABLE>>
+    ];
+        input_2->output_2 [style=invis];
+    }
+    subgraph cluster_2 {
+    label = "null"
+
+    style = rounded;
+    input_2 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+          <TR><TD>
+            <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" COLOR="darkblue">
+              <TR><TD PORT="e_in">in</TD></TR>
+            </TABLE>
+          </TD></TR>
+        </TABLE>>
+    ];
+    output_2 [
+      shape=rect;
+      label= 
+        <<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0">
+            <TR><TD>&nbsp;</TD></TR>
+        </TABLE>>
+    ];
+        input_2->output_2 [style=invis];
+    }
+
+    output_1:e_out -> input_20:e_in [color = darkblue]
+    output_20:e_success -> input_19:e_out [color = darkblue]
+    output_20:e_fail -> input_0:e_in [color = darkblue]
+    output_19:e_rrrreee -> input_2:e_in [color = darkblue]
+    output_19:e_in -> input_14:e_out [color = darkblue]
+    output_14:e_rrrreee -> input_2:e_in [color = darkblue]
+    output_14:e_in -> input_8:e_out [color = darkblue]
+    output_8:e_rrrreee -> input_2:e_in [color = darkblue]
+    output_8:e_in -> input_0:e_in [color = darkblue]
+    output_4:e_out -> input_7:e_in [color = darkblue]
+    output_4:e_foo -> input_2:e_in [color = darkblue]
+    output_7:e_success -> input_6:e_in [color = darkblue]
+    output_7:e_fail -> input_6:e_in [color = darkblue]
+    output_6:e_it -> input_5:e_in [color = darkblue]
+    output_6:e_out -> input_3:e_in [color = darkblue]
+    output_5:e_out -> input_6:e_in [color = darkblue]
+    output_6:d_out -> input_5:d_in [color = green]
+    output_7:d_out -> input_6:d_in [color = green]
+    output_4:d_t -> input_7:d_in [color = green]
+    output_9:e_out -> input_13:e_in [color = darkblue]
+    output_9:e_foo -> input_2:e_in [color = darkblue]
+    output_13:e_success -> input_12:e_in [color = darkblue]
+    output_13:e_fail -> input_12:e_in [color = darkblue]
+    output_12:e_it -> input_11:e_in [color = darkblue]
+    output_12:e_out -> input_10:e_in [color = darkblue]
+    output_11:e_out -> input_12:e_in [color = darkblue]
+    output_12:d_out -> input_11:d_in [color = green]
+    output_13:d_out -> input_12:d_in [color = green]
+    output_9:d_t -> input_13:d_in [color = green]
+    output_16:e_out -> input_18:e_in [color = darkblue]
+    output_16:e_foo -> input_2:e_in [color = darkblue]
+    output_18:e_it -> input_17:e_in [color = darkblue]
+    output_18:e_out -> input_2:e_in [color = darkblue]
+    output_17:e_success -> input_18:e_in [color = darkblue]
+    output_17:e_fail -> input_15:e_in [color = darkblue]
+    output_18:d_out -> input_17:d_in [color = green]
+    output_16:d_t -> input_18:d_in [color = green]
+}
+

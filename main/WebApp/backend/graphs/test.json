@@ -1,0 +1,113 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "height": 150,
+      "width": 145,
+      "position": {
+        "x": -210.0,
+        "y": 30.0
+      },
+      "type": "custom",
+      "ports": {
+        "exec_in": [
+          "in",
+          "in2",
+          "in3"
+        ],
+        "exec_out": [
+          "out"
+        ]
+      },
+      "meta": {
+        "label": "RRRRREEEEEEE",
+        "description": "test1234"
+      }
+    },
+    {
+      "id": "2",
+      "height": 100,
+      "width": 124,
+      "position": {
+        "x": 30.0,
+        "y": 205.0
+      },
+      "type": "custom",
+      "ports": {
+        "exec_in": [
+          "in",
+          "in2",
+          "in3"
+        ],
+        "exec_out": [
+          "out"
+        ]
+      },
+      "meta": {
+        "label": "Test123456789",
+        "description": "test1234"
+      }
+    },
+    {
+      "id": "3",
+      "height": 145,
+      "width": 336,
+      "position": {
+        "x": 175.0,
+        "y": 5.0
+      },
+      "type": "custom",
+      "ports": {
+        "exec_in": [
+          "in",
+          "in2",
+          "in3"
+        ],
+        "exec_out": [
+          "out"
+        ]
+      },
+      "meta": {
+        "label": "123",
+        "description": "een heel"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "1",
+      "source": "1",
+      "sourceHandle": "name",
+      "target": "3",
+      "targetHandle": "in"
+    },
+    {
+      "id": "2",
+      "source": "1",
+      "sourceHandle": "name",
+      "target": "3",
+      "targetHandle": "in3"
+    },
+    {
+      "id": "3",
+      "source": "3",
+      "sourceHandle": "name",
+      "target": "2",
+      "targetHandle": "in"
+    },
+    {
+      "id": "4",
+      "source": "2",
+      "sourceHandle": "name",
+      "target": "1",
+      "targetHandle": "in2"
+    },
+    {
+      "id": "5",
+      "source": "1",
+      "sourceHandle": "name",
+      "target": "2",
+      "targetHandle": "in3"
+    }
+  ]
+}

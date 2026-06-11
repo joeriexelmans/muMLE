@@ -1,0 +1,13 @@
+p_running:Place
+p_r:Port {
+    Name = `get_value(this) in port_names`;
+}
+p_rf:Port_flow_out (p_running -> p_r)
+
+p_next:Place {
+    Sync = `get_value(this) == sync`;
+}
+p_n:Port
+p_nf:Port_flow_in (p_next -> p_n)
+
+tr:Transition (p_r -> p_n)

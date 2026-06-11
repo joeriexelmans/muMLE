@@ -1,0 +1,6 @@
+[DESIGN]
+min-public-methods=0
+
+[MESSAGES CONTROL]
+disable=E0401,      # import-error
+        W0246       # useless-parent-delegation

@@ -1,0 +1,40 @@
+.node-panel-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+.node-section {
+    margin-bottom: 12px;
+    padding: 8px;
+
+    border-radius: 8px;
+    border: 1px solid var(--sidebar-border);
+
+    background: var(--sidebar-bg);
+}
+
+.node-section label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 6px;
+
+    color: var(--text-muted);
+}
+
+.node-field h4 {
+    font-size: 12px;
+    margin: 6px 0;
+
+    color: var(--text-primary);
+    opacity: 0.85;
+}
+
+.node-divider {
+    height: 1px;
+    margin: 10px 0;
+
+    background: var(--sidebar-border);
+    opacity: 0.6;
+}

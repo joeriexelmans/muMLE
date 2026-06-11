@@ -1,0 +1,29 @@
+sub_start_1:Start {
+    ports_data_out = `["t", "foo"]`;
+    ports_exec_out = `["out", "foo"]`;
+}
+
+sub_end_2:End {
+    ports_data_in = `[]`;
+    ports_exec_in = `["rrrreee", "in"]`;
+}
+
+iterateplaces_3:Loop
+increaseplace_4:Rewrite {
+    file = "rules/increase_outgoing.od";
+}
+
+outgoingplaces_5:Match {
+    file = "rules/all_outgoing.od";
+    n = 1;
+}
+
+:Conn_exec (iterateplaces_3 -> increaseplace_4) {from="it"; to="in";}
+:Conn_exec (sub_start_1 -> outgoingplaces_5) {from="out"; to="in";}
+:Conn_data (sub_start_1 -> outgoingplaces_5) {from="t"; to="in";}
+:Conn_exec (outgoingplaces_5 -> iterateplaces_3) {from="fail"; to="in";}
+:Conn_exec (outgoingplaces_5 -> iterateplaces_3) {from="success"; to="in";}
+:Conn_data (outgoingplaces_5 -> iterateplaces_3) {from="out"; to="in";}
+:Conn_data (iterateplaces_3 -> increaseplace_4) {from="out"; to="in";}
+:Conn_exec (iterateplaces_3 -> sub_end_2) {from="out"; to="in";}
+:Conn_exec (increaseplace_4 -> iterateplaces_3) {from="out"; to="in";}

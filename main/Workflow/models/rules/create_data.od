@@ -1,0 +1,19 @@
+state:RTState
+data:Port_data
+port:Port {
+    Name=`get_value(this)`;
+}
+place:Place
+
+# Delete
+# RTconn:RT_data_connect (state -> data)
+
+Dconn:Port_data_connect (data -> port)
+Pconn:Port_data_out (place -> port)
+
+new_data:Port_data {
+    Value = `'None'`;
+}
+new_RTconn:RT_data_connect (state -> new_data)
+new_Dconn:Port_data_connect (new_data -> port)
+:Prev(new_data -> data)

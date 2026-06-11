@@ -1,0 +1,81 @@
+PUT http://localhost:8000/file/a.json
+Content-Type: application/json
+
+{"content":
+    {
+      "Place": {
+        "p1": { "Process": "a1" },
+        "p2": { "Process": "p2" }
+      },
+      "Port": {
+        "of1": { "Name": "out" },
+        "od1": { "Name": "out" },
+        "if1": { "Name": "inp" },
+        "id1": { "Name": "inp" }
+      },
+      "Port_flow_out": [
+        {
+          "source": "p1",
+          "target": "of1"
+        }
+      ],
+      "Port_data_out": [
+        {
+          "source": "p1",
+          "target": "od1"
+        }
+      ],
+      "Port_flow_in": [
+        {
+          "source": "p2",
+          "target": "if1"
+        }
+      ],
+      "Port_data_in": [
+        {
+          "source": "p2",
+          "target": "id1"
+        }
+      ],
+      "Transition": [
+        {
+          "source": "of1",
+          "target": "if1"
+        }
+      ],
+      "Data_flow": [
+        {
+          "source": "od1",
+          "target": "id1"
+        }
+      ],
+      "RTState": {
+        "rt_state": {}
+      },
+      "Running": [
+        {
+          "source": "rt_state",
+          "target": "p1",
+          "Id": ""
+        }
+      ],
+      "Port_data": {
+        "d1": {
+          "value": ""
+        }
+      },
+      "Port_data_connect": [
+        {
+          "source": "d1",
+          "target": "od1"
+        }
+      ],
+      "RT_data_connect": [
+        {
+          "source": "rt_state",
+          "target": "d1"
+        }
+      ]
+    },
+"type": "json"
+}

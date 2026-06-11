@@ -1,0 +1,53 @@
+digraph Model {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+
+    subgraph cluster {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+        2327[label="a1"]
+        2451[shape=point, width=0.15, xlabel=out]
+        2422[shape=point, width=0.15, xlabel=inp]
+
+        2451 -> 2422
+        2422 -> 2327[color="blue"]
+        2327 -> 2451[color="blue"]
+}
+
+            5887[label=rt_state0]
+
+            2480[label=rt_state]
+
+            5987[label=rt_state1]
+
+        2487[label="`None`"]
+        6029[label="`{'some_json_content': ['some_values123']}`"]
+        5901[label="`{'some_json_content': ['some_values123']}`"]
+
+            2480 -> 5887[label="Next" color="lightgray"]
+
+            5887 -> 5987[label="Next" color="lightgray"]
+
+            5901 -> 6029[label="Next" color="lightgray"]
+
+            2487 -> 5901[label="Next" color="lightgray"]
+
+            5887 -> 2327 [label="Running" color="red"]
+
+            2480 -> 2327 [label="Running" color="red"]
+
+            6029 -> 2451 [label="Dconn"]
+
+            2487 -> 2451 [label="Dconn"]
+
+            5901 -> 2451 [label="Dconn"]
+
+            5987 -> 6029 [label="RTconn"]
+
+            2480 -> 2487 [label="RTconn"]
+
+            5887 -> 5901 [label="RTconn"]
+
+}

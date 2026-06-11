@@ -1,0 +1,149 @@
+:root {
+  color-scheme: light dark;
+
+/* animation */
+  --transition: 200ms;
+
+/* ========== DARK PALETTE ========== */
+  --dark-bg-canvas: #242424;
+  --dark-sidebar-bg: rgba(30, 30, 48, 1);
+  --dark-sidebar-border: #333;
+  --dark-node-bg: #212132;
+  --dark-node-border: #343450;
+  --dark-node-selected: #4fc3f7;
+  --dark-node-text: rgba(220, 220, 220, 1);
+  --dark-text-primary: #e6e6eb;
+  --dark-text-muted: #b0b0c0;
+  --dark-edge-default: #8a8aa0;
+  --dark-edge-selected: #4fc3f7;
+  --dark-grid-dot: rgba(255,255,255,0.08);
+  --dark-control-bg: #202032;
+  --dark-control-border: #34344b;
+  --dark-control-icon: #e6e6eb;
+  --dark-btn-bg: #2a2d3d;
+
+
+/* ========== LIGHT PALETTE ========== */
+  --light-bg-canvas: rgba(240, 240, 240, 1);
+  --light-sidebar-bg: rgba(255, 255, 255, 1);
+  --light-sidebar-border: rgba(200, 200, 200, 1);
+  --light-node-bg: rgba(250, 250, 250, 1);
+  --light-node-border: #d6d6e0;
+  --light-node-selected: #1976d2;
+  --light-node-text: rgba(50, 50, 50, 1);
+  --light-text-primary: #1b1b1f;
+  --light-text-muted: #666680;
+  --light-edge-default: #55556f;
+  --light-edge-selected: #1976d2;
+  --light-grid-dot: rgba(0,0,0,0.08);
+  --light-control-bg: #f7f7fa;
+  --light-control-border: #d6d6e0;
+  --light-control-icon: #1b1b1f;
+  --light-btn-bg: #e6e9f0;
+
+
+/* ========== NODES COLORS =========== */
+  --node-handle-flow-in: rgba(75, 118, 210, 1);
+  --node-handle-flow-out: rgba(25, 118, 210, 1);
+  --node-handle-data-in: rgba(75, 175, 80, 1);
+  --node-handle-data-out: rgba(75, 175, 80, 1);
+  --btn-add: #4caf50;
+  --btn-remove: #ff5c5c;
+  --btn-save: #1976d2;
+
+}
+
+/* =========================
+   SYSTEM DEFAULT
+   ========================= */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-canvas: var(--dark-bg-canvas);
+    --sidebar-bg: var(--dark-sidebar-bg);
+    --sidebar-border: var(--dark-sidebar-border);
+    --node-bg: var(--dark-node-bg);
+    --node-border: var(--dark-node-border);
+    --node-selected: var(--dark-node-selected);
+    --node-text: var(--dark-node-text);
+    --text-primary: var(--dark-text-primary);
+    --text-muted: var(--dark-text-muted);
+    --text-bg: var(--dark-btn-bg);
+    --edge-default: var(--dark-edge-default);
+    --edge-selected: var(--dark-edge-selected);
+    --grid-dot: var(--dark-grid-dot);
+    --control-bg: var(--dark-control-bg);
+    --control-border: var(--dark-control-border);
+    --control-icon: var(--dark-control-icon);
+    --btn-bg: var(--dark-btn-bg);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-canvas: var(--light-bg-canvas);
+    --sidebar-bg: var(--light-sidebar-bg);
+    --sidebar-border: var(--light-sidebar-border);
+    --node-bg: var(--light-node-bg);
+    --node-border: var(--light-node-border);
+    --node-selected: var(--light-node-selected);
+    --node-text: var(--light-node-text);
+    --text-primary: var(--light-text-primary);
+    --text-muted: var(--light-text-muted);
+    --text-bg: var(--light-btn-bg);
+    --edge-default: var(--light-edge-default);
+    --edge-selected: var(--light-edge-selected);
+    --grid-dot: var(--light-grid-dot);
+    --control-bg: var(--light-control-bg);
+    --control-border: var(--light-control-border);
+    --control-icon: var(--light-control-icon);
+    --btn-bg: var(--light-btn-bg)
+  }
+}
+
+html[data-theme='dark'] {
+  --bg-canvas: var(--dark-bg-canvas);
+  --sidebar-bg: var(--dark-sidebar-bg);
+  --sidebar-border: var(--dark-sidebar-border);
+  --node-bg: var(--dark-node-bg);
+  --node-border: var(--dark-node-border);
+  --node-selected: var(--dark-node-selected);
+  --node-text: var(--dark-node-text);
+  --text-primary: var(--dark-text-primary);
+  --text-muted: var(--dark-text-muted);
+  --text-bg: var(--dark-btn-bg);
+  --edge-default: var(--dark-edge-default);
+  --edge-selected: var(--dark-edge-selected);
+  --grid-dot: var(--dark-grid-dot);
+  --control-bg: var(--dark-control-bg);
+  --control-border: var(--dark-control-border);
+  --control-icon: var(--dark-control-icon);
+  --btn-bg: var(--dark-btn-bg)
+}
+
+html[data-theme='light'] {
+  --bg-canvas: var(--light-bg-canvas);
+  --sidebar-bg: var(--light-sidebar-bg);
+  --sidebar-border: var(--light-sidebar-border);
+  --node-bg: var(--light-node-bg);
+  --node-border: var(--light-node-border);
+  --node-selected: var(--light-node-selected);
+  --node-text: var(--light-node-text);
+  --text-primary: var(--light-text-primary);
+  --text-muted: var(--light-text-muted);
+  --text-bg: var(--light-btn-bg);
+  --edge-default: var(--light-edge-default);
+  --edge-selected: var(--light-edge-selected);
+  --grid-dot: var(--light-grid-dot);
+  --control-bg: var(--light-control-bg);
+  --control-border: var(--light-control-border);
+  --control-icon: var(--light-control-icon);
+  --btn-bg: var(--light-btn-bg)
+}
+
+* {
+  transition:
+    background-color var(--transition),
+    color var(--transition),
+    border-color var(--transition),
+    box-shadow var(--transition);
+}

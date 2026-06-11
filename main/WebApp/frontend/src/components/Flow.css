@@ -1,0 +1,38 @@
+.react-flow {
+  background: var(--bg-canvas);
+}
+
+/* Background grid */
+.react-flow__background path {
+  stroke: var(--grid-dot);
+}
+
+/* Edges */
+.react-flow__edge-path {
+  stroke: var(--edge-default);
+  stroke-width: 2;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--edge-selected);
+}
+
+/* Controls */
+.react-flow__controls {
+  background: var(--control-bg);
+  border: 1px solid var(--control-border);
+}
+
+.react-flow__controls button {
+  background: transparent;
+  color: var(--control-icon);
+  border-color: var(--control-border);
+}
+
+/* Selection box */
+.react-flow__selection {
+  border: 1px dashed var(--node-selected);
+  background: color-mix(in srgb, var(--node-selected) 10%, transparent);
+}
+
+

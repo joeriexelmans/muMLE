@@ -1,0 +1,68 @@
+digraph Model {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+
+    subgraph cluster {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+        2327[label="a1"]
+        2451[shape=point, width=0.15, xlabel=out]
+        2422[shape=point, width=0.15, xlabel=inp]
+
+        2451 -> 2422
+        2422 -> 2327[color="blue"]
+        2327 -> 2451[color="blue"]
+}
+
+            6016[label=rt_state2]
+
+            5916[label=rt_state1]
+
+            5816[label=rt_state0]
+
+            2480[label=rt_state]
+
+        5830[label="`69420`"]
+        2487[label="`None`"]
+        6030[label="`69420`"]
+        5930[label="`69420`"]
+
+            2480 -> 6016[label="Next" color="lightgray"]
+
+            2480 -> 5916[label="Next" color="lightgray"]
+
+            2480 -> 5816[label="Next" color="lightgray"]
+
+            2487 -> 5830[label="Next" color="lightgray"]
+
+            2487 -> 6030[label="Next" color="lightgray"]
+
+            2487 -> 5930[label="Next" color="lightgray"]
+
+            6016 -> 2327 [label="Running" color="red"]
+
+            5916 -> 2327 [label="Running" color="red"]
+
+            5816 -> 2327 [label="Running" color="red"]
+
+            2480 -> 2327 [label="Running" color="red"]
+
+            2487 -> 2451 [label="Dconn"]
+
+            5830 -> 2451 [label="Dconn"]
+
+            6030 -> 2451 [label="Dconn"]
+
+            5930 -> 2451 [label="Dconn"]
+
+            5916 -> 5930 [label="RTconn"]
+
+            2480 -> 2487 [label="RTconn"]
+
+            6016 -> 6030 [label="RTconn"]
+
+            5816 -> 5830 [label="RTconn"]
+
+}

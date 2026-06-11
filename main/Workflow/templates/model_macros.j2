@@ -1,0 +1,51 @@
+{% macro render_place(node) -%}
+    {{ node.id }}[label="{{ node.name }}"]
+{%- endmacro %}
+
+{% macro render_port(node) -%}
+    {{ node.id }}[shape=point, width=0.15, xlabel={{ node.params.Name }}]
+{%- endmacro %}
+
+{% macro render_port_data(node) -%}
+    {{ node.id }}[shape=point, width=0.15, xlabel={{ node.params.Name }}]
+{%- endmacro %}
+
+{% set render_nodes = {
+    "Place": render_place,
+    "Port": render_port,
+    "Port_data": render_port_data
+} %}
+
+{% macro render_transition(edge) -%}
+    {{ edge.source }} -> {{ edge.target }}
+{%- endmacro %}
+
+{% macro render_data_flow(edge) -%}
+    {{ edge.source }} -> {{ edge.target }}
+{%- endmacro %}
+
+{% macro render_port_data_in(edge) -%}
+    {{ edge.target }} -> {{ edge.source }}[color="green"]
+{%- endmacro %}
+
+{% macro render_port_data_out(edge) -%}
+    {{ edge.source }} -> {{ edge.target }}[color="green"]
+{%- endmacro %}
+
+{% macro render_port_flow_in(edge) -%}
+    {{ edge.target }} -> {{ edge.source }}[color="blue"]
+{%- endmacro %}
+
+{% macro render_port_flow_out(edge) -%}
+    {{ edge.source }} -> {{ edge.target }}[color="blue"]
+{%- endmacro %}
+
+
+{% set render_edges = {
+    "Transition": render_transition,
+    "Data_flow": render_data_flow,
+    "Port_flow_in": render_port_data_in,
+    "Port_flow_out": render_port_data_out,
+    "Port_data_in": render_port_flow_in,
+    "Port_data_out": render_port_flow_out
+} %}

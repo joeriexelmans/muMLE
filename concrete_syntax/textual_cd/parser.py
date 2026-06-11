@@ -13,7 +13,7 @@ grammar = r"""
 
 IDENTIFIER: /[A-Za-z_][A-Za-z_0-9]*/
 
-COMMENT: /#[^\n]*\n/
+COMMENT: /#[^\n]*/  | /\[\/\/\]\:[^\n]*/
 
 literal: INT
        | STR

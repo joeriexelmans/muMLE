@@ -1,0 +1,10 @@
+state:RTState
+data:Port_data
+port:Port {
+    Name=`True`;
+}
+place:Place
+
+RTconn:RT_data_connect (state -> data)
+Dconn:Port_data_connect (data -> port)
+Pconn:Port_data_out (place -> port)

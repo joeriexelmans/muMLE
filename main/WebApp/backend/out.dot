@@ -1,0 +1,41 @@
+digraph Model {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+
+    subgraph cluster {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+        2349[label="a2"]
+        2422[label="a3"]
+        2276[label="a1"]
+        2553[shape=point, width=0.15, xlabel=inputFlow]
+        2582[shape=point, width=0.15, xlabel=inputFlow]
+        2524[shape=point, width=0.15, xlabel=out2]
+        2495[shape=point, width=0.15, xlabel=out1]
+
+        2495 -> 2582
+        2524 -> 2553
+        2553 -> 2349[color="green"]
+        2582 -> 2422[color="green"]
+        2276 -> 2495[color="green"]
+        2276 -> 2524[color="green"]
+}
+
+            2611[label=rt_state]
+
+            5871[label=rt_state0]
+
+            5914[label=rt_state1]
+
+
+            2611 -> 5871[label="Next" color="lightgray"]
+
+            5871 -> 5914[label="Next" color="lightgray"]
+
+            2611 -> 2276 [label="Running" color="red"]
+
+            5871 -> 2276 [label="Running" color="red"]
+
+}

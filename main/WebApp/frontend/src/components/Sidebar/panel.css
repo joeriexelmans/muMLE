@@ -1,0 +1,11 @@
+.panel {
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid var(--sidebar-border);
+    border-radius: 8px;
+
+    background: var(--sidebar-bg);
+    color: var(--text-primary);
+
+    font-family: sans-serif;
+}

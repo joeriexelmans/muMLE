@@ -287,7 +287,7 @@ class Conformance:
             if code != None:
                 instances = self.odapi.get_all_instances(type_name, include_subtypes=self.constraint_check_subtypes)
                 for obj_name, obj_id in instances:
-                    description = f"Local constraint of \"{type_name}\" in \"{obj_name}\""
+                    description = f"Local constraint of \'{type_name}\' in \'{obj_name}\'"
                     # print(description)
                     try:
                         result = exec_then_eval(code, _globals=_global_binds, _locals={'this': obj_id}) # may raise

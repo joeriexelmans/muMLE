@@ -1,0 +1,109 @@
+digraph Model {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+
+    subgraph cluster {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+        2327[label="a1"]
+        2422[label="a2"]
+        2517[label="a3"]
+        2728[shape=point, width=0.15, xlabel=id]
+        2786[shape=point, width=0.15, xlabel=in]
+        2815[shape=point, width=0.15, xlabel=id]
+        2757[shape=point, width=0.15, xlabel=id]
+        2612[shape=point, width=0.15, xlabel=out]
+        2699[shape=point, width=0.15, xlabel=out]
+        2641[shape=point, width=0.15, xlabel=id]
+        2670[shape=point, width=0.15, xlabel=in]
+
+        2612 -> 2670
+        2699 -> 2786
+        2757 -> 2815
+        2641 -> 2728
+        2815 -> 2517[color="blue"]
+        2728 -> 2422[color="blue"]
+        2422 -> 2757[color="blue"]
+        2327 -> 2641[color="blue"]
+        2670 -> 2422[color="green"]
+        2786 -> 2517[color="green"]
+        2327 -> 2612[color="green"]
+        2422 -> 2699[color="green"]
+}
+
+            2844[label=rt_state]
+
+            6286[label=rt_state0]
+
+            6443[label=rt_state1]
+
+            6578[label=rt_state2]
+
+            6713[label=rt_state3]
+
+        2851[label="`None`"]
+        6357[label="`9999`"]
+        6492[label="`1`"]
+        6300[label="`None`"]
+        2880[label="`None`"]
+        6627[label="`1`"]
+
+            2844 -> 6286[label="Next" color="lightgray"]
+
+            6286 -> 6443[label="Next" color="lightgray"]
+
+            6443 -> 6578[label="Next" color="lightgray"]
+
+            6578 -> 6713[label="Next" color="lightgray"]
+
+            2851 -> 6357[label="Next" color="lightgray"]
+
+            6357 -> 6492[label="Next" color="lightgray"]
+
+            2880 -> 6300[label="Next" color="lightgray"]
+
+            6300 -> 6627[label="Next" color="lightgray"]
+
+            2844 -> 2327 [label="Running" color="red"]
+
+            6286 -> 2327 [label="Running" color="red"]
+
+            6443 -> 2422 [label="Running" color="red"]
+
+            6578 -> 2517 [label="Running" color="red"]
+
+            6627 -> 2757 [label="Dconn"]
+
+            2880 -> 2757 [label="Dconn"]
+
+            6300 -> 2757 [label="Dconn"]
+
+            6492 -> 2641 [label="Dconn"]
+
+            2851 -> 2641 [label="Dconn"]
+
+            6357 -> 2641 [label="Dconn"]
+
+            6286 -> 6357 [label="RTconn"]
+
+            6578 -> 6492 [label="RTconn"]
+
+            6713 -> 6627 [label="RTconn"]
+
+            6443 -> 6492 [label="RTconn"]
+
+            6713 -> 6492 [label="RTconn"]
+
+            2844 -> 2880 [label="RTconn"]
+
+            6286 -> 6300 [label="RTconn"]
+
+            2844 -> 2851 [label="RTconn"]
+
+            6578 -> 6627 [label="RTconn"]
+
+            6443 -> 6300 [label="RTconn"]
+
+}

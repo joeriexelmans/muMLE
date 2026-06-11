@@ -1,0 +1,20 @@
+{% import "RTmodel_dot_macros.j2" as rtm %}
+digraph Model {
+  rankdir=LR;
+  compound=true;
+  node [shape=rect];
+
+{{ rtm.include_model(model) }}
+{% for node_category, value in nodes.items() %}
+    {% for node in value %}
+        {{ rtm.render_nodes[node_category](node) }}
+    {% endfor %}
+{% endfor %}
+
+{% for edge_category, value in edges.items() %}
+    {% for edge in value %}
+        {{ rtm.render_edges[edge_category](edge) }}
+    {% endfor %}
+{% endfor %}
+}
+

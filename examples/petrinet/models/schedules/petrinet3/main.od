@@ -1,0 +1,31 @@
+start_1:Start
+alltranstions_2:Match {
+    file = "rules/transition.od";
+}
+
+findfirstthatcanfire_3:Schedule {
+    file = "schedules/petrinet3/check_nac.od";
+}
+
+reduceincoming_4:Schedule {
+    file = "schedules/petrinet3/reduce_incoming.od";
+}
+
+increaseoutgoing_5:Schedule {
+    file = "schedules/petrinet3/increase_outgoing.od";
+}
+
+end_6:End {
+    ports_exec_in = `["in"]`;
+    ports_data_in = `[]`;
+}
+
+:Conn_exec (start_1 -> alltranstions_2) {from="out"; to="in";}
+:Conn_data (alltranstions_2 -> findfirstthatcanfire_3) {from="out"; to="t";}
+:Conn_exec (reduceincoming_4 -> increaseoutgoing_5) {from="in"; to="out";}
+:Conn_exec (alltranstions_2 -> findfirstthatcanfire_3) {from="success"; to="out";}
+:Conn_exec (increaseoutgoing_5 -> end_6) {from="in"; to="in";}
+:Conn_exec (alltranstions_2 -> end_6) {from="fail"; to="in";}
+:Conn_data (findfirstthatcanfire_3 -> reduceincoming_4) {from="t"; to="t";}
+:Conn_data (findfirstthatcanfire_3 -> increaseoutgoing_5) {from="t"; to="t";}
+:Conn_exec (findfirstthatcanfire_3 -> reduceincoming_4) {from="in"; to="out";}

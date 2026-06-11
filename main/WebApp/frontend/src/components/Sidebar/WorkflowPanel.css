@@ -1,0 +1,58 @@
+.title {
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.player {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+/* Buttons */
+.button {
+  padding: 6px;
+  cursor: pointer;
+
+  background-color: var(--btn-bg);
+  border: 1px solid var(--control-border);
+  color: var(--control-icon);
+
+  border-radius: 6px;
+}
+
+.button:hover {
+  border-color: var(--node-selected);
+}
+
+.control {
+  flex: 1;
+  padding: 8px;
+
+  font-size: 16px;
+  cursor: pointer;
+
+  background: var(--btn-bg);
+  border: 1px solid var(--control-border);
+  color: var(--control-icon);
+
+  border-radius: 6px;
+}
+
+.control:disabled,
+.button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stop {
+  color: var(--btn-remove);
+}

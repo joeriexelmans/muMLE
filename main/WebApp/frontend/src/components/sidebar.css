@@ -1,0 +1,265 @@
+:root {
+  color-scheme: light dark;
+
+  --sidebar-text: #e0e0e0;
+
+  --hover-bg: #33334d;
+  --selected-bg: #55557a;
+
+  --input-bg: #2a2a3d;
+  --input-border: #555;
+}
+
+/* Base button */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* SIDEBAR */
+.sidebar {
+  background: var(--sidebar-bg);
+  color: var(--text-primary);
+  border-right: 1px solid var(--sidebar-border);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  transition: width 0.2s, background 0.3s;
+  font-family: sans-serif;
+
+  &.collapsed {
+    width: 40px;
+    padding: 12px 4px;
+  }
+
+  /* Resize handle */
+
+  .resizer {
+    width: 8px;
+    cursor: col-resize;
+    position: absolute;
+    top: 0;
+    right: -1px;
+    height: 100%;
+    z-index: 10;
+    background: transparent;
+  }
+
+  /* Collapse button */
+
+  .toggle-collapse {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+    line-height: 10px;
+    padding: 0px 3px 0px 0px;
+    border-radius: 50%;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--sidebar-text);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    z-index: 20;
+    transition: transform 0.2s;
+  }
+
+  /* All sidebar buttons */
+
+  button {
+    width: 100%;
+    padding: 6px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+
+    &.add-node {
+      background: var(--btn-add);
+    }
+
+    &.save-graph {
+      background: var(--btn-save);
+    }
+  }
+
+  .node-panel label {
+    display: flex;
+    flex-direction: column;
+  / / label on top of input margin-bottom: 12 px;
+  / / space between fields font-size: 13 px;
+    font-weight: 500;
+    color: var(--node-text);
+
+    input {
+      margin-top: 4px;
+    / / small gap between label and input padding: 6 px 8 px;
+      font-size: 14px;
+      border: 1px solid var(--node-border);
+      border-radius: 4px;
+      outline: none;
+      width: 100%;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+
+      &:focus {
+        /*border-color: var(--node-accent);*/
+      }
+    }
+
+
+  }
+
+
+  /* NODES LIST */
+
+  ul.nodes-list {
+    list-style: none;
+    padding-left: 0;
+    font-size: 14px;
+
+    li {
+      padding: 4px 6px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.2s;
+
+      &:hover {
+        background: var(--hover-bg);
+      }
+
+      &.selected {
+        background: var(--selected-bg);
+      }
+    }
+  }
+
+  /* DATATYPES SECTION */
+
+  .datatypes {
+    .datatype-row {
+      display: flex;
+      align-items: stretch;
+      gap: 6px;
+      padding: 3px 0px 3px 0px;
+      height: 24px;
+
+
+      input {
+        flex: 1;
+        border-radius: 4px;
+        border: 1px solid var(--input-border);
+        font-size: 14px;
+        background: var(--input-bg);
+        color: var(--sidebar-text);
+        height: 100%;
+        box-sizing: border-box;
+      }
+
+
+      /* EDIT BUTTON + MENU */
+
+      .edit-menu {
+        position: relative;
+        margin-right: 4px;
+
+        &::after {
+          content: '';
+          position: absolute;
+          top: -6px;
+          bottom: -6px;
+          left: -6px;
+          right: -6px;
+        }
+
+        &:hover .menu {
+          display: block;
+        }
+
+        .edit-icon {
+          width: 100%;
+          height: 100%;
+          padding: 3px;
+          border-radius: 4px;
+          background: #3a3a4d;
+          color: #e0e0e0;
+        }
+
+        .menu {
+          display: none;
+          position: absolute;
+          right: 100%;
+          top: 0;
+          margin-right: 6px;
+
+          background: #2a2a3d;
+          border: 1px solid #444;
+          border-radius: 6px;
+          padding: 4px 0;
+          white-space: wrap;
+
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+          z-index: 1000;
+
+          .menu-item {
+            width: 100%;
+            text-align: center;
+            padding: 6px 12px;
+            background: none;
+            border: none;
+            color: #ddd;
+            cursor: pointer;
+            font-size: 13px;
+
+            &:hover {
+              background: #41415a;
+            }
+
+            &.danger {
+              color: var(--btn-remove);
+
+              &:hover {
+                background: #542a2a;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    /* Add datatype button */
+
+    .add {
+      background: var(--btn-add);
+      margin-top: 4px;
+    }
+  }
+
+  /* SELECTED NODE INFO */
+
+  .selected-node {
+    margin-top: 16px;
+    border-top: 1px solid var(--input-border);
+    padding-top: 10px;
+    font-size: 13px;
+  }
+}

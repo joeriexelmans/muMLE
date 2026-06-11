@@ -1,0 +1,82 @@
+.ports-category {
+    margin-bottom: 14px;
+    padding: 8px;
+
+    border: 1px solid var(--sidebar-border);
+    border-radius: 8px;
+
+    background: var(--sidebar-bg);
+}
+
+.ports-title {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 8px;
+
+    color: var(--text-primary);
+}
+
+.port-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 6px;
+    overflow: hidden;
+}
+
+.port-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.port-btn {
+    min-width: 26px;
+    max-width: 26px;
+    height: 26px;
+    padding: 0;
+
+    border-radius: 4px;
+    border: 1px solid var(--sidebar-border);
+
+    background: var(--btn-bg);
+    color: var(--text-primary);
+
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.port-btn:hover {
+    filter: brightness(1.05);
+}
+
+.port-btn-danger {
+    color: #ff5c5c;
+}
+
+.port-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.add-port-btn {
+    margin-top: 6px;
+
+    width: 100%;
+    padding: 6px;
+
+    border-radius: 6px;
+    border: 1px solid var(--sidebar-border);
+
+    background: var(--btn-bg);
+    color: var(--text-primary);
+
+    cursor: pointer;
+}
+
+.add-port-btn:hover {
+    filter: brightness(1.05);
+}

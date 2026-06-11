@@ -1,0 +1,316 @@
+a1:Place {
+	Name = "create new runtime state";
+	Process = "_create_new_rt_state";
+	Start = True;
+	Sync = False;
+}
+a2:Place {
+	Name = "copy running";
+	Process = "_copy_running";
+	Start = False;
+	Sync = False;
+}
+a3:Place {
+	Name = "Input";
+	Process = "";
+	Start = False;
+	Sync = False;
+}
+a4:Place {
+	Name = "copy running tokens";
+	Process = "_copy_running_tokens";
+	Start = False;
+	Sync = False;
+}
+a5:Place {
+	Name = "update data";
+	Process = "_update_data";
+	Start = False;
+	Sync = False;
+}
+a6:Place {
+	Name = "next activities";
+	Process = "_get_next_activities";
+	Start = False;
+	Sync = True;
+}
+a7:Place {
+	Name = "create activities data";
+	Process = "_create_activities_data";
+	Start = False;
+	Sync = False;
+}
+a1flow_out1:Port {
+	Name = "out";
+}
+a1data_in1:Port {
+	Name = "rt_state";
+}
+a1data_out1:Port {
+	Name = "new_rt_state";
+}
+a2flow_in1:Port {
+	Name = "in";
+}
+a2flow_out1:Port {
+	Name = "out";
+}
+a2data_in1:Port {
+	Name = "old_rt_state";
+}
+a2data_in2:Port {
+	Name = "new_rt_state";
+}
+a2data_in3:Port {
+	Name = "finished_task";
+}
+a2data_out1:Port {
+	Name = "activity_finished";
+}
+a3data_out1:Port {
+	Name = "rt_state";
+}
+a3data_out2:Port {
+	Name = "finished_task";
+}
+a3data_out3:Port {
+	Name = "results";
+}
+a3data_out4:Port {
+	Name = "flow_output";
+}
+a4flow_in1:Port {
+	Name = "inputFlow";
+}
+a4flow_out1:Port {
+	Name = "out";
+}
+a4data_in1:Port {
+	Name = "old_rt_state";
+}
+a4data_in2:Port {
+	Name = "new_rt_state";
+}
+a5flow_in1:Port {
+	Name = "inputFlow";
+}
+a5flow_out1:Port {
+	Name = "out";
+}
+a5data_in1:Port {
+	Name = "old_rt_state";
+}
+a5data_in2:Port {
+	Name = "new_rt_state";
+}
+a5data_in3:Port {
+	Name = "results";
+}
+a5data_in4:Port {
+	Name = "activity";
+}
+a6flow_in1:Port {
+	Name = "inputFlow1";
+}
+a6flow_in2:Port {
+	Name = "inputFlow2";
+}
+a6flow_out1:Port {
+	Name = "out";
+}
+a6data_in1:Port {
+	Name = "activity_finished";
+}
+a6data_in2:Port {
+	Name = "new_rt_state";
+}
+a6data_in4:Port {
+	Name = "flow_output";
+}
+a6data_out1:Port {
+	Name = "new_activities";
+}
+a7flow_in1:Port {
+	Name = "inputFlow";
+}
+a7data_in2:Port {
+	Name = "new_rt_state";
+}
+a7data_in1:Port {
+	Name = "new_activities";
+}
+a7data_out1:Port {
+	Name = "data";
+}
+rt_state:RTState {
+}
+d1data_out1:Port_data {
+	Value = "None";
+}
+d2data_out1:Port_data {
+	Value = "None";
+}
+d3data_out1:Port_data {
+	Value = "None";
+}
+d3data_out2:Port_data {
+	Value = "None";
+}
+d3data_out3:Port_data {
+	Value = "None";
+}
+d3data_out4:Port_data {
+	Value = "None";
+}
+d6data_out1:Port_data {
+	Value = "None";
+}
+d7data_out1:Port_data {
+	Value = "None";
+}
+
+:Transition (a1flow_out1 -> a2flow_in1) {
+}
+:Transition (a1flow_out1 -> a4flow_in1) {
+}
+:Transition (a2flow_out1 -> a5flow_in1) {
+}
+:Transition (a5flow_out1 -> a6flow_in1) {
+}
+:Transition (a4flow_out1 -> a6flow_in2) {
+}
+:Transition (a6flow_out1 -> a7flow_in1) {
+}
+:Data_flow (a3data_out1 -> a1data_in1) {
+}
+:Data_flow (a1data_out1 -> a2data_in2) {
+}
+:Data_flow (a1data_out1 -> a4data_in2) {
+}
+:Data_flow (a1data_out1 -> a5data_in2) {
+}
+:Data_flow (a3data_out1 -> a5data_in1) {
+}
+:Data_flow (a3data_out1 -> a4data_in1) {
+}
+:Data_flow (a3data_out1 -> a2data_in1) {
+}
+:Data_flow (a3data_out2 -> a2data_in3) {
+}
+:Data_flow (a3data_out3 -> a5data_in3) {
+}
+:Data_flow (a2data_out1 -> a5data_in4) {
+}
+:Data_flow (a2data_out1 -> a6data_in1) {
+}
+:Data_flow (a1data_out1 -> a6data_in2) {
+}
+:Data_flow (a3data_out4 -> a6data_in4) {
+}
+:Data_flow (a6data_out1 -> a7data_in1) {
+}
+:Data_flow (a1data_out1 -> a7data_in2) {
+}
+:Port_flow_in (a2 -> a2flow_in1) {
+}
+:Port_flow_in (a4 -> a4flow_in1) {
+}
+:Port_flow_in (a5 -> a5flow_in1) {
+}
+:Port_flow_in (a6 -> a6flow_in1) {
+}
+:Port_flow_in (a6 -> a6flow_in2) {
+}
+:Port_flow_in (a7 -> a7flow_in1) {
+}
+:Port_flow_out (a1 -> a1flow_out1) {
+}
+:Port_flow_out (a2 -> a2flow_out1) {
+}
+:Port_flow_out (a4 -> a4flow_out1) {
+}
+:Port_flow_out (a5 -> a5flow_out1) {
+}
+:Port_flow_out (a6 -> a6flow_out1) {
+}
+:Port_data_in (a1 -> a1data_in1) {
+}
+:Port_data_in (a2 -> a2data_in1) {
+}
+:Port_data_in (a2 -> a2data_in2) {
+}
+:Port_data_in (a2 -> a2data_in3) {
+}
+:Port_data_in (a4 -> a4data_in1) {
+}
+:Port_data_in (a4 -> a4data_in2) {
+}
+:Port_data_in (a5 -> a5data_in1) {
+}
+:Port_data_in (a5 -> a5data_in2) {
+}
+:Port_data_in (a5 -> a5data_in3) {
+}
+:Port_data_in (a5 -> a5data_in4) {
+}
+:Port_data_in (a6 -> a6data_in1) {
+}
+:Port_data_in (a6 -> a6data_in2) {
+}
+:Port_data_in (a6 -> a6data_in4) {
+}
+:Port_data_in (a7 -> a7data_in2) {
+}
+:Port_data_in (a7 -> a7data_in1) {
+}
+:Port_data_out (a1 -> a1data_out1) {
+}
+:Port_data_out (a2 -> a2data_out1) {
+}
+:Port_data_out (a3 -> a3data_out1) {
+}
+:Port_data_out (a3 -> a3data_out2) {
+}
+:Port_data_out (a3 -> a3data_out3) {
+}
+:Port_data_out (a3 -> a3data_out4) {
+}
+:Port_data_out (a6 -> a6data_out1) {
+}
+:Port_data_out (a7 -> a7data_out1) {
+}
+:Running (rt_state -> a1) {
+	Id="";
+}
+:RT_data_connect (rt_state -> d1data_out1) {
+}
+:RT_data_connect (rt_state -> d2data_out1) {
+}
+:RT_data_connect (rt_state -> d3data_out1) {
+}
+:RT_data_connect (rt_state -> d3data_out2) {
+}
+:RT_data_connect (rt_state -> d3data_out3) {
+}
+:RT_data_connect (rt_state -> d3data_out4) {
+}
+:RT_data_connect (rt_state -> d6data_out1) {
+}
+:RT_data_connect (rt_state -> d7data_out1) {
+}
+:Port_data_connect (d1data_out1 -> a1data_out1) {
+}
+:Port_data_connect (d2data_out1 -> a2data_out1) {
+}
+:Port_data_connect (d3data_out1 -> a3data_out1) {
+}
+:Port_data_connect (d3data_out2 -> a3data_out2) {
+}
+:Port_data_connect (d3data_out3 -> a3data_out3) {
+}
+:Port_data_connect (d3data_out4 -> a3data_out4) {
+}
+:Port_data_connect (d6data_out1 -> a6data_out1) {
+}
+:Port_data_connect (d7data_out1 -> a7data_out1) {
+}
