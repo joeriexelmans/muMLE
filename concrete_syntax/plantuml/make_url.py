@@ -18,4 +18,4 @@ def encode(plantuml_text: str) -> str:
 
 def make_url(plantuml_text: str) -> str:
     encoded = encode(plantuml_text)
-    return f"https://deemz.org/plantuml/pdf/{encoded}"
+    return f"https://www.plantuml.com/plantuml/uml/{encoded}"

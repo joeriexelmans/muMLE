@@ -93,7 +93,7 @@ class MinimalSimulator:
         self._print("Start simulation")
         self._print(f"Decision maker: {self.decision_maker}")
         step_counter = 0
-        while step_counter < 10:
+        while step_counter < 100:
             termination_reason = self.termination_condition(model)
             if termination_reason != None:
                 self._print(f"Termination condition satisfied.\nReason: {termination_reason}.")
