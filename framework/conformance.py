@@ -194,7 +194,7 @@ class Conformance:
                 # target_name = self.odapi.m_obj_to_name[m_target]
                 target_type_actual = self.odapi.get_type_name(m_target)
                 target_type_expected = self.odapi.mm_obj_to_name[tm_target]
-                if not self.cdapi.is_subtype(super_type_name=source_type_expected, sub_type_name=source_type_actual):
+                if not self.cdapi.is_subtype(super_type_name=target_type_expected, sub_type_name=target_type_actual):
                     errors.append(f"Invalid target type '{target_type_actual}' for link '{m_name}:{tm_name}'")
         return errors
 
